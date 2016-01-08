@@ -7,24 +7,26 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		AA62D05C1C3F6E8F00804CE5 /* SchemaUpdateController.m in Sources */ = {isa = PBXBuildFile; fileRef = AA62D05B1C3F6E8F00804CE5 /* SchemaUpdateController.m */; };
 		AABA33401C3D2FB10086A9A1 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = AABA333F1C3D2FB10086A9A1 /* main.m */; };
 		AABA33431C3D2FB10086A9A1 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = AABA33421C3D2FB10086A9A1 /* AppDelegate.m */; };
-		AABA33461C3D2FB10086A9A1 /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = AABA33451C3D2FB10086A9A1 /* ViewController.m */; };
 		AABA334B1C3D2FB10086A9A1 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AABA334A1C3D2FB10086A9A1 /* Assets.xcassets */; };
 		AABA334E1C3D2FB10086A9A1 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = AABA334C1C3D2FB10086A9A1 /* LaunchScreen.storyboard */; };
 		AABA336B1C3D3CCB0086A9A1 /* DataModelManager.m in Sources */ = {isa = PBXBuildFile; fileRef = AABA336A1C3D3CCB0086A9A1 /* DataModelManager.m */; };
 		AABA33891C3DC4220086A9A1 /* Project.m in Sources */ = {isa = PBXBuildFile; fileRef = AABA33881C3DC4210086A9A1 /* Project.m */; };
 		AABA338C1C3DC4D30086A9A1 /* Schema.m in Sources */ = {isa = PBXBuildFile; fileRef = AABA338B1C3DC4D30086A9A1 /* Schema.m */; };
 		AABA338F1C3DC58A0086A9A1 /* Session.m in Sources */ = {isa = PBXBuildFile; fileRef = AABA338E1C3DC58A0086A9A1 /* Session.m */; };
+		AABA33921C3DCF990086A9A1 /* ProjectMenuController.m in Sources */ = {isa = PBXBuildFile; fileRef = AABA33911C3DCF990086A9A1 /* ProjectMenuController.m */; };
+		AABA33951C3DD0660086A9A1 /* ProjectDetailController.m in Sources */ = {isa = PBXBuildFile; fileRef = AABA33941C3DD0660086A9A1 /* ProjectDetailController.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		AA62D05A1C3F6E8F00804CE5 /* SchemaUpdateController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SchemaUpdateController.h; sourceTree = "<group>"; };
+		AA62D05B1C3F6E8F00804CE5 /* SchemaUpdateController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SchemaUpdateController.m; sourceTree = "<group>"; };
 		AABA333B1C3D2FB10086A9A1 /* BehaviorLogger.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BehaviorLogger.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		AABA333F1C3D2FB10086A9A1 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		AABA33411C3D2FB10086A9A1 /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
 		AABA33421C3D2FB10086A9A1 /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
-		AABA33441C3D2FB10086A9A1 /* ViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ViewController.h; sourceTree = "<group>"; };
-		AABA33451C3D2FB10086A9A1 /* ViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ViewController.m; sourceTree = "<group>"; };
 		AABA334A1C3D2FB10086A9A1 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		AABA334D1C3D2FB10086A9A1 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		AABA334F1C3D2FB10086A9A1 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -36,6 +38,10 @@
 		AABA338B1C3DC4D30086A9A1 /* Schema.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Schema.m; sourceTree = "<group>"; };
 		AABA338D1C3DC58A0086A9A1 /* Session.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Session.h; sourceTree = "<group>"; };
 		AABA338E1C3DC58A0086A9A1 /* Session.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Session.m; sourceTree = "<group>"; };
+		AABA33901C3DCF990086A9A1 /* ProjectMenuController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ProjectMenuController.h; sourceTree = "<group>"; };
+		AABA33911C3DCF990086A9A1 /* ProjectMenuController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ProjectMenuController.m; sourceTree = "<group>"; };
+		AABA33931C3DD0660086A9A1 /* ProjectDetailController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ProjectDetailController.h; sourceTree = "<group>"; };
+		AABA33941C3DD0660086A9A1 /* ProjectDetailController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ProjectDetailController.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -91,8 +97,12 @@
 		AABA33571C3D32540086A9A1 /* Controllers */ = {
 			isa = PBXGroup;
 			children = (
-				AABA33441C3D2FB10086A9A1 /* ViewController.h */,
-				AABA33451C3D2FB10086A9A1 /* ViewController.m */,
+				AABA33901C3DCF990086A9A1 /* ProjectMenuController.h */,
+				AABA33911C3DCF990086A9A1 /* ProjectMenuController.m */,
+				AABA33931C3DD0660086A9A1 /* ProjectDetailController.h */,
+				AABA33941C3DD0660086A9A1 /* ProjectDetailController.m */,
+				AA62D05A1C3F6E8F00804CE5 /* SchemaUpdateController.h */,
+				AA62D05B1C3F6E8F00804CE5 /* SchemaUpdateController.m */,
 			);
 			name = Controllers;
 			sourceTree = "<group>";
@@ -100,8 +110,8 @@
 		AABA335B1C3D39090086A9A1 /* Model */ = {
 			isa = PBXGroup;
 			children = (
-				AABA33691C3D3CCB0086A9A1 /* ProjectManager.h */,
-				AABA336A1C3D3CCB0086A9A1 /* ProjectManager.m */,
+				AABA33691C3D3CCB0086A9A1 /* DataModelManager.h */,
+				AABA336A1C3D3CCB0086A9A1 /* DataModelManager.m */,
 				AABA33871C3DC4210086A9A1 /* Project.h */,
 				AABA33881C3DC4210086A9A1 /* Project.m */,
 				AABA338A1C3DC4D30086A9A1 /* Schema.h */,
@@ -181,12 +191,14 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				AABA33461C3D2FB10086A9A1 /* ViewController.m in Sources */,
+				AA62D05C1C3F6E8F00804CE5 /* SchemaUpdateController.m in Sources */,
+				AABA33951C3DD0660086A9A1 /* ProjectDetailController.m in Sources */,
 				AABA33891C3DC4220086A9A1 /* Project.m in Sources */,
 				AABA338F1C3DC58A0086A9A1 /* Session.m in Sources */,
 				AABA338C1C3DC4D30086A9A1 /* Schema.m in Sources */,
-				AABA336B1C3D3CCB0086A9A1 /* ProjectManager.m in Sources */,
+				AABA336B1C3D3CCB0086A9A1 /* DataModelManager.m in Sources */,
 				AABA33431C3D2FB10086A9A1 /* AppDelegate.m in Sources */,
+				AABA33921C3DCF990086A9A1 /* ProjectMenuController.m in Sources */,
 				AABA33401C3D2FB10086A9A1 /* main.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

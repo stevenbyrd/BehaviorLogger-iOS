@@ -6,12 +6,16 @@
 //  Copyright © 2016 3Bird. All rights reserved.
 //
 
+#import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
+
 
 @interface AppDelegate : UIResponder <UIApplicationDelegate>
 
-@property (strong, nonatomic) UIWindow *window;
+@property (nonatomic, strong) UIWindow *window;
+@property (nonatomic, strong, readonly) UISplitViewController *splitViewController;
 
++ (instancetype)sharedInstance;
 
 @end
 
