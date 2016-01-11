@@ -7,6 +7,7 @@
 //
 
 #import "AppDelegate.h"
+#import "DataModelManager.h"
 #import "ProjectMenuController.h"
 #import "ProjectDetailController.h"
 
@@ -33,6 +34,8 @@
     self.window.rootViewController = self.splitViewController;
     
     [self.window makeKeyAndVisible];
+
+    [DataModelManager initializeWithCompletion:nil];
     
     return YES;
 }

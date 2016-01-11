@@ -11,6 +11,10 @@
 #import "Schema.h"
 
 
+NSUInteger const ProjectNameMinimumLength = 3;
+NSUInteger const ProjectClientMinimumLength = 3;
+
+
 static NSString *const ArchiveVersionKey = @"ArchiveVersionKey";
 
 
@@ -27,8 +31,6 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
 - (instancetype)initWithUid:(NSNumber *)uid name:(NSString *)name client:(NSString *)client schema:(Schema *)schema sessionByUid:(NSDictionary<NSNumber *, Session *> *)sessionByUid {
     NSParameterAssert(name.length > 0);
     NSParameterAssert(client.length > 0);
-    NSParameterAssert(schema != nil);
-    NSParameterAssert(sessionByUid != nil);
 
     self = [super init];
 

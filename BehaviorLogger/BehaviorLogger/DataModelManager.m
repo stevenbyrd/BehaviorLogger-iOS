@@ -17,6 +17,8 @@ NSString *const DataModelProjectCreatedNotification = @"DataModelProjectCreatedN
 NSString *const DataModelProjectDeletedNotification = @"DataModelProjectDeletedNotification";
 NSString *const DataModelProjectUpdatedNotification = @"DataModelProjectUpdatedNotification";
 
+NSString *const DataModelProjectErrorDomain = @"com.3bird.BehaviorLogger.Project";
+
 
 static NSString *const ArchiveFileName = @"project.dat";
 static NSString *const ArchiveVersionKey = @"ArchiveVersionKey";
@@ -58,7 +60,7 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
     static dispatch_once_t onceToken;
 
     dispatch_once(&onceToken, ^{
-        [[DataModelManager sharedManager] restoreArchivedState];
+        [[DataModelManager sharedManager] restoreArchivedStateWithCompletion:completion];
     });
 }
 
@@ -110,6 +112,43 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
     assert(project != nil);
 
     return project;
+}
+
+
+- (void)createProjectWithName:(NSString *)name client:(NSString *)client schema:(Schema *)schema sessionByUid:(NSDictionary<NSNumber *, Session *> *)sessionByUid completion:(void(^)(Project *createdProject, NSError *error))completion {
+    assert([NSThread isMainThread]);
+    NSParameterAssert(name.length >= ProjectNameMinimumLength);
+    NSParameterAssert(client.length >= ProjectClientMinimumLength);
+    NSParameterAssert(completion != nil);
+
+    __block Project *createdProject = nil;
+    __block NSError *error = nil;
+
+    NSString *lowerCaseName = [name.lowercaseString stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+
+    [self.projectUidSet enumerateIndexesUsingBlock:^(NSUInteger uid, BOOL * _Nonnull stop) {
+        if ([self.projectByUid[@(uid)].name.lowercaseString isEqualToString:lowerCaseName]) {
+            error = [NSError errorWithDomain:DataModelProjectErrorDomain code:-1 userInfo:@{ NSLocalizedDescriptionKey : @"A project with that name already exists." }];
+            *stop = YES;
+            return;
+        }
+    }];
+
+    if (error == nil) {
+        NSUInteger lastUid = ((self.projectUidSet.count > 0) ? self.projectUidSet.lastIndex : 0);
+        NSNumber *uid = @(lastUid + 1);
+        
+        [self.projectUidSet addIndex:uid.integerValue];
+
+        createdProject = [[Project alloc] initWithUid:uid name:name client:client schema:nil sessionByUid:nil];
+        self.projectByUid[uid] = createdProject;
+
+        [self archiveCurrentState];
+
+        [[NSNotificationCenter defaultCenter] postNotificationName:DataModelProjectCreatedNotification object:createdProject];
+    }
+
+    completion(createdProject, error);
 }
 
 - (void)updateSchemaForProjectUid:(NSNumber *)projectUid toSchema:(Schema *)schema {
@@ -182,7 +221,7 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
 }
 
 
-- (void)restoreArchivedState {
+- (void)restoreArchivedStateWithCompletion:(dispatch_block_t)completion {
     assert([NSThread isMainThread]);
     assert(!self.isRestoringArchive);
 
@@ -225,6 +264,10 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
             _restoringArchive = NO;
 
             [[NSNotificationCenter defaultCenter] postNotificationName:DataModelArchiveRestoredNotification object:self];
+
+            if (completion != nil) {
+                completion();
+            }
         }];
     }];
 }

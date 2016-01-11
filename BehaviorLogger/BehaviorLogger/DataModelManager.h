@@ -18,6 +18,7 @@ extern NSString *const DataModelProjectUpdatedNotification;
 
 @class Project;
 @class Schema;
+@class Session;
 
 
 @interface DataModelManager : NSObject
@@ -29,6 +30,8 @@ extern NSString *const DataModelProjectUpdatedNotification;
 
 - (NSIndexSet *)allProjectUids;
 - (Project *)projectForUid:(NSNumber *)uid;
+
+- (void)createProjectWithName:(NSString *)name client:(NSString *)client schema:(Schema *)schema sessionByUid:(NSDictionary<NSNumber *, Session *> *)sessionByUid completion:(void(^)(Project *createdProject, NSError *error))completion;
 
 - (void)updateSchemaForProjectUid:(NSNumber *)projectUid toSchema:(Schema *)schema;
 

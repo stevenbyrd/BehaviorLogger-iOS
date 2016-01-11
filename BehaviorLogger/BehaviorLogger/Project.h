@@ -9,6 +9,10 @@
 #import <Foundation/Foundation.h>
 
 
+extern NSUInteger const ProjectNameMinimumLength;
+extern NSUInteger const ProjectClientMinimumLength;
+
+
 @class Schema;
 @class Session;
 

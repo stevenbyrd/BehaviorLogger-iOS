@@ -14,6 +14,8 @@
 NSString *const ProjectMenuControllerDidSelectProjectNotification = @"ProjectMenuControllerDidSelectProjectNotification";
 NSString *const ProjectMenuControllerSelectedProjectUserInfoKey = @"ProjectMenuControllerSelectedProjectUserInfoKey";
 
+float const ProjectCellFontSize = 14.0;
+
 
 // TODO: TableSectionFilterByName,
 typedef NS_ENUM(NSInteger, TableSection) {
@@ -43,6 +45,17 @@ typedef NS_ENUM(NSInteger, TableSection) {
     [super prepareForReuse];
     
     self.textLabel.text = nil;
+    self.textLabel.font = [ProjectCell fontForSelected:NO];
+}
+
+- (void)setSelected:(BOOL)selected {
+    super.selected = selected;
+
+    self.textLabel.font = [ProjectCell fontForSelected:selected];
+}
+
++ (UIFont *)fontForSelected:(BOOL)selected {
+    return (selected ? [UIFont boldSystemFontOfSize:ProjectCellFontSize] : [UIFont systemFontOfSize:ProjectCellFontSize]);
 }
 
 @end
@@ -89,7 +102,7 @@ typedef NS_ENUM(NSInteger, TableSection) {
 
 #pragma mark
 
-@interface ProjectMenuController ()
+@interface ProjectMenuController () <UITextFieldDelegate>
 
 @property (nonatomic, strong, readonly) UITableView *tableView;
 @property (nonatomic, copy, readonly) NSArray<Project *> *projectList;
@@ -228,16 +241,90 @@ typedef NS_ENUM(NSInteger, TableSection) {
     [self loadProjectList];
 }
 
+
 - (void)handleDataModelProjectCreated:(NSNotification *)notification {
     [self loadProjectList];
 }
+
 
 - (void)handleDataModelProjectDeleted:(NSNotification *)notification {
     [self loadProjectList];
 }
 
+
 - (void)handleDataModelProjectUpdated:(NSNotification *)notification {
     [self loadProjectList];
+}
+
+#pragma mark Create Project
+
+- (void)showCreateProjectAlertControllerWithProjectName:(NSString *)projectName client:(NSString *)client {
+    assert([NSThread isMainThread]);
+
+    UIAlertController *alertController = [UIAlertController alertControllerWithTitle:@"Create New Project" message:@"Enter a the new project's name and client." preferredStyle:UIAlertControllerStyleAlert];
+
+    __block id projectNameTextFieldDidChangeObserver = nil;
+    __block id clientTextFieldDidChangeObserver = nil;
+
+    UIAlertAction *okayAction = [UIAlertAction actionWithTitle:@"Okay" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+        [[NSNotificationCenter defaultCenter] removeObserver:projectNameTextFieldDidChangeObserver];
+        [[NSNotificationCenter defaultCenter] removeObserver:clientTextFieldDidChangeObserver];
+
+        UITextField *projectNameTextField = alertController.textFields[0];
+        NSString *projectName = projectNameTextField.text;
+
+        UITextField *clientTextField = alertController.textFields[1];
+        NSString *client = clientTextField.text;
+
+        [[DataModelManager sharedManager] createProjectWithName:projectName client:client schema:nil sessionByUid:nil completion:^(Project *createdProject, NSError *error) {
+            if (error != nil) {
+                UIAlertController *errorAlertController = [UIAlertController alertControllerWithTitle:@"Error" message:error.userInfo[NSLocalizedDescriptionKey] preferredStyle:UIAlertControllerStyleAlert];
+
+                [errorAlertController addAction:[UIAlertAction actionWithTitle:@"Okay" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+                    [self showCreateProjectAlertControllerWithProjectName:nil client:client];
+                }]];
+
+                [self presentViewController:errorAlertController animated:YES completion:nil];
+            }
+        }];
+    }];
+
+    UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction * _Nonnull action) {
+        [[NSNotificationCenter defaultCenter] removeObserver:projectNameTextFieldDidChangeObserver];
+        [[NSNotificationCenter defaultCenter] removeObserver:clientTextFieldDidChangeObserver];
+    }];
+
+    void (^textFieldDidChangeBlock)(NSNotification *) = ^(NSNotification * notification) {
+        okayAction.enabled = ((alertController.textFields[0].text.length >= ProjectNameMinimumLength)
+                              && (alertController.textFields[1].text.length >= ProjectClientMinimumLength));
+    };
+
+    [alertController addTextFieldWithConfigurationHandler:^(UITextField * _Nonnull textField) {
+        textField.text = projectName;
+        textField.delegate = self;
+        textField.placeholder = [NSString stringWithFormat:@"Project Name (minimum of %ld characters)", (long)ProjectNameMinimumLength];
+        projectNameTextFieldDidChangeObserver = [[NSNotificationCenter defaultCenter] addObserverForName:UITextFieldTextDidChangeNotification object:textField queue:[NSOperationQueue mainQueue] usingBlock:textFieldDidChangeBlock];
+    }];
+
+    [alertController addTextFieldWithConfigurationHandler:^(UITextField * _Nonnull textField) {
+        textField.text = client;
+        textField.delegate = self;
+        textField.placeholder = [NSString stringWithFormat:@"Client (minimum of %ld character)", (long)ProjectClientMinimumLength];
+        clientTextFieldDidChangeObserver = [[NSNotificationCenter defaultCenter] addObserverForName:UITextFieldTextDidChangeNotification object:textField queue:[NSOperationQueue mainQueue] usingBlock:textFieldDidChangeBlock];
+    }];
+
+    [alertController addAction:okayAction];
+    [alertController addAction:cancelAction];
+
+    okayAction.enabled = NO;
+
+    [self presentViewController:alertController animated:YES completion:nil];
+}
+
+#pragma mark UITextFieldDelegate
+
+- (BOOL)textFieldShouldReturn:(UITextField *)textField {
+    return NO;
 }
 
 #pragma mark UITableViewDataSource
@@ -310,8 +397,8 @@ typedef NS_ENUM(NSInteger, TableSection) {
         }
             
         case TableSectionCreateProject: {
-            //TODO: Push a ProjectCreationController onto splitViewController's detail controller stack
-            NSLog(@"");
+            [self.tableView deselectRowAtIndexPath:indexPath animated:NO];
+            [self showCreateProjectAlertControllerWithProjectName:nil client:nil];
             break;
         }
             
