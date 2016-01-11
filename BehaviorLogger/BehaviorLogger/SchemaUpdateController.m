@@ -33,7 +33,7 @@
     _project = project;
     _updatedMacroList = [project.schema.macros copy];
 
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleProjectUpdated:) name:ProjectUpdatedNotification object:self.project];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleProjectUpdated:) name:DataModelProjectUpdatedNotification object:self.project];
 
     return self;
 }
@@ -58,12 +58,12 @@
     }
 
     if (self.project != nil) {
-        [[NSNotificationCenter defaultCenter] removeObserver:self name:ProjectUpdatedNotification object:self.project];
+        [[NSNotificationCenter defaultCenter] removeObserver:self name:DataModelProjectUpdatedNotification object:self.project];
     }
 
     _project = project;
 
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleProjectUpdated:) name:ProjectUpdatedNotification object:self.project];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleProjectUpdated:) name:DataModelProjectUpdatedNotification object:self.project];
 }
 
 

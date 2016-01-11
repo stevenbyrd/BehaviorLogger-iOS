@@ -99,6 +99,11 @@ typedef NS_ENUM(NSInteger, TableSection) {
 
 @implementation ProjectMenuController
 
+- (void)dealloc {
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+}
+
+
 - (void)viewDidLoad {
     [super viewDidLoad];
     
@@ -118,6 +123,121 @@ typedef NS_ENUM(NSInteger, TableSection) {
     [self.view addConstraint:[NSLayoutConstraint constraintWithItem:self.tableView attribute:NSLayoutAttributeRight relatedBy:NSLayoutRelationEqual toItem:self.view attribute:NSLayoutAttributeRight multiplier:1.0 constant:0.0]];
     [self.view addConstraint:[NSLayoutConstraint constraintWithItem:self.tableView attribute:NSLayoutAttributeTop relatedBy:NSLayoutRelationEqual toItem:self.view attribute:NSLayoutAttributeTop multiplier:1.0 constant:0.0]];
     [self.view addConstraint:[NSLayoutConstraint constraintWithItem:self.tableView attribute:NSLayoutAttributeBottom relatedBy:NSLayoutRelationEqual toItem:self.view attribute:NSLayoutAttributeBottom multiplier:1.0 constant:0.0]];
+
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleDataModelArchiveRestored:) name:DataModelArchiveRestoredNotification object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleDataModelProjectCreated:) name:DataModelProjectCreatedNotification object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleDataModelProjectDeleted:) name:DataModelProjectDeletedNotification object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleDataModelProjectUpdated:) name:DataModelProjectUpdatedNotification object:nil];
+}
+
+#pragma mark Internal State
+
+- (void)loadProjectList {
+    assert([NSThread isMainThread]);
+    assert(![DataModelManager sharedManager].isRestoringArchive);
+
+    NSIndexPath *selectedIndexPath = self.tableView.indexPathForSelectedRow;
+    Project *selectedProject = nil;
+
+    if (selectedIndexPath != nil) {
+        switch ((TableSection)selectedIndexPath.section) {
+            case TableSectionProjectList:
+                selectedProject = self.projectList[selectedIndexPath.row];
+                assert(selectedProject != nil);
+                break;
+
+            case TableSectionCreateProject:
+            case TableSectionCount:
+                assert(NO);
+                break;
+        }
+
+        [self.tableView deselectRowAtIndexPath:selectedIndexPath animated:NO];
+        assert(self.tableView.indexPathsForSelectedRows.count == 0);
+    }
+
+    NSIndexSet *finalUidSet = [DataModelManager sharedManager].allProjectUids;
+    NSMutableArray<Project *> *finalProjectList = [NSMutableArray array];
+    NSMutableArray<NSNumber *> *finalUidList = [NSMutableArray array];
+
+    if (finalUidSet.count > 0) {
+        [finalUidSet enumerateIndexesUsingBlock:^(NSUInteger uid, BOOL * _Nonnull stop) {
+            [finalUidList addObject:@(uid)];
+            [finalProjectList addObject:[[DataModelManager sharedManager] projectForUid:@(uid)]];
+        }];
+    }
+
+    NSMutableIndexSet *originalUidSet = [NSMutableIndexSet indexSet];
+    NSMutableArray *originalUidList = [NSMutableArray array];
+
+    [self.projectList enumerateObjectsUsingBlock:^(Project *project, NSUInteger idx, BOOL * _Nonnull stop) {
+        [originalUidSet addIndex:project.uid.integerValue];
+        [originalUidList addObject:project.uid];
+    }];
+
+    NSMutableIndexSet *deletedUidSet = [originalUidSet mutableCopy];
+    [deletedUidSet removeIndexes:finalUidSet];
+
+    NSMutableIndexSet *insertedUidSet = [finalUidSet mutableCopy];
+    [insertedUidSet removeIndexes:originalUidSet];
+
+    NSMutableIndexSet *updatedUidSet = [finalUidSet mutableCopy];
+    [updatedUidSet removeIndexes:deletedUidSet];
+    [updatedUidSet removeIndexes:insertedUidSet];
+
+    NSArray *(^buildIndexPathList)(NSIndexSet *, NSArray *) = ^NSArray *(NSIndexSet *uidSet, NSArray *sourceUidList) {
+        NSMutableArray *indexPathList = [NSMutableArray array];
+
+        [uidSet enumerateIndexesUsingBlock:^(NSUInteger uid, BOOL * _Nonnull stop) {
+            NSInteger row = [sourceUidList indexOfObject:@(uid)];
+            assert(row != NSNotFound);
+
+            [indexPathList addObject:[NSIndexPath indexPathForRow:row inSection:TableSectionProjectList]];
+        }];
+
+        return indexPathList;
+    };
+
+    [self.tableView beginUpdates];
+
+    NSArray *deletedIndexPaths = buildIndexPathList(deletedUidSet, originalUidList);
+    [self.tableView deleteRowsAtIndexPaths:deletedIndexPaths withRowAnimation:UITableViewRowAnimationNone];
+
+    NSArray *updatedIndexPaths = buildIndexPathList(updatedUidSet, originalUidList);
+    [self.tableView reloadRowsAtIndexPaths:updatedIndexPaths withRowAnimation:UITableViewRowAnimationNone];
+
+    NSArray *insertedIndexPaths = buildIndexPathList(insertedUidSet, finalUidList);
+    [self.tableView insertRowsAtIndexPaths:insertedIndexPaths withRowAnimation:UITableViewRowAnimationNone];
+
+    _projectList = [finalProjectList copy];
+
+    [self.tableView endUpdates];
+
+    if (selectedProject != nil) {
+        NSInteger selectedIndex = [finalUidList indexOfObject:selectedProject.uid];
+
+        if (selectedIndex != NSNotFound) {
+            [self.tableView selectRowAtIndexPath:[NSIndexPath indexPathForRow:selectedIndex inSection:TableSectionProjectList] animated:NO scrollPosition:UITableViewScrollPositionNone];
+        }
+    }
+}
+
+#pragma mark Event Handling
+
+- (void)handleDataModelArchiveRestored:(NSNotification *)notification {
+    [self loadProjectList];
+}
+
+- (void)handleDataModelProjectCreated:(NSNotification *)notification {
+    [self loadProjectList];
+}
+
+- (void)handleDataModelProjectDeleted:(NSNotification *)notification {
+    [self loadProjectList];
+}
+
+- (void)handleDataModelProjectUpdated:(NSNotification *)notification {
+    [self loadProjectList];
 }
 
 #pragma mark UITableViewDataSource

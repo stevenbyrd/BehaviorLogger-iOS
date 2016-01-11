@@ -11,8 +11,11 @@
 #import "Schema.h"
 
 
-NSString *const DataModelManagerRestoredArchivedStateNotification = @"DataModelManagerRestoredArchivedStateNotification";
-NSString *const ProjectUpdatedNotification = @"ProjectUpdatedNotification";
+NSString *const DataModelArchiveRestoredNotification = @"DataModelArchiveRestoredNotification";
+
+NSString *const DataModelProjectCreatedNotification = @"DataModelProjectCreatedNotification";
+NSString *const DataModelProjectDeletedNotification = @"DataModelProjectDeletedNotification";
+NSString *const DataModelProjectUpdatedNotification = @"DataModelProjectUpdatedNotification";
 
 
 static NSString *const ArchiveFileName = @"project.dat";
@@ -42,6 +45,7 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
 
 @interface DataModelManager ()
 
+@property (nonatomic, strong, readonly) NSMutableIndexSet *projectUidSet;
 @property (nonatomic, copy, readonly) NSMutableDictionary<NSNumber*, Project *> *projectByUid;
 @property (nonatomic, strong, readonly) NSOperationQueue *archiveQueue;
 
@@ -78,6 +82,8 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
         return nil;
     }
 
+    _projectUidSet = [NSMutableIndexSet indexSet];
+
     _projectByUid = [NSMutableDictionary dictionary];
 
     _archiveQueue = [[NSOperationQueue alloc] init];
@@ -90,16 +96,10 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
 
 #pragma mark Internal State
 
-- (NSSet<NSNumber *> *)projectUidSet {
+- (NSIndexSet *)allProjectUids {
     assert([NSThread isMainThread]);
-
-    NSMutableSet<NSNumber *> *projectUidSet = [NSMutableSet set];
-
-    for (NSNumber *projectUid in self.projectByUid.keyEnumerator) {
-        [projectUidSet addObject:projectUid];
-    }
-
-    return projectUidSet;
+    
+    return self.projectUidSet.copy;
 }
 
 
@@ -125,7 +125,7 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
 
     self.projectByUid[projectUid] = [[Project alloc] initWithUid:projectUid name:originalProject.name client:originalProject.client schema:schema sessionByUid:originalProject.sessionByUid];
 
-    [[NSNotificationCenter defaultCenter] postNotificationName:ProjectUpdatedNotification object:originalProject];
+    [[NSNotificationCenter defaultCenter] postNotificationName:DataModelProjectUpdatedNotification object:originalProject];
 }
 
 #pragma mark Archiving
@@ -138,7 +138,8 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
         [self.archiveQueue cancelAllOperations];
     }
 
-    NSDictionary *projectByUid = self.projectByUid;
+    NSIndexSet *projectUidSet = self.projectUidSet.copy;
+    NSDictionary *projectByUid = self.projectByUid.copy;
 
     [self.archiveQueue addOperationWithBlock:^{
         BOOL isDirectory = NO;
@@ -168,6 +169,7 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
         NSKeyedArchiver *archiver = [[NSKeyedArchiver alloc] initForWritingWithMutableData:archiveData];
 
         [archiver encodeInteger:ArchiveVersionLatest forKey:ArchiveVersionKey];
+        [archiver encodeObject:projectUidSet forKey:@"projectUidSet"];
         [archiver encodeObject:projectByUid forKey:@"projectByUid"];
         [archiver finishEncoding];
 
@@ -187,6 +189,7 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
     _restoringArchive = YES;
 
     [self.archiveQueue addOperationWithBlock:^{
+        NSIndexSet *projectUidSet = [NSIndexSet indexSet];
         NSDictionary *projectByUid = @{};
         NSString *filePath = [ArchiveDirectory() stringByAppendingPathComponent:ArchiveFileName];
         NSData *archiveData = [NSData dataWithContentsOfFile:filePath];
@@ -201,6 +204,7 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
                     break;
 
                 case ArchiveVersionLatest:
+                    projectUidSet = [unarchiver decodeObjectForKey:@"projectUidSet"];
                     projectByUid = [unarchiver decodeObjectForKey:@"projectByUid"];
                     break;
             }
@@ -211,13 +215,16 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
         }
 
         [[NSOperationQueue mainQueue] addOperationWithBlock:^{
+            assert(self.projectUidSet.count == 0);
+            [self.projectUidSet addIndexes:projectUidSet];
+
             assert(self.projectByUid.count == 0);
             [self.projectByUid addEntriesFromDictionary:projectByUid];
 
             assert(self.isRestoringArchive);
             _restoringArchive = NO;
 
-            [[NSNotificationCenter defaultCenter] postNotificationName:DataModelManagerRestoredArchivedStateNotification object:self];
+            [[NSNotificationCenter defaultCenter] postNotificationName:DataModelArchiveRestoredNotification object:self];
         }];
     }];
 }

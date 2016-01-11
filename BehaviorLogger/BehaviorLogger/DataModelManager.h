@@ -9,8 +9,11 @@
 #import <Foundation/Foundation.h>
 
 
-extern NSString *const DataModelManagerRestoredArchivedStateNotification;
-extern NSString *const ProjectUpdatedNotification;
+extern NSString *const DataModelArchiveRestoredNotification;
+
+extern NSString *const DataModelProjectCreatedNotification;
+extern NSString *const DataModelProjectDeletedNotification;
+extern NSString *const DataModelProjectUpdatedNotification;
 
 
 @class Project;
@@ -24,7 +27,7 @@ extern NSString *const ProjectUpdatedNotification;
 + (void)initializeWithCompletion:(dispatch_block_t)completion;
 + (instancetype)sharedManager;
 
-- (NSSet<NSNumber *> *)projectUidSet;
+- (NSIndexSet *)allProjectUids;
 - (Project *)projectForUid:(NSNumber *)uid;
 
 - (void)updateSchemaForProjectUid:(NSNumber *)projectUid toSchema:(Schema *)schema;
