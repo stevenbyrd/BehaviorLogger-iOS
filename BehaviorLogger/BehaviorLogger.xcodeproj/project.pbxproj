@@ -7,41 +7,41 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		AA62D05C1C3F6E8F00804CE5 /* SchemaUpdateController.m in Sources */ = {isa = PBXBuildFile; fileRef = AA62D05B1C3F6E8F00804CE5 /* SchemaUpdateController.m */; };
+		AA62D05C1C3F6E8F00804CE5 /* BLMSchemaUpdateController.m in Sources */ = {isa = PBXBuildFile; fileRef = AA62D05B1C3F6E8F00804CE5 /* BLMSchemaUpdateController.m */; };
 		AABA33401C3D2FB10086A9A1 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = AABA333F1C3D2FB10086A9A1 /* main.m */; };
-		AABA33431C3D2FB10086A9A1 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = AABA33421C3D2FB10086A9A1 /* AppDelegate.m */; };
+		AABA33431C3D2FB10086A9A1 /* BLMAppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = AABA33421C3D2FB10086A9A1 /* BLMAppDelegate.m */; };
 		AABA334B1C3D2FB10086A9A1 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AABA334A1C3D2FB10086A9A1 /* Assets.xcassets */; };
 		AABA334E1C3D2FB10086A9A1 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = AABA334C1C3D2FB10086A9A1 /* LaunchScreen.storyboard */; };
-		AABA336B1C3D3CCB0086A9A1 /* DataModelManager.m in Sources */ = {isa = PBXBuildFile; fileRef = AABA336A1C3D3CCB0086A9A1 /* DataModelManager.m */; };
-		AABA33891C3DC4220086A9A1 /* Project.m in Sources */ = {isa = PBXBuildFile; fileRef = AABA33881C3DC4210086A9A1 /* Project.m */; };
-		AABA338C1C3DC4D30086A9A1 /* Schema.m in Sources */ = {isa = PBXBuildFile; fileRef = AABA338B1C3DC4D30086A9A1 /* Schema.m */; };
-		AABA338F1C3DC58A0086A9A1 /* Session.m in Sources */ = {isa = PBXBuildFile; fileRef = AABA338E1C3DC58A0086A9A1 /* Session.m */; };
-		AABA33921C3DCF990086A9A1 /* ProjectMenuController.m in Sources */ = {isa = PBXBuildFile; fileRef = AABA33911C3DCF990086A9A1 /* ProjectMenuController.m */; };
-		AABA33951C3DD0660086A9A1 /* ProjectDetailController.m in Sources */ = {isa = PBXBuildFile; fileRef = AABA33941C3DD0660086A9A1 /* ProjectDetailController.m */; };
+		AABA336B1C3D3CCB0086A9A1 /* BLMDataManager.m in Sources */ = {isa = PBXBuildFile; fileRef = AABA336A1C3D3CCB0086A9A1 /* BLMDataManager.m */; };
+		AABA33891C3DC4220086A9A1 /* BLMProject.m in Sources */ = {isa = PBXBuildFile; fileRef = AABA33881C3DC4210086A9A1 /* BLMProject.m */; };
+		AABA338C1C3DC4D30086A9A1 /* BLMSchema.m in Sources */ = {isa = PBXBuildFile; fileRef = AABA338B1C3DC4D30086A9A1 /* BLMSchema.m */; };
+		AABA338F1C3DC58A0086A9A1 /* BLMSession.m in Sources */ = {isa = PBXBuildFile; fileRef = AABA338E1C3DC58A0086A9A1 /* BLMSession.m */; };
+		AABA33921C3DCF990086A9A1 /* BLMProjectMenuController.m in Sources */ = {isa = PBXBuildFile; fileRef = AABA33911C3DCF990086A9A1 /* BLMProjectMenuController.m */; };
+		AABA33951C3DD0660086A9A1 /* BLMProjectDetailController.m in Sources */ = {isa = PBXBuildFile; fileRef = AABA33941C3DD0660086A9A1 /* BLMProjectDetailController.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		AA62D05A1C3F6E8F00804CE5 /* SchemaUpdateController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SchemaUpdateController.h; sourceTree = "<group>"; };
-		AA62D05B1C3F6E8F00804CE5 /* SchemaUpdateController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SchemaUpdateController.m; sourceTree = "<group>"; };
+		AA62D05A1C3F6E8F00804CE5 /* BLMSchemaUpdateController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BLMSchemaUpdateController.h; sourceTree = "<group>"; };
+		AA62D05B1C3F6E8F00804CE5 /* BLMSchemaUpdateController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BLMSchemaUpdateController.m; sourceTree = "<group>"; };
 		AABA333B1C3D2FB10086A9A1 /* BehaviorLogger.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BehaviorLogger.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		AABA333F1C3D2FB10086A9A1 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
-		AABA33411C3D2FB10086A9A1 /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
-		AABA33421C3D2FB10086A9A1 /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
+		AABA33411C3D2FB10086A9A1 /* BLMAppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = BLMAppDelegate.h; sourceTree = "<group>"; };
+		AABA33421C3D2FB10086A9A1 /* BLMAppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = BLMAppDelegate.m; sourceTree = "<group>"; };
 		AABA334A1C3D2FB10086A9A1 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		AABA334D1C3D2FB10086A9A1 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		AABA334F1C3D2FB10086A9A1 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		AABA33691C3D3CCB0086A9A1 /* DataModelManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DataModelManager.h; sourceTree = "<group>"; };
-		AABA336A1C3D3CCB0086A9A1 /* DataModelManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DataModelManager.m; sourceTree = "<group>"; };
-		AABA33871C3DC4210086A9A1 /* Project.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Project.h; sourceTree = "<group>"; };
-		AABA33881C3DC4210086A9A1 /* Project.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Project.m; sourceTree = "<group>"; };
-		AABA338A1C3DC4D30086A9A1 /* Schema.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Schema.h; sourceTree = "<group>"; };
-		AABA338B1C3DC4D30086A9A1 /* Schema.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Schema.m; sourceTree = "<group>"; };
-		AABA338D1C3DC58A0086A9A1 /* Session.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Session.h; sourceTree = "<group>"; };
-		AABA338E1C3DC58A0086A9A1 /* Session.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Session.m; sourceTree = "<group>"; };
-		AABA33901C3DCF990086A9A1 /* ProjectMenuController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ProjectMenuController.h; sourceTree = "<group>"; };
-		AABA33911C3DCF990086A9A1 /* ProjectMenuController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ProjectMenuController.m; sourceTree = "<group>"; };
-		AABA33931C3DD0660086A9A1 /* ProjectDetailController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ProjectDetailController.h; sourceTree = "<group>"; };
-		AABA33941C3DD0660086A9A1 /* ProjectDetailController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ProjectDetailController.m; sourceTree = "<group>"; };
+		AABA33691C3D3CCB0086A9A1 /* BLMDataManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BLMDataManager.h; sourceTree = "<group>"; };
+		AABA336A1C3D3CCB0086A9A1 /* BLMDataManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BLMDataManager.m; sourceTree = "<group>"; };
+		AABA33871C3DC4210086A9A1 /* BLMProject.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BLMProject.h; sourceTree = "<group>"; };
+		AABA33881C3DC4210086A9A1 /* BLMProject.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BLMProject.m; sourceTree = "<group>"; };
+		AABA338A1C3DC4D30086A9A1 /* BLMSchema.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BLMSchema.h; sourceTree = "<group>"; };
+		AABA338B1C3DC4D30086A9A1 /* BLMSchema.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BLMSchema.m; sourceTree = "<group>"; };
+		AABA338D1C3DC58A0086A9A1 /* BLMSession.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BLMSession.h; sourceTree = "<group>"; };
+		AABA338E1C3DC58A0086A9A1 /* BLMSession.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BLMSession.m; sourceTree = "<group>"; };
+		AABA33901C3DCF990086A9A1 /* BLMProjectMenuController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BLMProjectMenuController.h; sourceTree = "<group>"; };
+		AABA33911C3DCF990086A9A1 /* BLMProjectMenuController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BLMProjectMenuController.m; sourceTree = "<group>"; };
+		AABA33931C3DD0660086A9A1 /* BLMProjectDetailController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BLMProjectDetailController.h; sourceTree = "<group>"; };
+		AABA33941C3DD0660086A9A1 /* BLMProjectDetailController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BLMProjectDetailController.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -74,8 +74,8 @@
 		AABA333D1C3D2FB10086A9A1 /* BehaviorLogger */ = {
 			isa = PBXGroup;
 			children = (
-				AABA33411C3D2FB10086A9A1 /* AppDelegate.h */,
-				AABA33421C3D2FB10086A9A1 /* AppDelegate.m */,
+				AABA33411C3D2FB10086A9A1 /* BLMAppDelegate.h */,
+				AABA33421C3D2FB10086A9A1 /* BLMAppDelegate.m */,
 				AABA335B1C3D39090086A9A1 /* Model */,
 				AABA33571C3D32540086A9A1 /* Controllers */,
 				AABA333E1C3D2FB10086A9A1 /* Supporting Files */,
@@ -97,12 +97,12 @@
 		AABA33571C3D32540086A9A1 /* Controllers */ = {
 			isa = PBXGroup;
 			children = (
-				AABA33901C3DCF990086A9A1 /* ProjectMenuController.h */,
-				AABA33911C3DCF990086A9A1 /* ProjectMenuController.m */,
-				AABA33931C3DD0660086A9A1 /* ProjectDetailController.h */,
-				AABA33941C3DD0660086A9A1 /* ProjectDetailController.m */,
-				AA62D05A1C3F6E8F00804CE5 /* SchemaUpdateController.h */,
-				AA62D05B1C3F6E8F00804CE5 /* SchemaUpdateController.m */,
+				AABA33901C3DCF990086A9A1 /* BLMProjectMenuController.h */,
+				AABA33911C3DCF990086A9A1 /* BLMProjectMenuController.m */,
+				AABA33931C3DD0660086A9A1 /* BLMProjectDetailController.h */,
+				AABA33941C3DD0660086A9A1 /* BLMProjectDetailController.m */,
+				AA62D05A1C3F6E8F00804CE5 /* BLMSchemaUpdateController.h */,
+				AA62D05B1C3F6E8F00804CE5 /* BLMSchemaUpdateController.m */,
 			);
 			name = Controllers;
 			sourceTree = "<group>";
@@ -110,14 +110,14 @@
 		AABA335B1C3D39090086A9A1 /* Model */ = {
 			isa = PBXGroup;
 			children = (
-				AABA33691C3D3CCB0086A9A1 /* DataModelManager.h */,
-				AABA336A1C3D3CCB0086A9A1 /* DataModelManager.m */,
-				AABA33871C3DC4210086A9A1 /* Project.h */,
-				AABA33881C3DC4210086A9A1 /* Project.m */,
-				AABA338A1C3DC4D30086A9A1 /* Schema.h */,
-				AABA338B1C3DC4D30086A9A1 /* Schema.m */,
-				AABA338D1C3DC58A0086A9A1 /* Session.h */,
-				AABA338E1C3DC58A0086A9A1 /* Session.m */,
+				AABA33691C3D3CCB0086A9A1 /* BLMDataManager.h */,
+				AABA336A1C3D3CCB0086A9A1 /* BLMDataManager.m */,
+				AABA33871C3DC4210086A9A1 /* BLMProject.h */,
+				AABA33881C3DC4210086A9A1 /* BLMProject.m */,
+				AABA338A1C3DC4D30086A9A1 /* BLMSchema.h */,
+				AABA338B1C3DC4D30086A9A1 /* BLMSchema.m */,
+				AABA338D1C3DC58A0086A9A1 /* BLMSession.h */,
+				AABA338E1C3DC58A0086A9A1 /* BLMSession.m */,
 			);
 			name = Model;
 			sourceTree = "<group>";
@@ -191,14 +191,14 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				AA62D05C1C3F6E8F00804CE5 /* SchemaUpdateController.m in Sources */,
-				AABA33951C3DD0660086A9A1 /* ProjectDetailController.m in Sources */,
-				AABA33891C3DC4220086A9A1 /* Project.m in Sources */,
-				AABA338F1C3DC58A0086A9A1 /* Session.m in Sources */,
-				AABA338C1C3DC4D30086A9A1 /* Schema.m in Sources */,
-				AABA336B1C3D3CCB0086A9A1 /* DataModelManager.m in Sources */,
-				AABA33431C3D2FB10086A9A1 /* AppDelegate.m in Sources */,
-				AABA33921C3DCF990086A9A1 /* ProjectMenuController.m in Sources */,
+				AA62D05C1C3F6E8F00804CE5 /* BLMSchemaUpdateController.m in Sources */,
+				AABA33951C3DD0660086A9A1 /* BLMProjectDetailController.m in Sources */,
+				AABA33891C3DC4220086A9A1 /* BLMProject.m in Sources */,
+				AABA338F1C3DC58A0086A9A1 /* BLMSession.m in Sources */,
+				AABA338C1C3DC4D30086A9A1 /* BLMSchema.m in Sources */,
+				AABA336B1C3D3CCB0086A9A1 /* BLMDataManager.m in Sources */,
+				AABA33431C3D2FB10086A9A1 /* BLMAppDelegate.m in Sources */,
+				AABA33921C3DCF990086A9A1 /* BLMProjectMenuController.m in Sources */,
 				AABA33401C3D2FB10086A9A1 /* main.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

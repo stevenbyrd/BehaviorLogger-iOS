@@ -1,13 +1,13 @@
 //
-//  Session.m
+//  BLMSession.m
 //  BehaviorLogger
 //
 //  Created by Steven Byrd on 1/6/16.
 //  Copyright © 2016 3Bird. All rights reserved.
 //
 
-#import "Session.h"
-#import "Schema.h"
+#import "BLMSession.h"
+#import "BLMSchema.h"
 
 
 static NSString *const ArchiveVersionKey = @"ArchiveVersionKey";
@@ -21,9 +21,9 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
 
 #pragma mark
 
-@implementation Session
+@implementation BLMSession
 
-- (instancetype)initWithUid:(NSNumber *)uid name:(NSString *)name condition:(NSString *)condition location:(NSString *)location therapist:(NSString *)therapist observer:(NSString *)observer schema:(Schema *)schema timeLimitOptions:(TimeLimitOptions)timeLimitOptions {
+- (instancetype)initWithUid:(NSNumber *)uid name:(NSString *)name condition:(NSString *)condition location:(NSString *)location therapist:(NSString *)therapist observer:(NSString *)observer schema:(BLMSchema *)schema timeLimitOptions:(BLMTimeLimitOptions)timeLimitOptions {
     NSParameterAssert(name.length > 0);
     NSParameterAssert(schema != nil);
 
@@ -54,7 +54,7 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
                     location:[aDecoder decodeObjectOfClass:[NSString class] forKey:@"location"]
                    therapist:[aDecoder decodeObjectOfClass:[NSString class] forKey:@"therapist"]
                     observer:[aDecoder decodeObjectOfClass:[NSString class] forKey:@"observer"]
-                      schema:[aDecoder decodeObjectOfClass:[Schema class] forKey:@"schema"]
+                      schema:[aDecoder decodeObjectOfClass:[BLMSchema class] forKey:@"schema"]
             timeLimitOptions:[aDecoder decodeIntegerForKey:@"timeLimitOptions"]];
 }
 

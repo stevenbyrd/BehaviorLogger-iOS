@@ -1,23 +1,23 @@
 //
-//  ProjectManager.m
+//  BLMDataManager.m
 //  BehaviorLogger
 //
 //  Created by Steven Byrd on 1/6/16.
 //  Copyright © 2016 3Bird. All rights reserved.
 //
 
-#import "DataModelManager.h"
-#import "Project.h"
-#import "Schema.h"
+#import "BLMDataManager.h"
+#import "BLMProject.h"
+#import "BLMSchema.h"
 
 
-NSString *const DataModelArchiveRestoredNotification = @"DataModelArchiveRestoredNotification";
+NSString *const BLMDataManagerArchiveRestoredNotification = @"BLMDataManagerArchiveRestoredNotification";
 
-NSString *const DataModelProjectCreatedNotification = @"DataModelProjectCreatedNotification";
-NSString *const DataModelProjectDeletedNotification = @"DataModelProjectDeletedNotification";
-NSString *const DataModelProjectUpdatedNotification = @"DataModelProjectUpdatedNotification";
+NSString *const BLMDataManagerProjectCreatedNotification = @"BLMDataManagerProjectCreatedNotification";
+NSString *const BLMDataManagerProjectDeletedNotification = @"BLMDataManagerProjectDeletedNotification";
+NSString *const BLMDataManagerProjectUpdatedNotification = @"BLMDataManagerProjectUpdatedNotification";
 
-NSString *const DataModelProjectErrorDomain = @"com.3bird.BehaviorLogger.Project";
+NSString *const BLMDataManagerProjectErrorDomain = @"com.3bird.BehaviorLogger.Project";
 
 
 static NSString *const ArchiveFileName = @"project.dat";
@@ -45,32 +45,32 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
 
 #pragma mark
 
-@interface DataModelManager ()
+@interface BLMDataManager ()
 
 @property (nonatomic, strong, readonly) NSMutableIndexSet *projectUidSet;
-@property (nonatomic, copy, readonly) NSMutableDictionary<NSNumber*, Project *> *projectByUid;
+@property (nonatomic, copy, readonly) NSMutableDictionary<NSNumber*, BLMProject *> *projectByUid;
 @property (nonatomic, strong, readonly) NSOperationQueue *archiveQueue;
 
 @end
 
 
-@implementation DataModelManager
+@implementation BLMDataManager
 
 + (void)initializeWithCompletion:(dispatch_block_t)completion {
     static dispatch_once_t onceToken;
 
     dispatch_once(&onceToken, ^{
-        [[DataModelManager sharedManager] restoreArchivedStateWithCompletion:completion];
+        [[BLMDataManager sharedManager] restoreArchivedStateWithCompletion:completion];
     });
 }
 
 
 + (instancetype)sharedManager {
-    static DataModelManager *sharedManager = nil;
+    static BLMDataManager *sharedManager = nil;
     static dispatch_once_t onceToken = 0;
 
     dispatch_once(&onceToken, ^{
-        sharedManager = [[DataModelManager alloc] init];
+        sharedManager = [[BLMDataManager alloc] init];
     });
 
     return sharedManager;
@@ -100,35 +100,35 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
 
 - (NSIndexSet *)allProjectUids {
     assert([NSThread isMainThread]);
-    
+
     return self.projectUidSet.copy;
 }
 
 
-- (Project *)projectForUid:(NSNumber *)uid {
+- (BLMProject *)projectForUid:(NSNumber *)uid {
     assert([NSThread isMainThread]);
 
-    Project *project = self.projectByUid[uid];
+    BLMProject *project = self.projectByUid[uid];
     assert(project != nil);
 
     return project;
 }
 
 
-- (void)createProjectWithName:(NSString *)name client:(NSString *)client schema:(Schema *)schema sessionByUid:(NSDictionary<NSNumber *, Session *> *)sessionByUid completion:(void(^)(Project *createdProject, NSError *error))completion {
+- (void)createProjectWithName:(NSString *)name client:(NSString *)client schema:(BLMSchema *)schema sessionByUid:(NSDictionary<NSNumber *, BLMSession *> *)sessionByUid completion:(void(^)(BLMProject *createdProject, NSError *error))completion {
     assert([NSThread isMainThread]);
-    NSParameterAssert(name.length >= ProjectNameMinimumLength);
-    NSParameterAssert(client.length >= ProjectClientMinimumLength);
+    NSParameterAssert(name.length >= BLMProjectNameMinimumLength);
+    NSParameterAssert(client.length >= BLMProjectClientMinimumLength);
     NSParameterAssert(completion != nil);
 
-    __block Project *createdProject = nil;
+    __block BLMProject *createdProject = nil;
     __block NSError *error = nil;
 
     NSString *lowerCaseName = [name.lowercaseString stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
 
     [self.projectUidSet enumerateIndexesUsingBlock:^(NSUInteger uid, BOOL * _Nonnull stop) {
         if ([self.projectByUid[@(uid)].name.lowercaseString isEqualToString:lowerCaseName]) {
-            error = [NSError errorWithDomain:DataModelProjectErrorDomain code:-1 userInfo:@{ NSLocalizedDescriptionKey : @"A project with that name already exists." }];
+            error = [NSError errorWithDomain:BLMDataManagerProjectErrorDomain code:-1 userInfo:@{ NSLocalizedDescriptionKey : @"A project with that name already exists." }];
             *stop = YES;
             return;
         }
@@ -137,24 +137,24 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
     if (error == nil) {
         NSUInteger lastUid = ((self.projectUidSet.count > 0) ? self.projectUidSet.lastIndex : 0);
         NSNumber *uid = @(lastUid + 1);
-        
+
         [self.projectUidSet addIndex:uid.integerValue];
 
-        createdProject = [[Project alloc] initWithUid:uid name:name client:client schema:nil sessionByUid:nil];
+        createdProject = [[BLMProject alloc] initWithUid:uid name:name client:client schema:nil sessionByUid:nil];
         self.projectByUid[uid] = createdProject;
 
         [self archiveCurrentState];
 
-        [[NSNotificationCenter defaultCenter] postNotificationName:DataModelProjectCreatedNotification object:createdProject];
+        [[NSNotificationCenter defaultCenter] postNotificationName:BLMDataManagerProjectCreatedNotification object:createdProject];
     }
 
     completion(createdProject, error);
 }
 
-- (void)updateSchemaForProjectUid:(NSNumber *)projectUid toSchema:(Schema *)schema {
+- (void)updateSchemaForProjectUid:(NSNumber *)projectUid toSchema:(BLMSchema *)schema {
     assert([NSThread isMainThread]);
 
-    Project *originalProject = self.projectByUid[projectUid];
+    BLMProject *originalProject = self.projectByUid[projectUid];
     assert(originalProject != nil);
 
     if ([originalProject.schema isEqual:schema]) {
@@ -162,9 +162,9 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
         return;
     }
 
-    self.projectByUid[projectUid] = [[Project alloc] initWithUid:projectUid name:originalProject.name client:originalProject.client schema:schema sessionByUid:originalProject.sessionByUid];
+    self.projectByUid[projectUid] = [[BLMProject alloc] initWithUid:projectUid name:originalProject.name client:originalProject.client schema:schema sessionByUid:originalProject.sessionByUid];
 
-    [[NSNotificationCenter defaultCenter] postNotificationName:DataModelProjectUpdatedNotification object:originalProject];
+    [[NSNotificationCenter defaultCenter] postNotificationName:BLMDataManagerProjectUpdatedNotification object:originalProject];
 }
 
 #pragma mark Archiving
@@ -262,9 +262,9 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
 
             assert(self.isRestoringArchive);
             _restoringArchive = NO;
-
-            [[NSNotificationCenter defaultCenter] postNotificationName:DataModelArchiveRestoredNotification object:self];
-
+            
+            [[NSNotificationCenter defaultCenter] postNotificationName:BLMDataManagerArchiveRestoredNotification object:self];
+            
             if (completion != nil) {
                 completion();
             }

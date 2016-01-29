@@ -1,5 +1,5 @@
 //
-//  Schema.h
+//  BLMSchema.h
 //  BehaviorLogger
 //
 //  Created by Steven Byrd on 1/6/16.
@@ -9,7 +9,7 @@
 #import <Foundation/Foundation.h>
 
 
-@interface Macro : NSObject <NSCoding>
+@interface BLMMacro : NSObject <NSCoding>
 
 @property (nonatomic, copy, readonly) NSString *name;
 @property (nonatomic, copy, readonly) NSString *behavior;
@@ -20,10 +20,10 @@
 @end
 
 
-@interface Schema : NSObject <NSCoding>
+@interface BLMSchema : NSObject <NSCoding>
 
-@property (nonatomic, copy, readonly) NSArray<Macro *> *macros;
+@property (nonatomic, copy, readonly) NSArray<BLMMacro *> *macros;
 
-- (instancetype)initWithMacros:(NSArray<Macro *> *)macros;
+- (instancetype)initWithMacros:(NSArray<BLMMacro *> *)macros;
 
 @end

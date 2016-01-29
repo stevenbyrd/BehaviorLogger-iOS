@@ -1,18 +1,18 @@
 //
-//  AppDelegate.m
+//  BLMAppDelegate.m
 //  BehaviorLogger
 //
 //  Created by Steven Byrd on 1/6/16.
 //  Copyright © 2016 3Bird. All rights reserved.
 //
 
-#import "AppDelegate.h"
-#import "DataModelManager.h"
-#import "ProjectMenuController.h"
-#import "ProjectDetailController.h"
+#import "BLMAppDelegate.h"
+#import "BLMDataManager.h"
+#import "BLMProjectMenuController.h"
+#import "BLMProjectDetailController.h"
 
 
-@implementation AppDelegate
+@implementation BLMAppDelegate
 
 + (instancetype)sharedInstance {
     return [UIApplication sharedApplication].delegate;
@@ -23,8 +23,8 @@
     _window = [[UIWindow alloc] initWithFrame:[UIScreen mainScreen].bounds];
     _splitViewController = [[UISplitViewController alloc] init];
     
-    UINavigationController *primaryController = [[UINavigationController alloc] initWithRootViewController:[[ProjectMenuController alloc] init]];
-    UINavigationController *detailController = [[UINavigationController alloc] initWithRootViewController:[[ProjectDetailController alloc] init]];
+    UINavigationController *primaryController = [[UINavigationController alloc] initWithRootViewController:[[BLMProjectMenuController alloc] init]];
+    UINavigationController *detailController = [[UINavigationController alloc] initWithRootViewController:[[BLMProjectDetailController alloc] init]];
     
     self.splitViewController.viewControllers = @[primaryController, detailController];
     self.splitViewController.preferredDisplayMode = UISplitViewControllerDisplayModeAllVisible;
@@ -35,7 +35,7 @@
     
     [self.window makeKeyAndVisible];
 
-    [DataModelManager initializeWithCompletion:nil];
+    [BLMDataManager initializeWithCompletion:nil];
     
     return YES;
 }

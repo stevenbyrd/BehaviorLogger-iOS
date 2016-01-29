@@ -1,18 +1,18 @@
 //
-//  Project.m
+//  BLMProject.m
 //  BehaviorLogger
 //
 //  Created by Steven Byrd on 1/6/16.
 //  Copyright © 2016 3Bird. All rights reserved.
 //
 
-#import "Project.h"
-#import "Session.h"
-#import "Schema.h"
+#import "BLMProject.h"
+#import "BLMSession.h"
+#import "BLMSchema.h"
 
 
-NSUInteger const ProjectNameMinimumLength = 3;
-NSUInteger const ProjectClientMinimumLength = 3;
+NSUInteger const BLMProjectNameMinimumLength = 3;
+NSUInteger const BLMProjectClientMinimumLength = 3;
 
 
 static NSString *const ArchiveVersionKey = @"ArchiveVersionKey";
@@ -26,9 +26,9 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
 
 #pragma mark
 
-@implementation Project
+@implementation BLMProject
 
-- (instancetype)initWithUid:(NSNumber *)uid name:(NSString *)name client:(NSString *)client schema:(Schema *)schema sessionByUid:(NSDictionary<NSNumber *, Session *> *)sessionByUid {
+- (instancetype)initWithUid:(NSNumber *)uid name:(NSString *)name client:(NSString *)client schema:(BLMSchema *)schema sessionByUid:(NSDictionary<NSNumber *, BLMSession *> *)sessionByUid {
     NSParameterAssert(name.length > 0);
     NSParameterAssert(client.length > 0);
 
@@ -53,8 +53,8 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
     return [self initWithUid:[aDecoder decodeObjectOfClass:[NSNumber class] forKey:@"uid"]
                         name:[aDecoder decodeObjectOfClass:[NSString class] forKey:@"name"]
                       client:[aDecoder decodeObjectOfClass:[NSString class] forKey:@"client"]
-                      schema:[aDecoder decodeObjectOfClass:[Schema class] forKey:@"schema"]
-               sessionByUid:[aDecoder decodeObjectOfClasses:[NSSet setWithArray:@[[NSDictionary<NSNumber *, Session *> class], [NSNumber class], [Session class]]] forKey:@"sessionByUid"]];
+                      schema:[aDecoder decodeObjectOfClass:[BLMSchema class] forKey:@"schema"]
+                sessionByUid:[aDecoder decodeObjectOfClasses:[NSSet setWithArray:@[[NSDictionary<NSNumber *, BLMSession *> class], [NSNumber class], [BLMSession class]]] forKey:@"sessionByUid"]];
 }
 
 

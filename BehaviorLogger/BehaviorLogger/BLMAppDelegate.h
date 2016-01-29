@@ -1,5 +1,5 @@
 //
-//  AppDelegate.h
+//  BLMAppDelegate.h
 //  BehaviorLogger
 //
 //  Created by Steven Byrd on 1/6/16.
@@ -10,7 +10,7 @@
 #import <UIKit/UIKit.h>
 
 
-@interface AppDelegate : UIResponder <UIApplicationDelegate>
+@interface BLMAppDelegate : UIResponder <UIApplicationDelegate>
 
 @property (nonatomic, strong) UIWindow *window;
 @property (nonatomic, strong, readonly) UISplitViewController *splitViewController;

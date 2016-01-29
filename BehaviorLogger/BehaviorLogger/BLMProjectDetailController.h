@@ -1,5 +1,5 @@
 //
-//  ProjectDetailController.h
+//  BLMProjectDetailController.h
 //  BehaviorLogger
 //
 //  Created by Steven Byrd on 1/6/16.
@@ -10,6 +10,6 @@
 #import <UIKit/UIKit.h>
 
 
-@interface ProjectDetailController : UIViewController
+@interface BLMProjectDetailController : UIViewController
 
 @end

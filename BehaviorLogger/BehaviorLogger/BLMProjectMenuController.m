@@ -1,18 +1,18 @@
 //
-//  ProjectMenuController.m
+//  BLMProjectMenuController.m
 //  BehaviorLogger
 //
 //  Created by Steven Byrd on 1/6/16.
 //  Copyright © 2016 3Bird. All rights reserved.
 //
 
-#import "ProjectMenuController.h"
-#import "DataModelManager.h"
-#import "Project.h"
+#import "BLMProjectMenuController.h"
+#import "BLMDataManager.h"
+#import "BLMProject.h"
 
 
-NSString *const ProjectMenuControllerDidSelectProjectNotification = @"ProjectMenuControllerDidSelectProjectNotification";
-NSString *const ProjectMenuControllerSelectedProjectUserInfoKey = @"ProjectMenuControllerSelectedProjectUserInfoKey";
+NSString *const BLMProjectMenuControllerDidSelectProjectNotification = @"BLMProjectMenuControllerDidSelectProjectNotification";
+NSString *const BLMProjectMenuControllerSelectedProjectUserInfoKey = @"BLMProjectMenuControllerSelectedProjectUserInfoKey";
 
 float const ProjectCellFontSize = 14.0;
 
@@ -27,23 +27,28 @@ typedef NS_ENUM(NSInteger, TableSection) {
 
 #pragma mark
 
+@interface ProjectCell : UITableViewCell
+
+@end
+
+
 @implementation ProjectCell
 
 - (instancetype)initWithStyle:(UITableViewCellStyle)style reuseIdentifier:(NSString *)reuseIdentifier {
     self = [super initWithStyle:style reuseIdentifier:reuseIdentifier];
-    
+
     if (self == nil) {
         return nil;
     }
-    
+
     self.contentView.backgroundColor = [UIColor colorWithWhite:1.0 alpha:1.0];
-    
+
     return self;
 }
 
 - (void)prepareForReuse {
     [super prepareForReuse];
-    
+
     self.textLabel.text = nil;
     self.textLabel.font = [ProjectCell fontForSelected:NO];
 }
@@ -63,37 +68,44 @@ typedef NS_ENUM(NSInteger, TableSection) {
 
 #pragma mark
 
+@interface CreateProjectCell : UITableViewCell
+
+@property (nonatomic, strong, readonly) UIView *separatorView;
+
+@end
+
+
 @implementation CreateProjectCell
 
 - (instancetype)initWithStyle:(UITableViewCellStyle)style reuseIdentifier:(NSString *)reuseIdentifier {
     self = [super initWithStyle:style reuseIdentifier:reuseIdentifier];
-    
+
     if (self == nil) {
         return nil;
     }
-    
+
     NSMutableParagraphStyle *paragraphStyle = [[NSMutableParagraphStyle alloc] init];
     paragraphStyle.alignment = NSTextAlignmentCenter;
-    
+
     NSDictionary *textAttributes = @{ NSForegroundColorAttributeName : [UIColor darkTextColor], NSFontAttributeName : [UIFont boldSystemFontOfSize:12.0], NSParagraphStyleAttributeName : paragraphStyle};
-    
+
     self.textLabel.attributedText = [[NSAttributedString alloc] initWithString:@"Create New" attributes:textAttributes];
     self.textLabel.numberOfLines = 1;
-    
+
     _separatorView = [[UIView alloc] initWithFrame:CGRectZero];
-    
+
     self.separatorView.backgroundColor = [UIColor blueColor];
     self.separatorView.translatesAutoresizingMaskIntoConstraints = NO;
-    
+
     [self.contentView addSubview:self.separatorView];
-    
+
     [self.contentView addConstraint:[NSLayoutConstraint constraintWithItem:self.separatorView attribute:NSLayoutAttributeLeft relatedBy:NSLayoutRelationEqual toItem:self.contentView attribute:NSLayoutAttributeLeft multiplier:1.0 constant:0.0]];
     [self.contentView addConstraint:[NSLayoutConstraint constraintWithItem:self.separatorView attribute:NSLayoutAttributeRight relatedBy:NSLayoutRelationEqual toItem:self.contentView attribute:NSLayoutAttributeRight multiplier:1.0 constant:0.0]];
     [self.contentView addConstraint:[NSLayoutConstraint constraintWithItem:self.separatorView attribute:NSLayoutAttributeTop relatedBy:NSLayoutRelationEqual toItem:self.contentView attribute:NSLayoutAttributeTop multiplier:1.0 constant:0.0]];
     [self.contentView addConstraint:[NSLayoutConstraint constraintWithItem:self.separatorView attribute:NSLayoutAttributeHeight relatedBy:NSLayoutRelationEqual toItem:nil attribute:NSLayoutAttributeNotAnAttribute multiplier:1.0 constant:1.0]];
-    
+
     self.contentView.backgroundColor = [UIColor colorWithWhite:1.0 alpha:1.0];
-    
+
     return self;
 }
 
@@ -102,15 +114,15 @@ typedef NS_ENUM(NSInteger, TableSection) {
 
 #pragma mark
 
-@interface ProjectMenuController () <UITextFieldDelegate>
+@interface BLMProjectMenuController () <UITextFieldDelegate>
 
 @property (nonatomic, strong, readonly) UITableView *tableView;
-@property (nonatomic, copy, readonly) NSArray<Project *> *projectList;
+@property (nonatomic, copy, readonly) NSArray<BLMProject *> *projectList;
 
 @end
 
 
-@implementation ProjectMenuController
+@implementation BLMProjectMenuController
 
 - (void)dealloc {
     [[NSNotificationCenter defaultCenter] removeObserver:self];
@@ -119,38 +131,38 @@ typedef NS_ENUM(NSInteger, TableSection) {
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    
+
     self.navigationItem.title = @"Projects";
-    
+
     _tableView = [[UITableView alloc] init];
-    
+
     [self.tableView registerClass:[ProjectCell class] forCellReuseIdentifier:@"ProjectCell"];
     [self.tableView registerClass:[CreateProjectCell class] forCellReuseIdentifier:@"CreateProjectCell"];
-    
+
     self.tableView.delegate = self;
     self.tableView.dataSource = self;
     self.tableView.translatesAutoresizingMaskIntoConstraints = NO;
-    
+
     [self.view addSubview:self.tableView];
     [self.view addConstraint:[NSLayoutConstraint constraintWithItem:self.tableView attribute:NSLayoutAttributeLeft relatedBy:NSLayoutRelationEqual toItem:self.view attribute:NSLayoutAttributeLeft multiplier:1.0 constant:0.0]];
     [self.view addConstraint:[NSLayoutConstraint constraintWithItem:self.tableView attribute:NSLayoutAttributeRight relatedBy:NSLayoutRelationEqual toItem:self.view attribute:NSLayoutAttributeRight multiplier:1.0 constant:0.0]];
     [self.view addConstraint:[NSLayoutConstraint constraintWithItem:self.tableView attribute:NSLayoutAttributeTop relatedBy:NSLayoutRelationEqual toItem:self.view attribute:NSLayoutAttributeTop multiplier:1.0 constant:0.0]];
     [self.view addConstraint:[NSLayoutConstraint constraintWithItem:self.tableView attribute:NSLayoutAttributeBottom relatedBy:NSLayoutRelationEqual toItem:self.view attribute:NSLayoutAttributeBottom multiplier:1.0 constant:0.0]];
 
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleDataModelArchiveRestored:) name:DataModelArchiveRestoredNotification object:nil];
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleDataModelProjectCreated:) name:DataModelProjectCreatedNotification object:nil];
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleDataModelProjectDeleted:) name:DataModelProjectDeletedNotification object:nil];
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleDataModelProjectUpdated:) name:DataModelProjectUpdatedNotification object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleDataModelArchiveRestored:) name:BLMDataManagerArchiveRestoredNotification object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleDataModelProjectCreated:) name:BLMDataManagerProjectCreatedNotification object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleDataModelProjectDeleted:) name:BLMDataManagerProjectDeletedNotification object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleDataModelProjectUpdated:) name:BLMDataManagerProjectUpdatedNotification object:nil];
 }
 
 #pragma mark Internal State
 
 - (void)loadProjectList {
     assert([NSThread isMainThread]);
-    assert(![DataModelManager sharedManager].isRestoringArchive);
+    assert(![BLMDataManager sharedManager].isRestoringArchive);
 
     NSIndexPath *selectedIndexPath = self.tableView.indexPathForSelectedRow;
-    Project *selectedProject = nil;
+    BLMProject *selectedProject = nil;
 
     if (selectedIndexPath != nil) {
         switch ((TableSection)selectedIndexPath.section) {
@@ -169,21 +181,21 @@ typedef NS_ENUM(NSInteger, TableSection) {
         assert(self.tableView.indexPathsForSelectedRows.count == 0);
     }
 
-    NSIndexSet *finalUidSet = [DataModelManager sharedManager].allProjectUids;
-    NSMutableArray<Project *> *finalProjectList = [NSMutableArray array];
+    NSIndexSet *finalUidSet = [BLMDataManager sharedManager].allProjectUids;
+    NSMutableArray<BLMProject *> *finalProjectList = [NSMutableArray array];
     NSMutableArray<NSNumber *> *finalUidList = [NSMutableArray array];
 
     if (finalUidSet.count > 0) {
         [finalUidSet enumerateIndexesUsingBlock:^(NSUInteger uid, BOOL * _Nonnull stop) {
             [finalUidList addObject:@(uid)];
-            [finalProjectList addObject:[[DataModelManager sharedManager] projectForUid:@(uid)]];
+            [finalProjectList addObject:[[BLMDataManager sharedManager] projectForUid:@(uid)]];
         }];
     }
 
     NSMutableIndexSet *originalUidSet = [NSMutableIndexSet indexSet];
     NSMutableArray *originalUidList = [NSMutableArray array];
 
-    [self.projectList enumerateObjectsUsingBlock:^(Project *project, NSUInteger idx, BOOL * _Nonnull stop) {
+    [self.projectList enumerateObjectsUsingBlock:^(BLMProject *project, NSUInteger idx, BOOL * _Nonnull stop) {
         [originalUidSet addIndex:project.uid.integerValue];
         [originalUidList addObject:project.uid];
     }];
@@ -276,7 +288,7 @@ typedef NS_ENUM(NSInteger, TableSection) {
         UITextField *clientTextField = alertController.textFields[1];
         NSString *client = clientTextField.text;
 
-        [[DataModelManager sharedManager] createProjectWithName:projectName client:client schema:nil sessionByUid:nil completion:^(Project *createdProject, NSError *error) {
+        [[BLMDataManager sharedManager] createProjectWithName:projectName client:client schema:nil sessionByUid:nil completion:^(BLMProject *createdProject, NSError *error) {
             if (error != nil) {
                 UIAlertController *errorAlertController = [UIAlertController alertControllerWithTitle:@"Error" message:error.userInfo[NSLocalizedDescriptionKey] preferredStyle:UIAlertControllerStyleAlert];
 
@@ -295,21 +307,21 @@ typedef NS_ENUM(NSInteger, TableSection) {
     }];
 
     void (^textFieldDidChangeBlock)(NSNotification *) = ^(NSNotification * notification) {
-        okayAction.enabled = ((alertController.textFields[0].text.length >= ProjectNameMinimumLength)
-                              && (alertController.textFields[1].text.length >= ProjectClientMinimumLength));
+        okayAction.enabled = ((alertController.textFields[0].text.length >= BLMProjectNameMinimumLength)
+                              && (alertController.textFields[1].text.length >= BLMProjectClientMinimumLength));
     };
 
     [alertController addTextFieldWithConfigurationHandler:^(UITextField * _Nonnull textField) {
         textField.text = projectName;
         textField.delegate = self;
-        textField.placeholder = [NSString stringWithFormat:@"Project Name (minimum of %ld characters)", (long)ProjectNameMinimumLength];
+        textField.placeholder = [NSString stringWithFormat:@"Project Name (minimum of %ld characters)", (long)BLMProjectNameMinimumLength];
         projectNameTextFieldDidChangeObserver = [[NSNotificationCenter defaultCenter] addObserverForName:UITextFieldTextDidChangeNotification object:textField queue:[NSOperationQueue mainQueue] usingBlock:textFieldDidChangeBlock];
     }];
 
     [alertController addTextFieldWithConfigurationHandler:^(UITextField * _Nonnull textField) {
         textField.text = client;
         textField.delegate = self;
-        textField.placeholder = [NSString stringWithFormat:@"Client (minimum of %ld character)", (long)ProjectClientMinimumLength];
+        textField.placeholder = [NSString stringWithFormat:@"Client (minimum of %ld character)", (long)BLMProjectClientMinimumLength];
         clientTextFieldDidChangeObserver = [[NSNotificationCenter defaultCenter] addObserverForName:UITextFieldTextDidChangeNotification object:textField queue:[NSOperationQueue mainQueue] usingBlock:textFieldDidChangeBlock];
     }];
 
@@ -336,21 +348,21 @@ typedef NS_ENUM(NSInteger, TableSection) {
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
     NSInteger rowCount = 0;
-    
-    switch ((TableSection)section) {            
+
+    switch ((TableSection)section) {
         case TableSectionProjectList:
             rowCount = self.projectList.count;
             break;
-        
+
         case TableSectionCreateProject:
             rowCount = 1;
             break;
-            
+
         case TableSectionCount:
             assert(NO);
             break;
     }
-    
+
     return rowCount;
 }
 
@@ -358,26 +370,26 @@ typedef NS_ENUM(NSInteger, TableSection) {
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
     UITableViewCell *cell = nil;
     TableSection section = indexPath.section;
-    
-    switch (section) {            
+
+    switch (section) {
         case TableSectionProjectList: {
             ProjectCell *projectCell = [tableView dequeueReusableCellWithIdentifier:@"ProjectCell"];
-            projectCell.textLabel.text = self.projectList[indexPath.row].name;            
+            projectCell.textLabel.text = self.projectList[indexPath.row].name;
             cell = projectCell;
             break;
         }
-            
+
         case TableSectionCreateProject: {
-            CreateProjectCell *createProjectCell = [tableView dequeueReusableCellWithIdentifier:@"CreateProjectCell"];            
+            CreateProjectCell *createProjectCell = [tableView dequeueReusableCellWithIdentifier:@"CreateProjectCell"];
             cell = createProjectCell;
             break;
         }
-            
+
         case TableSectionCount:
             assert(NO);
             break;
     }
-    
+
     return cell;
 }
 
@@ -385,17 +397,17 @@ typedef NS_ENUM(NSInteger, TableSection) {
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
     TableSection section = indexPath.section;
-    
-    switch (section) {            
+
+    switch (section) {
         case TableSectionProjectList: {
-            Project *project = self.projectList[indexPath.row];
-            NSDictionary *userInfo = @{ ProjectMenuControllerSelectedProjectUserInfoKey:project };
-            
-            [[NSNotificationCenter defaultCenter] postNotificationName:ProjectMenuControllerDidSelectProjectNotification object:self userInfo:userInfo];
-            
+            BLMProject *project = self.projectList[indexPath.row];
+            NSDictionary *userInfo = @{ BLMProjectMenuControllerSelectedProjectUserInfoKey:project };
+
+            [[NSNotificationCenter defaultCenter] postNotificationName:BLMProjectMenuControllerDidSelectProjectNotification object:self userInfo:userInfo];
+
             break;
         }
-            
+
         case TableSectionCreateProject: {
             [self.tableView deselectRowAtIndexPath:indexPath animated:NO];
             [self showCreateProjectAlertControllerWithProjectName:nil client:nil];
