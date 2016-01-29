@@ -14,6 +14,21 @@
 
 @implementation BLMProjectDetailController
 
+- (instancetype)initWithProject:(BLMProject *)project {
+    NSParameterAssert(project != nil);
+
+    self = [super init];
+
+    if (self == nil) {
+        return nil;
+    }
+
+    _projectUid = project.uid;
+
+    return self;
+}
+
+
 - (void)dealloc {
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 }
@@ -24,20 +39,21 @@
 
     self.view.backgroundColor = [UIColor grayColor];
 
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleProjectMenuControllerDidSelectProject:) name:BLMProjectMenuControllerDidSelectProjectNotification object:nil];
+    BLMProject *project = [[BLMDataManager sharedManager] projectForUid:self.projectUid];
+
+    self.navigationItem.title = project.name;
+
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleProjectUpdated:) name:BLMDataManagerProjectUpdatedNotification object:project];
 }
 
 
-- (void)updateContentWithProject:(BLMProject *)project {
+#pragma mark Event Handling
 
-}
+- (void)handleProjectUpdated:(NSNotification *)notification {
+    BLMProject *project = (BLMProject *)notification.object;
+    assert([self.projectUid isEqualToNumber:project.uid]);
 
-
-- (void)handleProjectMenuControllerDidSelectProject:(NSNotification *)notification {
-    BLMProject *project = notification.userInfo[BLMProjectMenuControllerSelectedProjectUserInfoKey];
-    assert(project != nil);
-
-    [self updateContentWithProject:project];
+    //TODO: Update UI
 }
 
 @end

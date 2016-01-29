@@ -14,7 +14,7 @@
 
 @interface BLMSchemaUpdateController ()
 
-@property (nonatomic, copy) NSArray *updatedMacroList;
+@property (nonatomic, strong) BLMSchema *schema;
 
 @end
 
@@ -30,10 +30,10 @@
         return nil;
     }
 
-    _project = project;
-    _updatedMacroList = [project.schema.macros copy];
+    _projectUid = project.uid;
+    _schema = project.schema;
 
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleProjectUpdated:) name:BLMDataManagerProjectUpdatedNotification object:self.project];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleProjectUpdated:) name:BLMDataManagerProjectUpdatedNotification object:project];
 
     return self;
 }
@@ -46,48 +46,35 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
+
+    self.navigationItem.leftBarButtonItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemDone target:self action:@selector(handleDoneButtonTapped)];
 }
 
 
-- (void)setProject:(BLMProject *)project {
-    NSParameterAssert(project != nil);
+- (void)refreshSchema {
+    BLMSchema *schema = [[BLMDataManager sharedManager] projectForUid:self.projectUid].schema;
+    assert(schema != nil);
 
-    if (self.project == project) {
-        assert(NO);
+    if ([self.schema isEqual:schema]) {
         return;
     }
 
-    if (self.project != nil) {
-        [[NSNotificationCenter defaultCenter] removeObserver:self name:BLMDataManagerProjectUpdatedNotification object:self.project];
-    }
+    _schema = schema;
 
-    _project = project;
-
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleProjectUpdated:) name:BLMDataManagerProjectUpdatedNotification object:self.project];
+    //TODO: reload macro list UI
 }
 
-
-- (void)setUpdatedMacroList:(NSArray *)updatedMacroList {
-    NSParameterAssert(updatedMacroList != nil);
-
-    if (self.updatedMacroList == updatedMacroList) {
-        assert(NO);
-        return;
-    }
-
-    _updatedMacroList = [updatedMacroList copy];
-
-    // TODO: reload table
-}
-
-#pragma Event Handling
+#pragma mark Event Handling
 
 - (void)handleProjectUpdated:(NSNotification *)notification {
-    BLMProject *project = notification.object;
-    assert([self.project.uid isEqualToNumber:project.uid]);
+    BLMProject *project = (BLMProject *)notification.object;
+    assert([self.projectUid isEqualToNumber:project.uid]);
 
-    self.project = [[BLMDataManager sharedManager] projectForUid:self.project.uid];
-    self.updatedMacroList = self.project.schema.macros;
+    [self refreshSchema];
+}
+
+- (void)handleDoneButtonTapped {
+    [self.navigationController popViewControllerAnimated:YES];
 }
 
 @end

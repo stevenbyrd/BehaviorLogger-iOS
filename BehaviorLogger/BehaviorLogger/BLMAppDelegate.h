@@ -13,7 +13,6 @@
 @interface BLMAppDelegate : UIResponder <UIApplicationDelegate>
 
 @property (nonatomic, strong) UIWindow *window;
-@property (nonatomic, strong, readonly) UISplitViewController *splitViewController;
 
 + (instancetype)sharedInstance;
 

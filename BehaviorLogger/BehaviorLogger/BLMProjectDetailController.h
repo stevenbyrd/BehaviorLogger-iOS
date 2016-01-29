@@ -10,6 +10,13 @@
 #import <UIKit/UIKit.h>
 
 
+@class BLMProject;
+
+
 @interface BLMProjectDetailController : UIViewController
+
+@property (nonatomic, strong, readonly) NSNumber *projectUid;
+
+- (instancetype)initWithProject:(BLMProject *)project;
 
 @end

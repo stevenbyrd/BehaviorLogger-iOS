@@ -12,10 +12,17 @@
 #import "BLMProjectDetailController.h"
 
 
+@interface BLMAppDelegate () <UISplitViewControllerDelegate>
+
+@property (nonatomic, strong, readonly) UISplitViewController *splitViewController;
+
+@end
+
+
 @implementation BLMAppDelegate
 
 + (instancetype)sharedInstance {
-    return [UIApplication sharedApplication].delegate;
+    return (BLMAppDelegate *)[UIApplication sharedApplication].delegate;
 }
 
 
@@ -24,12 +31,13 @@
     _splitViewController = [[UISplitViewController alloc] init];
     
     UINavigationController *primaryController = [[UINavigationController alloc] initWithRootViewController:[[BLMProjectMenuController alloc] init]];
-    UINavigationController *detailController = [[UINavigationController alloc] initWithRootViewController:[[BLMProjectDetailController alloc] init]];
+    UINavigationController *detailController = [[UINavigationController alloc] init];
     
     self.splitViewController.viewControllers = @[primaryController, detailController];
     self.splitViewController.preferredDisplayMode = UISplitViewControllerDisplayModeAllVisible;
     self.splitViewController.preferredPrimaryColumnWidthFraction = 0.25;
     self.splitViewController.presentsWithGesture = NO;
+    self.splitViewController.delegate = self;
     
     self.window.rootViewController = self.splitViewController;
     
@@ -38,6 +46,22 @@
     [BLMDataManager initializeWithCompletion:nil];
     
     return YES;
+}
+
+#pragma mark UISplitViewControllerDelegate
+
+- (void)splitViewController:(UISplitViewController *)svc willChangeToDisplayMode:(UISplitViewControllerDisplayMode)displayMode {
+    NSLog(@"[%@ %@]> %@", NSStringFromClass([self class]), NSStringFromSelector(_cmd), @(displayMode));
+}
+
+
+- (UIInterfaceOrientationMask)splitViewControllerSupportedInterfaceOrientations:(UISplitViewController *)splitViewController {
+    return UIInterfaceOrientationMaskLandscape;
+}
+
+
+- (UIInterfaceOrientation)splitViewControllerPreferredInterfaceOrientationForPresentation:(UISplitViewController *)splitViewController {
+    return UIInterfaceOrientationLandscapeLeft;
 }
 
 @end

@@ -55,6 +55,27 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
     [aCoder encodeInteger:ArchiveVersionLatest forKey:ArchiveVersionKey];
 }
 
+#pragma mark Internal State
+
+- (NSUInteger)hash {
+    return (self.name.hash ^ self.behavior.hash);
+}
+
+
+- (BOOL)isEqual:(id)object {
+    assert([NSThread isMainThread]);
+
+    if (![object isKindOfClass:[self class]]) {
+        return NO;
+    }
+
+    BLMMacro *macro = (BLMMacro *)object;
+
+    return ([self.name isEqualToString:macro.name]
+            && [self.behavior isEqualToString:macro.behavior]
+            && (self.isContinuous == macro.isContinuous));
+}
+
 @end
 
 
@@ -86,6 +107,25 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
 - (void)encodeWithCoder:(NSCoder *)aCoder {
     [aCoder encodeObject:self.macros forKey:@"macros"];
     [aCoder encodeInteger:ArchiveVersionLatest forKey:ArchiveVersionKey];
+}
+
+#pragma mark Internal State
+
+- (NSUInteger)hash {
+    return self.macros.hash;
+}
+
+
+- (BOOL)isEqual:(id)object {
+    assert([NSThread isMainThread]);
+
+    if (![object isKindOfClass:[self class]]) {
+        return NO;
+    }
+
+    BLMSchema *schema = (BLMSchema *)object;
+
+    return [self.macros isEqualToArray:schema.macros];
 }
 
 @end

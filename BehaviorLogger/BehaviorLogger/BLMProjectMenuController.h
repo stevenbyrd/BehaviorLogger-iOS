@@ -10,10 +10,6 @@
 #import <UIKit/UIKit.h>
 
 
-extern NSString *const BLMProjectMenuControllerDidSelectProjectNotification;
-extern NSString *const BLMProjectMenuControllerSelectedProjectUserInfoKey;
-
-
-@interface BLMProjectMenuController : UIViewController <UITableViewDelegate, UITableViewDataSource>
+@interface BLMProjectMenuController : UIViewController
 
 @end

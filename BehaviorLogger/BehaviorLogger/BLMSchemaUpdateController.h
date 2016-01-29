@@ -15,7 +15,7 @@
 
 @interface BLMSchemaUpdateController : UIViewController
 
-@property (nonatomic, strong, readonly) BLMProject *project;
+@property (nonatomic, strong, readonly) NSNumber *projectUid;
 
 - (instancetype)initWithProject:(BLMProject *)project;
 
