@@ -19,17 +19,26 @@ typedef NS_OPTIONS(NSInteger, BLMTimeLimitOptions) {
 };
 
 
-@interface BLMSession : NSObject <NSCoding>
+@interface BLMSessionConfiguration : NSObject <NSCoding>
 
-@property (nonatomic, strong, readonly) NSNumber *uid;
-@property (nonatomic, copy, readonly) NSString *name;
 @property (nonatomic, copy, readonly) NSString *condition;
 @property (nonatomic, copy, readonly) NSString *location;
 @property (nonatomic, copy, readonly) NSString *therapist;
 @property (nonatomic, copy, readonly) NSString *observer;
-@property (nonatomic, strong, readonly) BLMSchema *schema;
 @property (nonatomic, assign, readonly) BLMTimeLimitOptions timeLimitOptions;
+@property (nonatomic, strong, readonly) BLMSchema *schema;
 
-- (instancetype)initWithUid:(NSNumber *)uid name:(NSString *)name condition:(NSString *)condition location:(NSString *)location therapist:(NSString *)therapist observer:(NSString *)observer schema:(BLMSchema *)schema timeLimitOptions:(BLMTimeLimitOptions)timeLimitOptions;
+- (instancetype)initWitCondition:(NSString *)condition location:(NSString *)location therapist:(NSString *)therapist observer:(NSString *)observer timeLimitOptions:(BLMTimeLimitOptions)timeLimitOptions schema:(BLMSchema *)schema;
+
+@end
+
+
+@interface BLMSession : NSObject <NSCoding>
+
+@property (nonatomic, strong, readonly) NSNumber *uid;
+@property (nonatomic, copy, readonly) NSString *name;
+@property (nonatomic, strong, readonly) BLMSessionConfiguration *configuration;
+
+- (instancetype)initWithUid:(NSNumber *)uid name:(NSString *)name configuration:(BLMSessionConfiguration *)configuration;
 
 @end

@@ -9,13 +9,17 @@
 #import "BLMDataManager.h"
 #import "BLMProject.h"
 #import "BLMSchema.h"
+#import "BLMUtils.h"
 
 
 NSString *const BLMDataManagerArchiveRestoredNotification = @"BLMDataManagerArchiveRestoredNotification";
 
-NSString *const BLMDataManagerProjectCreatedNotification = @"BLMDataManagerProjectCreatedNotification";
-NSString *const BLMDataManagerProjectDeletedNotification = @"BLMDataManagerProjectDeletedNotification";
-NSString *const BLMDataManagerProjectUpdatedNotification = @"BLMDataManagerProjectUpdatedNotification";
+NSString *const BLMProjectCreatedNotification = @"BLMProjectCreatedNotification";
+NSString *const BLMProjectDeletedNotification = @"BLMProjectDeletedNotification";
+NSString *const BLMProjectUpdatedNotification = @"BLMProjectUpdatedNotification";
+
+NSString *const BLMProjectOldProjectUserInfoKey = @"BLMProjectOldProjectUserInfoKey";
+NSString *const BLMProjectNewProjectUserInfoKey = @"BLMProjectNewProjectUserInfoKey";
 
 NSString *const BLMDataManagerProjectErrorDomain = @"com.3bird.BehaviorLogger.Project";
 
@@ -115,19 +119,19 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
 }
 
 
-- (void)createProjectWithName:(NSString *)name client:(NSString *)client schema:(BLMSchema *)schema sessionByUid:(NSDictionary<NSNumber *, BLMSession *> *)sessionByUid completion:(void(^)(BLMProject *createdProject, NSError *error))completion {
+- (void)createProjectWithName:(NSString *)name client:(NSString *)client completion:(void(^)(BLMProject *createdProject, NSError *error))completion {
     assert([NSThread isMainThread]);
     NSParameterAssert(name.length >= BLMProjectNameMinimumLength);
     NSParameterAssert(client.length >= BLMProjectClientMinimumLength);
     NSParameterAssert(completion != nil);
 
-    __block BLMProject *createdProject = nil;
+    __block BLMProject *project = nil;
     __block NSError *error = nil;
 
     NSString *lowerCaseName = [name.lowercaseString stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
 
     [self.projectUidSet enumerateIndexesUsingBlock:^(NSUInteger uid, BOOL * _Nonnull stop) {
-        if ([self.projectByUid[@(uid)].name.lowercaseString isEqualToString:lowerCaseName]) {
+        if ([BLMUtils isString:self.projectByUid[@(uid)].name.lowercaseString equalToString:lowerCaseName]) {
             error = [NSError errorWithDomain:BLMDataManagerProjectErrorDomain code:-1 userInfo:@{ NSLocalizedDescriptionKey : @"A project with that name already exists." }];
             *stop = YES;
             return;
@@ -140,31 +144,31 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
 
         [self.projectUidSet addIndex:uid.integerValue];
 
-        createdProject = [[BLMProject alloc] initWithUid:uid name:name client:client schema:nil sessionByUid:nil];
-        self.projectByUid[uid] = createdProject;
+        project = [[BLMProject alloc] initWithUid:uid name:name client:client defaultSessionConfiguration:nil sessionByUid:nil];
+        self.projectByUid[uid] = project;
 
         [self archiveCurrentState];
 
-        [[NSNotificationCenter defaultCenter] postNotificationName:BLMDataManagerProjectCreatedNotification object:createdProject];
+        NSDictionary *userInfo = @{ BLMProjectNewProjectUserInfoKey:project };
+        [[NSNotificationCenter defaultCenter] postNotificationName:BLMProjectCreatedNotification object:project userInfo:userInfo];
     }
 
-    completion(createdProject, error);
+    completion(project, error);
 }
 
-- (void)updateSchemaForProjectUid:(NSNumber *)projectUid toSchema:(BLMSchema *)schema {
+- (void)updateDefaultSessionConfigurationForProjectUid:(NSNumber *)projectUid configuration:(BLMSessionConfiguration *)configuration {
     assert([NSThread isMainThread]);
 
-    BLMProject *originalProject = self.projectByUid[projectUid];
-    assert(originalProject != nil);
+    BLMProject *project = self.projectByUid[projectUid];
+    assert(project != nil);
 
-    if ([originalProject.schema isEqual:schema]) {
-        assert(NO);
-        return;
+    if (![BLMUtils isObject:project.defaultSessionConfiguration equalToObject:configuration]) {
+        BLMProject *updatedProject = [[BLMProject alloc] initWithUid:projectUid name:project.name client:project.client defaultSessionConfiguration:configuration sessionByUid:project.sessionByUid];
+        self.projectByUid[projectUid] = updatedProject;
+
+        NSDictionary *userInfo = @{ BLMProjectOldProjectUserInfoKey:project, BLMProjectNewProjectUserInfoKey:updatedProject };
+        [[NSNotificationCenter defaultCenter] postNotificationName:BLMProjectUpdatedNotification object:project userInfo:userInfo];
     }
-
-    self.projectByUid[projectUid] = [[BLMProject alloc] initWithUid:projectUid name:originalProject.name client:originalProject.client schema:schema sessionByUid:originalProject.sessionByUid];
-
-    [[NSNotificationCenter defaultCenter] postNotificationName:BLMDataManagerProjectUpdatedNotification object:originalProject];
 }
 
 #pragma mark Archiving

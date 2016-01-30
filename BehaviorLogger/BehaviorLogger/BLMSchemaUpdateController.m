@@ -10,6 +10,8 @@
 #import "BLMDataManager.h"
 #import "BLMProject.h"
 #import "BLMSchema.h"
+#import "BLMSession.h"
+#import "BLMUtils.h"
 
 
 @interface BLMSchemaUpdateController ()
@@ -31,9 +33,9 @@
     }
 
     _projectUid = project.uid;
-    _schema = project.schema;
+    _schema = project.defaultSessionConfiguration.schema;
 
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleProjectUpdated:) name:BLMDataManagerProjectUpdatedNotification object:project];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleProjectUpdated:) name:BLMProjectUpdatedNotification object:project];
 
     return self;
 }
@@ -52,23 +54,23 @@
 
 
 - (void)refreshSchema {
-    BLMSchema *schema = [[BLMDataManager sharedManager] projectForUid:self.projectUid].schema;
-    assert(schema != nil);
+    assert([NSThread isMainThread]);
 
-    if ([self.schema isEqual:schema]) {
-        return;
+    BLMProject *project = [[BLMDataManager sharedManager] projectForUid:self.projectUid];
+    BLMSchema *schema = project.defaultSessionConfiguration.schema;
+
+    if (![BLMUtils isObject:self.schema equalToObject:schema]) {
+        _schema = schema;
+
+        //TODO: reload macro list UI
     }
-
-    _schema = schema;
-
-    //TODO: reload macro list UI
 }
 
 #pragma mark Event Handling
 
 - (void)handleProjectUpdated:(NSNotification *)notification {
     BLMProject *project = (BLMProject *)notification.object;
-    assert([self.projectUid isEqualToNumber:project.uid]);
+    assert([BLMUtils isNumber:self.projectUid equalToNumber:project.uid]);
 
     [self refreshSchema];
 }

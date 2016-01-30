@@ -7,6 +7,7 @@
 //
 
 #import "BLMSchema.h"
+#import "BLMUtils.h"
 
 
 static NSString *const ArchiveVersionKey = @"ArchiveVersionKey";
@@ -58,7 +59,11 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
 #pragma mark Internal State
 
 - (NSUInteger)hash {
-    return (self.name.hash ^ self.behavior.hash);
+    assert([NSThread isMainThread]);
+    
+    return (self.name.hash
+            ^ self.behavior.hash
+            ^ self.isContinuous);
 }
 
 
@@ -71,8 +76,8 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
 
     BLMMacro *macro = (BLMMacro *)object;
 
-    return ([self.name isEqualToString:macro.name]
-            && [self.behavior isEqualToString:macro.behavior]
+    return ([BLMUtils isString:self.name equalToString:macro.name]
+            && [BLMUtils isString:self.behavior equalToString:macro.behavior]
             && (self.isContinuous == macro.isContinuous));
 }
 
@@ -112,6 +117,8 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
 #pragma mark Internal State
 
 - (NSUInteger)hash {
+    assert([NSThread isMainThread]);
+
     return self.macros.hash;
 }
 

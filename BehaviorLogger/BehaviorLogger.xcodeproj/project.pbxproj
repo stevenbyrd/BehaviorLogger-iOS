@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		AA103CA11C5C5368006D2BC0 /* BLMUtils.m in Sources */ = {isa = PBXBuildFile; fileRef = AA103CA01C5C5368006D2BC0 /* BLMUtils.m */; };
 		AA62D05C1C3F6E8F00804CE5 /* BLMSchemaUpdateController.m in Sources */ = {isa = PBXBuildFile; fileRef = AA62D05B1C3F6E8F00804CE5 /* BLMSchemaUpdateController.m */; };
 		AABA33401C3D2FB10086A9A1 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = AABA333F1C3D2FB10086A9A1 /* main.m */; };
 		AABA33431C3D2FB10086A9A1 /* BLMAppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = AABA33421C3D2FB10086A9A1 /* BLMAppDelegate.m */; };
@@ -21,6 +22,8 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		AA103C9F1C5C5368006D2BC0 /* BLMUtils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BLMUtils.h; sourceTree = "<group>"; };
+		AA103CA01C5C5368006D2BC0 /* BLMUtils.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BLMUtils.m; sourceTree = "<group>"; };
 		AA62D05A1C3F6E8F00804CE5 /* BLMSchemaUpdateController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BLMSchemaUpdateController.h; sourceTree = "<group>"; };
 		AA62D05B1C3F6E8F00804CE5 /* BLMSchemaUpdateController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BLMSchemaUpdateController.m; sourceTree = "<group>"; };
 		AABA333B1C3D2FB10086A9A1 /* BehaviorLogger.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BehaviorLogger.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -76,6 +79,8 @@
 			children = (
 				AABA33411C3D2FB10086A9A1 /* BLMAppDelegate.h */,
 				AABA33421C3D2FB10086A9A1 /* BLMAppDelegate.m */,
+				AA103C9F1C5C5368006D2BC0 /* BLMUtils.h */,
+				AA103CA01C5C5368006D2BC0 /* BLMUtils.m */,
 				AABA335B1C3D39090086A9A1 /* Model */,
 				AABA33571C3D32540086A9A1 /* Controllers */,
 				AABA333E1C3D2FB10086A9A1 /* Supporting Files */,
@@ -194,6 +199,7 @@
 				AA62D05C1C3F6E8F00804CE5 /* BLMSchemaUpdateController.m in Sources */,
 				AABA33951C3DD0660086A9A1 /* BLMProjectDetailController.m in Sources */,
 				AABA33891C3DC4220086A9A1 /* BLMProject.m in Sources */,
+				AA103CA11C5C5368006D2BC0 /* BLMUtils.m in Sources */,
 				AABA338F1C3DC58A0086A9A1 /* BLMSession.m in Sources */,
 				AABA338C1C3DC4D30086A9A1 /* BLMSchema.m in Sources */,
 				AABA336B1C3D3CCB0086A9A1 /* BLMDataManager.m in Sources */,

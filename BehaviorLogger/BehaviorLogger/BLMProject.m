@@ -9,6 +9,7 @@
 #import "BLMProject.h"
 #import "BLMSession.h"
 #import "BLMSchema.h"
+#import "BLMUtils.h"
 
 
 NSUInteger const BLMProjectNameMinimumLength = 3;
@@ -28,7 +29,7 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
 
 @implementation BLMProject
 
-- (instancetype)initWithUid:(NSNumber *)uid name:(NSString *)name client:(NSString *)client schema:(BLMSchema *)schema sessionByUid:(NSDictionary<NSNumber *, BLMSession *> *)sessionByUid {
+- (instancetype)initWithUid:(NSNumber *)uid name:(NSString *)name client:(NSString *)client defaultSessionConfiguration:(BLMSessionConfiguration *)defaultSessionConfiguration sessionByUid:(NSDictionary<NSNumber *, BLMSession *> *)sessionByUid {
     NSParameterAssert(name.length > 0);
     NSParameterAssert(client.length > 0);
 
@@ -41,7 +42,7 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
     _uid = uid;
     _name = [name copy];
     _client = [client copy];
-    _schema = schema;
+    _defaultSessionConfiguration = defaultSessionConfiguration;
     _sessionByUid = [sessionByUid copy];
 
     return self;
@@ -53,7 +54,7 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
     return [self initWithUid:[aDecoder decodeObjectOfClass:[NSNumber class] forKey:@"uid"]
                         name:[aDecoder decodeObjectOfClass:[NSString class] forKey:@"name"]
                       client:[aDecoder decodeObjectOfClass:[NSString class] forKey:@"client"]
-                      schema:[aDecoder decodeObjectOfClass:[BLMSchema class] forKey:@"schema"]
+ defaultSessionConfiguration:[aDecoder decodeObjectOfClass:[BLMSessionConfiguration class] forKey:@"defaultSessionConfiguration"]
                 sessionByUid:[aDecoder decodeObjectOfClasses:[NSSet setWithArray:@[[NSDictionary<NSNumber *, BLMSession *> class], [NSNumber class], [BLMSession class]]] forKey:@"sessionByUid"]];
 }
 
@@ -62,9 +63,38 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
     [aCoder encodeObject:self.uid forKey:@"uid"];
     [aCoder encodeObject:self.name forKey:@"name"];
     [aCoder encodeObject:self.client forKey:@"client"];
-    [aCoder encodeObject:self.schema forKey:@"schema"];
+    [aCoder encodeObject:self.defaultSessionConfiguration forKey:@"defaultSessionConfiguration"];
     [aCoder encodeObject:self.sessionByUid forKey:@"sessionByUid"];
     [aCoder encodeInteger:ArchiveVersionLatest forKey:ArchiveVersionKey];
+}
+
+#pragma mark Internal State
+
+- (NSUInteger)hash {
+    assert([NSThread isMainThread]);
+
+    return (self.uid.hash
+            ^ self.name.hash
+            ^ self.client.hash
+            ^ self.defaultSessionConfiguration.hash
+            ^ self.sessionByUid.hash);
+}
+
+
+- (BOOL)isEqual:(id)object {
+    assert([NSThread isMainThread]);
+
+    if (![object isKindOfClass:[self class]]) {
+        return NO;
+    }
+
+    BLMProject *project = (BLMProject *)object;
+
+    return ([BLMUtils isNumber:self.uid equalToNumber:project.uid]
+            && [BLMUtils isString:self.name equalToString:project.name]
+            && [BLMUtils isString:self.client equalToString:project.client]
+            && [BLMUtils isObject:self.defaultSessionConfiguration equalToObject:project.defaultSessionConfiguration]
+            && [self.sessionByUid isEqualToDictionary:project.sessionByUid]);
 }
 
 @end

@@ -10,6 +10,7 @@
 #import "BLMProject.h"
 #import "BLMProjectDetailController.h"
 #import "BLMProjectMenuController.h"
+#import "BLMUtils.h"
 
 
 float const ProjectCellFontSize = 14.0;
@@ -145,9 +146,9 @@ typedef NS_ENUM(NSInteger, TableSection) {
     [self.view addConstraint:[NSLayoutConstraint constraintWithItem:self.tableView attribute:NSLayoutAttributeBottom relatedBy:NSLayoutRelationEqual toItem:self.view attribute:NSLayoutAttributeBottom multiplier:1.0 constant:0.0]];
 
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleDataModelArchiveRestored:) name:BLMDataManagerArchiveRestoredNotification object:nil];
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleDataModelProjectCreated:) name:BLMDataManagerProjectCreatedNotification object:nil];
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleDataModelProjectDeleted:) name:BLMDataManagerProjectDeletedNotification object:nil];
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleDataModelProjectUpdated:) name:BLMDataManagerProjectUpdatedNotification object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleDataModelProjectCreated:) name:BLMProjectCreatedNotification object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleDataModelProjectDeleted:) name:BLMProjectDeletedNotification object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleDataModelProjectUpdated:) name:BLMProjectUpdatedNotification object:nil];
 }
 
 #pragma mark Internal State
@@ -190,7 +191,7 @@ typedef NS_ENUM(NSInteger, TableSection) {
         [self.tableView deselectRowAtIndexPath:selectedIndexPath animated:NO];
 
         detailController.viewControllers = @[];
-    } else if (![self.selectedProjectUid isEqualToNumber:projectUid]) {
+    } else if (![BLMUtils isNumber:self.selectedProjectUid equalToNumber:projectUid]) {
         assert(detailController.viewControllers.count <= 1);
 
         NSInteger selectedIndex = [self.projectUidList indexOfObject:projectUid];
@@ -282,7 +283,7 @@ typedef NS_ENUM(NSInteger, TableSection) {
         UITextField *clientTextField = alertController.textFields[1];
         NSString *client = clientTextField.text;
 
-        [[BLMDataManager sharedManager] createProjectWithName:projectName client:client schema:nil sessionByUid:nil completion:^(BLMProject *createdProject, NSError *error) {
+        [[BLMDataManager sharedManager] createProjectWithName:projectName client:client completion:^(BLMProject *createdProject, NSError *error) {
             if (error != nil) {
                 UIAlertController *errorAlertController = [UIAlertController alertControllerWithTitle:@"Error" message:error.userInfo[NSLocalizedDescriptionKey] preferredStyle:UIAlertControllerStyleAlert];
 
@@ -293,7 +294,7 @@ typedef NS_ENUM(NSInteger, TableSection) {
                 [self presentViewController:errorAlertController animated:YES completion:nil];
             } else {
                 assert(createdProject != nil);
-                assert([self.projectUidList.lastObject isEqual:createdProject.uid]);
+                assert([BLMUtils isObject:self.projectUidList.lastObject equalToObject:createdProject.uid]);
 
                 [self showDetailsForProjectUid:createdProject.uid];
             }

@@ -11,14 +11,18 @@
 
 extern NSString *const BLMDataManagerArchiveRestoredNotification;
 
-extern NSString *const BLMDataManagerProjectCreatedNotification;
-extern NSString *const BLMDataManagerProjectDeletedNotification;
-extern NSString *const BLMDataManagerProjectUpdatedNotification;
+extern NSString *const BLMProjectCreatedNotification;
+extern NSString *const BLMProjectDeletedNotification;
+extern NSString *const BLMProjectUpdatedNotification;
+
+extern NSString *const BLMProjectOldProjectUserInfoKey;
+extern NSString *const BLMProjectNewProjectUserInfoKey;
 
 
 @class BLMProject;
 @class BLMSchema;
 @class BLMSession;
+@class BLMSessionConfiguration;
 
 
 @interface BLMDataManager : NSObject
@@ -31,8 +35,8 @@ extern NSString *const BLMDataManagerProjectUpdatedNotification;
 - (NSIndexSet *)allProjectUids;
 - (BLMProject *)projectForUid:(NSNumber *)uid;
 
-- (void)createProjectWithName:(NSString *)name client:(NSString *)client schema:(BLMSchema *)schema sessionByUid:(NSDictionary<NSNumber *, BLMSession *> *)sessionByUid completion:(void(^)(BLMProject *createdProject, NSError *error))completion;
+- (void)createProjectWithName:(NSString *)name client:(NSString *)client completion:(void(^)(BLMProject *createdProject, NSError *error))completion;
 
-- (void)updateSchemaForProjectUid:(NSNumber *)projectUid toSchema:(BLMSchema *)schema;
+- (void)updateDefaultSessionConfigurationForProjectUid:(NSNumber *)projectUid configuration:(BLMSessionConfiguration *)configuration;
 
 @end

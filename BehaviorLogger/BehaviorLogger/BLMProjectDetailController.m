@@ -10,6 +10,7 @@
 #import "BLMProjectMenuController.h"
 #import "BLMDataManager.h"
 #import "BLMProject.h"
+#import "BLMUtils.h"
 
 
 @implementation BLMProjectDetailController
@@ -37,13 +38,11 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
 
-    self.view.backgroundColor = [UIColor grayColor];
+    self.view.backgroundColor = [UIColor lightGrayColor];
 
     BLMProject *project = [[BLMDataManager sharedManager] projectForUid:self.projectUid];
 
-    self.navigationItem.title = project.name;
-
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleProjectUpdated:) name:BLMDataManagerProjectUpdatedNotification object:project];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleProjectUpdated:) name:BLMProjectUpdatedNotification object:project];
 }
 
 
@@ -51,7 +50,7 @@
 
 - (void)handleProjectUpdated:(NSNotification *)notification {
     BLMProject *project = (BLMProject *)notification.object;
-    assert([self.projectUid isEqualToNumber:project.uid]);
+    assert([BLMUtils isNumber:self.projectUid equalToNumber:project.uid]);
 
     //TODO: Update UI
 }

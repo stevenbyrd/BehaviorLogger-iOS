@@ -13,8 +13,8 @@ extern NSUInteger const BLMProjectNameMinimumLength;
 extern NSUInteger const BLMProjectClientMinimumLength;
 
 
-@class BLMSchema;
 @class BLMSession;
+@class BLMSessionConfiguration;
 
 
 @interface BLMProject : NSObject <NSCoding>
@@ -22,9 +22,9 @@ extern NSUInteger const BLMProjectClientMinimumLength;
 @property (nonatomic, strong, readonly) NSNumber *uid;
 @property (nonatomic, copy, readonly) NSString *name;
 @property (nonatomic, copy, readonly) NSString *client;
-@property (nonatomic, strong, readonly) BLMSchema *schema;
+@property (nonatomic, strong, readonly) BLMSessionConfiguration *defaultSessionConfiguration;
 @property (nonatomic, copy, readonly) NSDictionary<NSNumber *, BLMSession *> *sessionByUid;
 
-- (instancetype)initWithUid:(NSNumber *)uid name:(NSString *)name client:(NSString *)client schema:(BLMSchema *)schema sessionByUid:(NSDictionary<NSNumber *, BLMSession *> *)sessionByUid;
+- (instancetype)initWithUid:(NSNumber *)uid name:(NSString *)name client:(NSString *)client defaultSessionConfiguration:(BLMSessionConfiguration *)defaultSessionConfiguration sessionByUid:(NSDictionary<NSNumber *, BLMSession *> *)sessionByUid;
 
 @end
