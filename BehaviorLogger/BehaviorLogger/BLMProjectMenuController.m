@@ -40,25 +40,9 @@ typedef NS_ENUM(NSInteger, TableSection) {
     }
 
     self.contentView.backgroundColor = [UIColor colorWithWhite:1.0 alpha:1.0];
+    self.textLabel.font = [UIFont systemFontOfSize:ProjectCellFontSize];
 
     return self;
-}
-
-- (void)prepareForReuse {
-    [super prepareForReuse];
-
-    self.textLabel.text = nil;
-    self.textLabel.font = [ProjectCell fontForSelected:NO];
-}
-
-- (void)setSelected:(BOOL)selected {
-    super.selected = selected;
-
-    self.textLabel.font = [ProjectCell fontForSelected:selected];
-}
-
-+ (UIFont *)fontForSelected:(BOOL)selected {
-    return (selected ? [UIFont boldSystemFontOfSize:ProjectCellFontSize] : [UIFont systemFontOfSize:ProjectCellFontSize]);
 }
 
 @end
@@ -115,13 +99,25 @@ typedef NS_ENUM(NSInteger, TableSection) {
 @interface BLMProjectMenuController () <UITableViewDelegate, UITableViewDataSource, UITextFieldDelegate>
 
 @property (nonatomic, strong, readonly) UITableView *tableView;
-@property (nonatomic, copy, readonly) NSArray<BLMProject *> *projectList;
+@property (nonatomic, copy, readonly) NSMutableArray<NSNumber *> *projectUidList;
 @property (nonatomic, strong) NSNumber *selectedProjectUid;
 
 @end
 
 
 @implementation BLMProjectMenuController
+
+- (instancetype)init {
+    self = [super init];
+
+    if (self == nil) {
+        return nil;
+    }
+
+    _projectUidList = [NSMutableArray array];
+
+    return self;
+}
 
 - (void)dealloc {
     [[NSNotificationCenter defaultCenter] removeObserver:self];
@@ -160,117 +156,53 @@ typedef NS_ENUM(NSInteger, TableSection) {
     assert([NSThread isMainThread]);
     assert(![BLMDataManager sharedManager].isRestoringArchive);
 
-    if (self.selectedProjectUid != nil) {
-        NSIndexPath *selectedIndexPath = self.tableView.indexPathForSelectedRow;
-        [self.tableView deselectRowAtIndexPath:selectedIndexPath animated:NO];
-    }
+    [self.projectUidList removeAllObjects];
 
-    NSIndexSet *finalUidSet = [BLMDataManager sharedManager].allProjectUids;
-    NSMutableArray<BLMProject *> *finalProjectList = [NSMutableArray array];
-    NSMutableArray<NSNumber *> *finalUidList = [NSMutableArray array];
-
-    if (finalUidSet.count > 0) {
-        [finalUidSet enumerateIndexesUsingBlock:^(NSUInteger uid, BOOL * _Nonnull stop) {
-            [finalUidList addObject:@(uid)];
-            [finalProjectList addObject:[[BLMDataManager sharedManager] projectForUid:@(uid)]];
-        }];
-    }
-
-    NSMutableIndexSet *originalUidSet = [NSMutableIndexSet indexSet];
-    NSMutableArray *originalUidList = [NSMutableArray array];
-
-    [self.projectList enumerateObjectsUsingBlock:^(BLMProject *project, NSUInteger idx, BOOL * _Nonnull stop) {
-        [originalUidSet addIndex:project.uid.integerValue];
-        [originalUidList addObject:project.uid];
+    [[BLMDataManager sharedManager].allProjectUids enumerateIndexesUsingBlock:^(NSUInteger uid, BOOL * _Nonnull stop) {
+        [self.projectUidList addObject:@(uid)];
     }];
 
-    NSMutableIndexSet *deletedUidSet = [originalUidSet mutableCopy];
-    [deletedUidSet removeIndexes:finalUidSet];
+    [self.tableView reloadData];
 
-    NSMutableIndexSet *insertedUidSet = [finalUidSet mutableCopy];
-    [insertedUidSet removeIndexes:originalUidSet];
-
-    NSMutableIndexSet *updatedUidSet = [finalUidSet mutableCopy];
-    [updatedUidSet removeIndexes:deletedUidSet];
-    [updatedUidSet removeIndexes:insertedUidSet];
-
-    NSArray *(^buildIndexPathList)(NSIndexSet *, NSArray *) = ^NSArray *(NSIndexSet *uidSet, NSArray *sourceUidList) {
-        NSMutableArray *indexPathList = [NSMutableArray array];
-
-        [uidSet enumerateIndexesUsingBlock:^(NSUInteger uid, BOOL * _Nonnull stop) {
-            NSInteger row = [sourceUidList indexOfObject:@(uid)];
-            assert(row != NSNotFound);
-
-            [indexPathList addObject:[NSIndexPath indexPathForRow:row inSection:TableSectionProjectList]];
-        }];
-
-        return indexPathList;
-    };
-
-    [self.tableView beginUpdates];
-
-    NSArray *deletedIndexPaths = buildIndexPathList(deletedUidSet, originalUidList);
-    [self.tableView deleteRowsAtIndexPaths:deletedIndexPaths withRowAnimation:UITableViewRowAnimationNone];
-
-    NSArray *updatedIndexPaths = buildIndexPathList(updatedUidSet, originalUidList);
-    [self.tableView reloadRowsAtIndexPaths:updatedIndexPaths withRowAnimation:UITableViewRowAnimationNone];
-
-    NSArray *insertedIndexPaths = buildIndexPathList(insertedUidSet, finalUidList);
-    [self.tableView insertRowsAtIndexPaths:insertedIndexPaths withRowAnimation:UITableViewRowAnimationNone];
-
-    _projectList = [finalProjectList copy];
-
-    [self.tableView endUpdates];
-
-    UINavigationController *detailController = self.splitViewController.viewControllers.lastObject;
-
-    if (self.projectList.count == 0) { // Remove the BLMProjectDetailController for the previously selected project, if present
-        [self selectProject:nil];
-        assert(self.selectedProjectUid == nil);
-    }
-
-    if (self.selectedProjectUid == nil) { // Automatically select the first project in the list if nothing has been selected and there are projects available
-        self.selectedProjectUid = self.projectList.firstObject.uid;
-    }
-
-    if (self.selectedProjectUid != nil) {
-        assert(self.projectList.count > 0);
-
-        NSInteger selectedIndex = [finalUidList indexOfObject:self.selectedProjectUid];
-
-        if (selectedIndex == NSNotFound) { // If the previously selected project is no longer available, automatically select the first listed project
-            self.selectedProjectUid = self.projectList.firstObject.uid;
-            assert(self.selectedProjectUid != nil);
-
-            selectedIndex = 0;
-        }
-
-        NSIndexPath *indexPath = [NSIndexPath indexPathForRow:selectedIndex inSection:TableSectionProjectList];
-        [self.tableView selectRowAtIndexPath:indexPath animated:NO scrollPosition:UITableViewScrollPositionNone];
-
-        BLMProjectDetailController *projectDetailController = detailController.viewControllers.firstObject;
-        assert(projectDetailController == detailController.topViewController);
-
-        [self selectProject:[[BLMDataManager sharedManager] projectForUid:self.selectedProjectUid]];
+    if (self.selectedProjectUid == nil) {
+        [self showDetailsForProjectUid:self.projectUidList.lastObject];
     }
 }
 
-- (void)selectProject:(BLMProject *)project {
+- (void)showDetailsForProjectUid:(NSNumber *)projectUid {
     assert([NSThread isMainThread]);
 
     UINavigationController *detailController = self.splitViewController.viewControllers.lastObject;
 
-    if ((project == nil) && (self.selectedProjectUid == nil)) {
+    if ((projectUid == nil) && (self.selectedProjectUid == nil)) {
         assert(detailController.viewControllers.count == 0);
         return;
     }
 
-    if ((project == nil) || ![self.selectedProjectUid isEqualToNumber:project.uid]) {
-        assert(detailController.viewControllers.count <= 1);
-        detailController.viewControllers = @[[[BLMProjectDetailController alloc] initWithProject:project]];
+    if (projectUid == nil) {
+        assert(self.selectedProjectUid != nil);
+        assert([detailController.topViewController isKindOfClass:[BLMProjectDetailController class]]);
 
-        self.selectedProjectUid = project.uid;
+        NSInteger selectedIndex = [self.projectUidList indexOfObject:self.selectedProjectUid];
+        assert(selectedIndex != NSNotFound);
+
+        NSIndexPath *selectedIndexPath = [NSIndexPath indexPathForRow:selectedIndex inSection:TableSectionProjectList];
+        [self.tableView deselectRowAtIndexPath:selectedIndexPath animated:NO];
+
+        detailController.viewControllers = @[];
+    } else if (![self.selectedProjectUid isEqualToNumber:projectUid]) {
+        assert(detailController.viewControllers.count <= 1);
+
+        NSInteger selectedIndex = [self.projectUidList indexOfObject:projectUid];
+        NSIndexPath *indexPath = [NSIndexPath indexPathForRow:selectedIndex inSection:TableSectionProjectList];
+        UITableViewScrollPosition scrollPosition = ((self.selectedProjectUid == nil) ? UITableViewScrollPositionBottom : UITableViewScrollPositionNone);
+        [self.tableView selectRowAtIndexPath:indexPath animated:YES scrollPosition:scrollPosition];
+
+        BLMProject *project = [[BLMDataManager sharedManager] projectForUid:projectUid];
+        detailController.viewControllers = @[[[BLMProjectDetailController alloc] initWithProject:project]];
     }
+
+    self.selectedProjectUid = projectUid;
 }
 
 #pragma mark Event Handling
@@ -281,17 +213,53 @@ typedef NS_ENUM(NSInteger, TableSection) {
 
 
 - (void)handleDataModelProjectCreated:(NSNotification *)notification {
-    [self refreshProjectList];
+    assert([NSThread isMainThread]);
+
+    BLMProject *project = (BLMProject *)notification.object;
+    NSNumber *projectUid = project.uid;
+    assert(![self.projectUidList containsObject:projectUid]);
+
+    [self.tableView beginUpdates];
+    [self.projectUidList addObject:projectUid];
+
+    NSIndexPath *indexPath = [NSIndexPath indexPathForItem:(self.projectUidList.count - 1) inSection:TableSectionProjectList];
+    [self.tableView insertRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationNone];
+    [self.tableView endUpdates];
 }
 
 
 - (void)handleDataModelProjectDeleted:(NSNotification *)notification {
-    [self refreshProjectList];
+    assert([NSThread isMainThread]);
+
+    BLMProject *project = (BLMProject *)notification.object;
+    NSNumber *projectUid = project.uid;
+    NSInteger index = [self.projectUidList indexOfObject:projectUid];
+
+    if (index != NSNotFound) {
+        [self.tableView beginUpdates];
+        [self.projectUidList removeObjectAtIndex:index];
+
+        NSIndexPath *indexPath = [NSIndexPath indexPathForItem:index inSection:TableSectionProjectList];
+        [self.tableView deleteRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationNone];
+        [self.tableView endUpdates];
+    }
+
+    if (self.selectedProjectUid == projectUid) {
+        [self showDetailsForProjectUid:nil];
+    }
 }
 
 
 - (void)handleDataModelProjectUpdated:(NSNotification *)notification {
-    [self refreshProjectList];
+    assert([NSThread isMainThread]);
+
+    BLMProject *project = (BLMProject *)notification.object;
+    NSInteger index = [self.projectUidList indexOfObject:project.uid];
+
+    if (index != NSNotFound) {
+        NSIndexPath *indexPath = [NSIndexPath indexPathForItem:index inSection:TableSectionProjectList];
+        [self.tableView reloadRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationNone];
+    }
 }
 
 #pragma mark Create Project
@@ -325,20 +293,9 @@ typedef NS_ENUM(NSInteger, TableSection) {
                 [self presentViewController:errorAlertController animated:YES completion:nil];
             } else {
                 assert(createdProject != nil);
-                assert([self.projectList.lastObject isEqual:createdProject]);
+                assert([self.projectUidList.lastObject isEqual:createdProject.uid]);
 
-                self.selectedProjectUid = createdProject.uid;
-
-                NSInteger selectedIndex = [self.projectList indexOfObject:createdProject];
-                assert(selectedIndex != NSNotFound);
-
-                NSIndexPath *selectedIndexPath = [NSIndexPath indexPathForRow:selectedIndex inSection:TableSectionProjectList];
-                [self.tableView selectRowAtIndexPath:selectedIndexPath animated:NO scrollPosition:UITableViewScrollPositionBottom];
-
-                UINavigationController *detailController = self.splitViewController.viewControllers.lastObject;
-                assert(detailController.viewControllers.count <= 1);
-
-                detailController.viewControllers = @[[[BLMProjectDetailController alloc] initWithProject:createdProject]];
+                [self showDetailsForProjectUid:createdProject.uid];
             }
         }];
     }];
@@ -346,6 +303,14 @@ typedef NS_ENUM(NSInteger, TableSection) {
     UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction * _Nonnull action) {
         [[NSNotificationCenter defaultCenter] removeObserver:projectNameTextFieldDidChangeObserver];
         [[NSNotificationCenter defaultCenter] removeObserver:clientTextFieldDidChangeObserver];
+
+        if (self.selectedProjectUid != nil) {
+            NSInteger index = [self.projectUidList indexOfObject:self.selectedProjectUid];
+            assert(index != NSNotFound);
+
+            NSIndexPath *indexPath = [NSIndexPath indexPathForItem:index inSection:TableSectionProjectList];
+            [self.tableView selectRowAtIndexPath:indexPath animated:NO scrollPosition:UITableViewScrollPositionNone];
+        }
     }];
 
     void (^textFieldDidChangeBlock)(NSNotification *) = ^(NSNotification * notification) {
@@ -393,7 +358,7 @@ typedef NS_ENUM(NSInteger, TableSection) {
 
     switch ((TableSection)section) {
         case TableSectionProjectList:
-            rowCount = self.projectList.count;
+            rowCount = self.projectUidList.count;
             break;
 
         case TableSectionCreateProject:
@@ -416,7 +381,11 @@ typedef NS_ENUM(NSInteger, TableSection) {
     switch (section) {
         case TableSectionProjectList: {
             ProjectCell *projectCell = [tableView dequeueReusableCellWithIdentifier:@"ProjectCell"];
-            projectCell.textLabel.text = self.projectList[indexPath.row].name;
+
+            NSNumber *projectUid = self.projectUidList[indexPath.row];
+            BLMProject *project = [[BLMDataManager sharedManager] projectForUid:projectUid];
+            projectCell.textLabel.text = project.name;
+
             cell = projectCell;
             break;
         }
@@ -444,7 +413,8 @@ typedef NS_ENUM(NSInteger, TableSection) {
 
     switch (section) {
         case TableSectionProjectList: {
-            [self selectProject:self.projectList[indexPath.row]];
+            NSNumber *projectUid = self.projectUidList[indexPath.row];
+            [self showDetailsForProjectUid:projectUid];
             break;
         }
 
