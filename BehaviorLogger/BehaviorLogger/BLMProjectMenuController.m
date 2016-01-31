@@ -11,12 +11,12 @@
 #import "BLMProjectDetailController.h"
 #import "BLMProjectMenuController.h"
 #import "BLMUtils.h"
+#import "BLMViewUtils.h"
 
 
 float const ProjectCellFontSize = 14.0;
 
 
-// TODO: TableSectionFilterByName,
 typedef NS_ENUM(NSInteger, TableSection) {
     TableSectionProjectList,
     TableSectionCreateProject,
@@ -81,11 +81,10 @@ typedef NS_ENUM(NSInteger, TableSection) {
     self.separatorView.translatesAutoresizingMaskIntoConstraints = NO;
 
     [self.contentView addSubview:self.separatorView];
-
-    [self.contentView addConstraint:[NSLayoutConstraint constraintWithItem:self.separatorView attribute:NSLayoutAttributeLeft relatedBy:NSLayoutRelationEqual toItem:self.contentView attribute:NSLayoutAttributeLeft multiplier:1.0 constant:0.0]];
-    [self.contentView addConstraint:[NSLayoutConstraint constraintWithItem:self.separatorView attribute:NSLayoutAttributeRight relatedBy:NSLayoutRelationEqual toItem:self.contentView attribute:NSLayoutAttributeRight multiplier:1.0 constant:0.0]];
-    [self.contentView addConstraint:[NSLayoutConstraint constraintWithItem:self.separatorView attribute:NSLayoutAttributeTop relatedBy:NSLayoutRelationEqual toItem:self.contentView attribute:NSLayoutAttributeTop multiplier:1.0 constant:0.0]];
-    [self.contentView addConstraint:[NSLayoutConstraint constraintWithItem:self.separatorView attribute:NSLayoutAttributeHeight relatedBy:NSLayoutRelationEqual toItem:nil attribute:NSLayoutAttributeNotAnAttribute multiplier:1.0 constant:1.0]];
+    [self.contentView addConstraint:[BLMViewUtils constraintWithItem:self.separatorView attribute:NSLayoutAttributeHeight equalToConstant:1.0]];
+    [self.contentView addConstraint:[BLMViewUtils constraintWithItem:self.separatorView attribute:NSLayoutAttributeWidth equalToItem:self.contentView constant:0.0]];
+    [self.contentView addConstraint:[BLMViewUtils constraintWithItem:self.separatorView attribute:NSLayoutAttributeCenterX equalToItem:self.contentView constant:0.0]];
+    [self.contentView addConstraint:[BLMViewUtils constraintWithItem:self.separatorView attribute:NSLayoutAttributeTop equalToItem:self.contentView constant:0.0]];
 
     self.contentView.backgroundColor = [UIColor colorWithWhite:1.0 alpha:1.0];
 
@@ -140,10 +139,7 @@ typedef NS_ENUM(NSInteger, TableSection) {
     self.tableView.translatesAutoresizingMaskIntoConstraints = NO;
 
     [self.view addSubview:self.tableView];
-    [self.view addConstraint:[NSLayoutConstraint constraintWithItem:self.tableView attribute:NSLayoutAttributeLeft relatedBy:NSLayoutRelationEqual toItem:self.view attribute:NSLayoutAttributeLeft multiplier:1.0 constant:0.0]];
-    [self.view addConstraint:[NSLayoutConstraint constraintWithItem:self.tableView attribute:NSLayoutAttributeRight relatedBy:NSLayoutRelationEqual toItem:self.view attribute:NSLayoutAttributeRight multiplier:1.0 constant:0.0]];
-    [self.view addConstraint:[NSLayoutConstraint constraintWithItem:self.tableView attribute:NSLayoutAttributeTop relatedBy:NSLayoutRelationEqual toItem:self.view attribute:NSLayoutAttributeTop multiplier:1.0 constant:0.0]];
-    [self.view addConstraint:[NSLayoutConstraint constraintWithItem:self.tableView attribute:NSLayoutAttributeBottom relatedBy:NSLayoutRelationEqual toItem:self.view attribute:NSLayoutAttributeBottom multiplier:1.0 constant:0.0]];
+    [self.view addConstraints:[BLMViewUtils constraintsForItem:self.tableView equalToItem:self.view]];
 
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleDataModelArchiveRestored:) name:BLMDataManagerArchiveRestoredNotification object:nil];
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleDataModelProjectCreated:) name:BLMProjectCreatedNotification object:nil];
@@ -185,9 +181,8 @@ typedef NS_ENUM(NSInteger, TableSection) {
         assert([detailController.topViewController isKindOfClass:[BLMProjectDetailController class]]);
 
         NSInteger selectedIndex = [self.projectUidList indexOfObject:self.selectedProjectUid];
-        assert(selectedIndex != NSNotFound);
-
         NSIndexPath *selectedIndexPath = [NSIndexPath indexPathForRow:selectedIndex inSection:TableSectionProjectList];
+
         [self.tableView deselectRowAtIndexPath:selectedIndexPath animated:NO];
 
         detailController.viewControllers = @[];
@@ -197,6 +192,7 @@ typedef NS_ENUM(NSInteger, TableSection) {
         NSInteger selectedIndex = [self.projectUidList indexOfObject:projectUid];
         NSIndexPath *indexPath = [NSIndexPath indexPathForRow:selectedIndex inSection:TableSectionProjectList];
         UITableViewScrollPosition scrollPosition = ((self.selectedProjectUid == nil) ? UITableViewScrollPositionBottom : UITableViewScrollPositionNone);
+
         [self.tableView selectRowAtIndexPath:indexPath animated:YES scrollPosition:scrollPosition];
 
         BLMProject *project = [[BLMDataManager sharedManager] projectForUid:projectUid];
@@ -358,17 +354,20 @@ typedef NS_ENUM(NSInteger, TableSection) {
     NSInteger rowCount = 0;
 
     switch ((TableSection)section) {
-        case TableSectionProjectList:
+        case TableSectionProjectList: {
             rowCount = self.projectUidList.count;
             break;
+        }
 
-        case TableSectionCreateProject:
+        case TableSectionCreateProject: {
             rowCount = 1;
             break;
+        }
 
-        case TableSectionCount:
+        case TableSectionCount: {
             assert(NO);
             break;
+        }
     }
 
     return rowCount;
@@ -377,9 +376,8 @@ typedef NS_ENUM(NSInteger, TableSection) {
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
     UITableViewCell *cell = nil;
-    TableSection section = indexPath.section;
 
-    switch (section) {
+    switch ((TableSection)indexPath.section) {
         case TableSectionProjectList: {
             ProjectCell *projectCell = [tableView dequeueReusableCellWithIdentifier:@"ProjectCell"];
 
@@ -397,9 +395,10 @@ typedef NS_ENUM(NSInteger, TableSection) {
             break;
         }
 
-        case TableSectionCount:
+        case TableSectionCount: {
             assert(NO);
             break;
+        }
     }
 
     return cell;
@@ -410,9 +409,7 @@ typedef NS_ENUM(NSInteger, TableSection) {
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
     assert(!self.splitViewController.isCollapsed);
 
-    TableSection section = indexPath.section;
-
-    switch (section) {
+    switch ((TableSection)indexPath.section) {
         case TableSectionProjectList: {
             NSNumber *projectUid = self.projectUidList[indexPath.row];
             [self showDetailsForProjectUid:projectUid];
@@ -425,9 +422,10 @@ typedef NS_ENUM(NSInteger, TableSection) {
             break;
         }
             
-        case TableSectionCount:
+        case TableSectionCount: {
             assert(NO);
             break;
+        }
     }
 }
 

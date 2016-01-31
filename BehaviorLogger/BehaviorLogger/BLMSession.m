@@ -6,8 +6,8 @@
 //  Copyright © 2016 3Bird. All rights reserved.
 //
 
+#import "BLMBehavior.h"
 #import "BLMSession.h"
-#import "BLMSchema.h"
 #import "BLMUtils.h"
 
 
@@ -24,8 +24,8 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
 
 @implementation BLMSessionConfiguration
 
-- (instancetype)initWitCondition:(NSString *)condition location:(NSString *)location therapist:(NSString *)therapist observer:(NSString *)observer timeLimitOptions:(BLMTimeLimitOptions)timeLimitOptions schema:(BLMSchema *)schema {
-    NSParameterAssert(schema != nil);
+- (instancetype)initWitCondition:(NSString *)condition location:(NSString *)location therapist:(NSString *)therapist observer:(NSString *)observer timeLimitOptions:(BLMTimeLimitOptions)timeLimitOptions behaviorList:(NSArray<BLMBehavior *> *)behaviorList {
+    NSParameterAssert(behaviorList != nil);
 
     self = [super init];
 
@@ -38,7 +38,7 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
     _therapist = [therapist copy];
     _observer = [observer copy];
     _timeLimitOptions = timeLimitOptions;
-    _schema = schema;
+    _behaviorList = [behaviorList copy];
 
     return self;
 }
@@ -51,7 +51,7 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
                         therapist:[aDecoder decodeObjectOfClass:[NSString class] forKey:@"therapist"]
                          observer:[aDecoder decodeObjectOfClass:[NSString class] forKey:@"observer"]
                  timeLimitOptions:[aDecoder decodeIntegerForKey:@"timeLimitOptions"]
-                           schema:[aDecoder decodeObjectOfClass:[BLMSchema class] forKey:@"schema"]];
+                           behaviorList:[aDecoder decodeObjectOfClasses:[NSSet setWithArray:@[[NSArray<BLMBehavior *> class], [BLMBehavior class]]] forKey:@"behaviorList"]];
 }
 
 
@@ -61,7 +61,7 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
     [aCoder encodeObject:self.therapist forKey:@"therapist"];
     [aCoder encodeObject:self.observer forKey:@"observer"];
     [aCoder encodeInteger:self.timeLimitOptions forKey:@"timeLimitOptions"];
-    [aCoder encodeObject:self.schema forKey:@"schema"];
+    [aCoder encodeObject:self.behaviorList forKey:@"behaviorList"];
     [aCoder encodeInteger:ArchiveVersionLatest forKey:ArchiveVersionKey];
 }
 
@@ -74,7 +74,7 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
             ^ self.location.hash
             ^ self.observer.hash
             ^ self.timeLimitOptions
-            ^ self.schema.hash);
+            ^ self.behaviorList.hash);
 }
 
 
@@ -90,7 +90,7 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
     return ([BLMUtils isString:self.condition equalToString:configuration.condition]
             && [BLMUtils isString:self.location equalToString:configuration.location]
             && [BLMUtils isString:self.observer equalToString:configuration.observer]
-            && [BLMUtils isObject:self.schema equalToObject:configuration.schema]
+            && [BLMUtils isArray:self.behaviorList equalToArray:configuration.behaviorList]
             && (self.timeLimitOptions == configuration.timeLimitOptions));
 }
 

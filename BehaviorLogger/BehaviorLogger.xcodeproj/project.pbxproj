@@ -8,14 +8,14 @@
 
 /* Begin PBXBuildFile section */
 		AA103CA11C5C5368006D2BC0 /* BLMUtils.m in Sources */ = {isa = PBXBuildFile; fileRef = AA103CA01C5C5368006D2BC0 /* BLMUtils.m */; };
-		AA62D05C1C3F6E8F00804CE5 /* BLMSchemaUpdateController.m in Sources */ = {isa = PBXBuildFile; fileRef = AA62D05B1C3F6E8F00804CE5 /* BLMSchemaUpdateController.m */; };
+		AA103CA41C5CBF90006D2BC0 /* BLMBehavior.m in Sources */ = {isa = PBXBuildFile; fileRef = AA103CA31C5CBF90006D2BC0 /* BLMBehavior.m */; };
+		AAB5616A1C5D775D00D454F8 /* BLMViewUtils.m in Sources */ = {isa = PBXBuildFile; fileRef = AAB561691C5D775D00D454F8 /* BLMViewUtils.m */; };
 		AABA33401C3D2FB10086A9A1 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = AABA333F1C3D2FB10086A9A1 /* main.m */; };
 		AABA33431C3D2FB10086A9A1 /* BLMAppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = AABA33421C3D2FB10086A9A1 /* BLMAppDelegate.m */; };
 		AABA334B1C3D2FB10086A9A1 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AABA334A1C3D2FB10086A9A1 /* Assets.xcassets */; };
 		AABA334E1C3D2FB10086A9A1 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = AABA334C1C3D2FB10086A9A1 /* LaunchScreen.storyboard */; };
 		AABA336B1C3D3CCB0086A9A1 /* BLMDataManager.m in Sources */ = {isa = PBXBuildFile; fileRef = AABA336A1C3D3CCB0086A9A1 /* BLMDataManager.m */; };
 		AABA33891C3DC4220086A9A1 /* BLMProject.m in Sources */ = {isa = PBXBuildFile; fileRef = AABA33881C3DC4210086A9A1 /* BLMProject.m */; };
-		AABA338C1C3DC4D30086A9A1 /* BLMSchema.m in Sources */ = {isa = PBXBuildFile; fileRef = AABA338B1C3DC4D30086A9A1 /* BLMSchema.m */; };
 		AABA338F1C3DC58A0086A9A1 /* BLMSession.m in Sources */ = {isa = PBXBuildFile; fileRef = AABA338E1C3DC58A0086A9A1 /* BLMSession.m */; };
 		AABA33921C3DCF990086A9A1 /* BLMProjectMenuController.m in Sources */ = {isa = PBXBuildFile; fileRef = AABA33911C3DCF990086A9A1 /* BLMProjectMenuController.m */; };
 		AABA33951C3DD0660086A9A1 /* BLMProjectDetailController.m in Sources */ = {isa = PBXBuildFile; fileRef = AABA33941C3DD0660086A9A1 /* BLMProjectDetailController.m */; };
@@ -24,8 +24,10 @@
 /* Begin PBXFileReference section */
 		AA103C9F1C5C5368006D2BC0 /* BLMUtils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BLMUtils.h; sourceTree = "<group>"; };
 		AA103CA01C5C5368006D2BC0 /* BLMUtils.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BLMUtils.m; sourceTree = "<group>"; };
-		AA62D05A1C3F6E8F00804CE5 /* BLMSchemaUpdateController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BLMSchemaUpdateController.h; sourceTree = "<group>"; };
-		AA62D05B1C3F6E8F00804CE5 /* BLMSchemaUpdateController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BLMSchemaUpdateController.m; sourceTree = "<group>"; };
+		AA103CA21C5CBF90006D2BC0 /* BLMBehavior.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BLMBehavior.h; sourceTree = "<group>"; };
+		AA103CA31C5CBF90006D2BC0 /* BLMBehavior.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BLMBehavior.m; sourceTree = "<group>"; };
+		AAB561681C5D775D00D454F8 /* BLMViewUtils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BLMViewUtils.h; sourceTree = "<group>"; };
+		AAB561691C5D775D00D454F8 /* BLMViewUtils.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BLMViewUtils.m; sourceTree = "<group>"; };
 		AABA333B1C3D2FB10086A9A1 /* BehaviorLogger.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BehaviorLogger.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		AABA333F1C3D2FB10086A9A1 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		AABA33411C3D2FB10086A9A1 /* BLMAppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = BLMAppDelegate.h; sourceTree = "<group>"; };
@@ -37,8 +39,6 @@
 		AABA336A1C3D3CCB0086A9A1 /* BLMDataManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BLMDataManager.m; sourceTree = "<group>"; };
 		AABA33871C3DC4210086A9A1 /* BLMProject.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BLMProject.h; sourceTree = "<group>"; };
 		AABA33881C3DC4210086A9A1 /* BLMProject.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BLMProject.m; sourceTree = "<group>"; };
-		AABA338A1C3DC4D30086A9A1 /* BLMSchema.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BLMSchema.h; sourceTree = "<group>"; };
-		AABA338B1C3DC4D30086A9A1 /* BLMSchema.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BLMSchema.m; sourceTree = "<group>"; };
 		AABA338D1C3DC58A0086A9A1 /* BLMSession.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BLMSession.h; sourceTree = "<group>"; };
 		AABA338E1C3DC58A0086A9A1 /* BLMSession.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BLMSession.m; sourceTree = "<group>"; };
 		AABA33901C3DCF990086A9A1 /* BLMProjectMenuController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BLMProjectMenuController.h; sourceTree = "<group>"; };
@@ -58,6 +58,17 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		AAB561671C5D772D00D454F8 /* Utilities */ = {
+			isa = PBXGroup;
+			children = (
+				AA103C9F1C5C5368006D2BC0 /* BLMUtils.h */,
+				AA103CA01C5C5368006D2BC0 /* BLMUtils.m */,
+				AAB561681C5D775D00D454F8 /* BLMViewUtils.h */,
+				AAB561691C5D775D00D454F8 /* BLMViewUtils.m */,
+			);
+			name = Utilities;
+			sourceTree = "<group>";
+		};
 		AABA33321C3D2FB10086A9A1 = {
 			isa = PBXGroup;
 			children = (
@@ -79,8 +90,7 @@
 			children = (
 				AABA33411C3D2FB10086A9A1 /* BLMAppDelegate.h */,
 				AABA33421C3D2FB10086A9A1 /* BLMAppDelegate.m */,
-				AA103C9F1C5C5368006D2BC0 /* BLMUtils.h */,
-				AA103CA01C5C5368006D2BC0 /* BLMUtils.m */,
+				AAB561671C5D772D00D454F8 /* Utilities */,
 				AABA335B1C3D39090086A9A1 /* Model */,
 				AABA33571C3D32540086A9A1 /* Controllers */,
 				AABA333E1C3D2FB10086A9A1 /* Supporting Files */,
@@ -106,8 +116,6 @@
 				AABA33911C3DCF990086A9A1 /* BLMProjectMenuController.m */,
 				AABA33931C3DD0660086A9A1 /* BLMProjectDetailController.h */,
 				AABA33941C3DD0660086A9A1 /* BLMProjectDetailController.m */,
-				AA62D05A1C3F6E8F00804CE5 /* BLMSchemaUpdateController.h */,
-				AA62D05B1C3F6E8F00804CE5 /* BLMSchemaUpdateController.m */,
 			);
 			name = Controllers;
 			sourceTree = "<group>";
@@ -119,8 +127,8 @@
 				AABA336A1C3D3CCB0086A9A1 /* BLMDataManager.m */,
 				AABA33871C3DC4210086A9A1 /* BLMProject.h */,
 				AABA33881C3DC4210086A9A1 /* BLMProject.m */,
-				AABA338A1C3DC4D30086A9A1 /* BLMSchema.h */,
-				AABA338B1C3DC4D30086A9A1 /* BLMSchema.m */,
+				AA103CA21C5CBF90006D2BC0 /* BLMBehavior.h */,
+				AA103CA31C5CBF90006D2BC0 /* BLMBehavior.m */,
 				AABA338D1C3DC58A0086A9A1 /* BLMSession.h */,
 				AABA338E1C3DC58A0086A9A1 /* BLMSession.m */,
 			);
@@ -196,13 +204,13 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				AA62D05C1C3F6E8F00804CE5 /* BLMSchemaUpdateController.m in Sources */,
 				AABA33951C3DD0660086A9A1 /* BLMProjectDetailController.m in Sources */,
+				AA103CA41C5CBF90006D2BC0 /* BLMBehavior.m in Sources */,
 				AABA33891C3DC4220086A9A1 /* BLMProject.m in Sources */,
 				AA103CA11C5C5368006D2BC0 /* BLMUtils.m in Sources */,
 				AABA338F1C3DC58A0086A9A1 /* BLMSession.m in Sources */,
-				AABA338C1C3DC4D30086A9A1 /* BLMSchema.m in Sources */,
 				AABA336B1C3D3CCB0086A9A1 /* BLMDataManager.m in Sources */,
+				AAB5616A1C5D775D00D454F8 /* BLMViewUtils.m in Sources */,
 				AABA33431C3D2FB10086A9A1 /* BLMAppDelegate.m in Sources */,
 				AABA33921C3DCF990086A9A1 /* BLMProjectMenuController.m in Sources */,
 				AABA33401C3D2FB10086A9A1 /* main.m in Sources */,

@@ -8,7 +8,6 @@
 
 #import "BLMProject.h"
 #import "BLMSession.h"
-#import "BLMSchema.h"
 #import "BLMUtils.h"
 
 

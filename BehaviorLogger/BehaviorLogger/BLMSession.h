@@ -9,7 +9,7 @@
 #import <Foundation/Foundation.h>
 
 
-@class BLMSchema;
+@class BLMBehavior;
 
 
 typedef NS_OPTIONS(NSInteger, BLMTimeLimitOptions) {
@@ -19,6 +19,8 @@ typedef NS_OPTIONS(NSInteger, BLMTimeLimitOptions) {
 };
 
 
+#pragma mark
+
 @interface BLMSessionConfiguration : NSObject <NSCoding>
 
 @property (nonatomic, copy, readonly) NSString *condition;
@@ -26,12 +28,14 @@ typedef NS_OPTIONS(NSInteger, BLMTimeLimitOptions) {
 @property (nonatomic, copy, readonly) NSString *therapist;
 @property (nonatomic, copy, readonly) NSString *observer;
 @property (nonatomic, assign, readonly) BLMTimeLimitOptions timeLimitOptions;
-@property (nonatomic, strong, readonly) BLMSchema *schema;
+@property (nonatomic, copy, readonly) NSArray<BLMBehavior *> *behaviorList;
 
-- (instancetype)initWitCondition:(NSString *)condition location:(NSString *)location therapist:(NSString *)therapist observer:(NSString *)observer timeLimitOptions:(BLMTimeLimitOptions)timeLimitOptions schema:(BLMSchema *)schema;
+- (instancetype)initWitCondition:(NSString *)condition location:(NSString *)location therapist:(NSString *)therapist observer:(NSString *)observer timeLimitOptions:(BLMTimeLimitOptions)timeLimitOptions behaviorList:(NSArray<BLMBehavior *> *)behaviorList;
 
 @end
 
+
+#pragma mark
 
 @interface BLMSession : NSObject <NSCoding>
 

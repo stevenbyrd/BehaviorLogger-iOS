@@ -20,7 +20,6 @@ extern NSString *const BLMProjectNewProjectUserInfoKey;
 
 
 @class BLMProject;
-@class BLMSchema;
 @class BLMSession;
 @class BLMSessionConfiguration;
 
