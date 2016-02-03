@@ -19,6 +19,14 @@ extern NSString *const BLMProjectOldProjectUserInfoKey;
 extern NSString *const BLMProjectNewProjectUserInfoKey;
 
 
+typedef NS_ENUM(NSUInteger, BLMProjectProperty) {
+    BLMProjectPropertyName,
+    BLMProjectPropertyClient,
+    BLMProjectPropertyDefaultSessionConfiguration,
+    BLMProjectPropertyCount
+};
+
+
 @class BLMProject;
 @class BLMSession;
 @class BLMSessionConfiguration;
@@ -34,8 +42,7 @@ extern NSString *const BLMProjectNewProjectUserInfoKey;
 - (NSIndexSet *)allProjectUids;
 - (BLMProject *)projectForUid:(NSNumber *)uid;
 
-- (void)createProjectWithName:(NSString *)name client:(NSString *)client completion:(void(^)(BLMProject *createdProject, NSError *error))completion;
-
-- (void)updateDefaultSessionConfigurationForProjectUid:(NSNumber *)projectUid configuration:(BLMSessionConfiguration *)configuration;
+- (void)createProjectWithName:(NSString *)name client:(NSString *)client completion:(void(^)(BLMProject *project, NSError *error))completion;
+- (void)applyUpdateForProjectUid:(NSNumber *)projectUid property:(BLMProjectProperty)property value:(id)value;
 
 @end

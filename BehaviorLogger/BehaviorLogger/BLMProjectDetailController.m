@@ -7,11 +7,15 @@
 //
 
 #import "BLMBehavior.h"
+#import "BLMButtonCell.h"
+#import "BLMCollectionViewCell.h"
 #import "BLMDataManager.h"
+#import "BLMPaddedTextField.h"
 #import "BLMProject.h"
 #import "BLMProjectDetailController.h"
 #import "BLMProjectMenuController.h"
 #import "BLMSession.h"
+#import "BLMTextInputCell.h"
 #import "BLMUtils.h"
 #import "BLMViewUtils.h"
 
@@ -20,21 +24,21 @@
  ` ### Anatomy of UICollectionView Sections
  `
  ` Header Origin -> *--------------------------* <- Section Width
- `                  |           Header         |
+ `                  |          Header          |
  ` Header Height -> *--------------------------*
- `                  |      Top Item Inset      |
+ `                  |                          |
  `                  |   *..................*   |
- `                  |   .                  .   |
- `                  | L .                  . R |
- `                  |   .                  .   |
- `                  | I .     Item Area    . I |
- `                  | n .                  . n |
- `                  | s . (Dynamic Height) . s |
- `                  | e .                  . e |
- `                  | t .                  . t |
- `                  |   .                  .   |
+ `                  |   .   Content Area   .   |
+ `                  |   .   ............   .   |
+ `                  |   .   .          .   .   |
+ `                  |   .   .   Item   .   .   |
+ `                  |   .   .   Grid   .   .   |
+ `                  |   .   .          .   .   |
+ `                  |   .   .          .   .   |
+ `                  |   .   ............   .   |
+ `                  |   .[Item Grid Insets].   |
  `                  |   *..................*   |
- `                  |     Bottom Item Inset    |
+ `                  |  [Content Area Insets]   |
  ` Footer Origin -> *--------------------------*
  `                  |          Footer          |
  ` Footer Height -> *--------------------------* <- Section Height
@@ -44,81 +48,252 @@
 
 #pragma mark Supplementary View
 
-static NSInteger const SupplementaryViewIndexPathItem = -1;
+static NSString *const SectionHeaderViewType = @"SectionHeaderViewType";
+static NSString *const SectionSeparatorViewType = @"SectionSeparatorViewType";
+static NSString *const SectionBackgroundViewType = @"SectionBackgroundViewType";
 
-static CGFloat const SectionHeaderHeight = 10.0;
-static CGFloat const SectionHeaderFontSize = 14.0;
-static CGFloat const SectionHeaderBaselineOffset = -9.5;
-static CGFloat const SectionHeaderSeparatorHeight = 1.0;
-
-static float const SectionFooterHeight = 10.0;
-
-
-#pragma mark Section Item Layout
-
-typedef struct ItemAreaLayout {
-    NSUInteger const    ColumnCount;
-    CGFloat const       ItemHeight;
-    CGFloat const       ItemSpacing;
-    UIEdgeInsets const  Insets;
-} ItemAreaLayout;
-
-
-static ItemAreaLayout const ItemAreaLayoutNull;
-
-
-static ItemAreaLayout const BasicInfoItemAreaLayout = {
-    .ColumnCount = 2,
-    .ItemHeight = 60.0,
-    .ItemSpacing = 3.0,
-    .Insets = {
-        .top = 0.0,
-        .left = 8.0,
-        .bottom = 0.0,
-        .right = 8.0
-    }
+typedef NS_ENUM(NSInteger, SupplementaryViewItem) {
+    SupplementaryViewItemSectionHeader = -1,
+    SupplementaryViewItemSectionBackground = -2,
+    SupplementaryViewItemSectionFooter = -3,
+    SupplementaryViewItemCount = -4
 };
 
-static ItemAreaLayout const SessionPropertiesItemAreaLayout = {
-    .ColumnCount = 2,
-    .ItemHeight = 60.0,
-    .ItemSpacing = 3.0,
-    .Insets = {
-        .top = 0.0,
-        .left = 8.0,
-        .bottom = 0.0,
-        .right = 8.0
-    }
+static CGFloat const SectionHeaderHeight = 30.0;
+static CGFloat const SectionHeaderTitleFontSize = 18.0;
+static CGFloat const SectionHeaderTitleBaselineInset = 9.5;
+static CGFloat const SectionHeaderTitleLeftInset = 10.0;
+
+static CGFloat const SectionSeparatorHeight = 1.0;
+static CGFloat const SectionSeparatorLeftInset = 30.0;
+static CGFloat const SectionSeparatorRightInset = 30.0;
+
+
+#pragma mark
+
+typedef struct ItemGridLayout {
+    NSInteger const ColumnCount;
+    CGFloat const ColumnSpacing;
+    CGFloat const RowSpacing;
+    CGFloat const RowHeight;
+    UIEdgeInsets const Insets;
+} ItemGridLayout;
+
+
+typedef struct ContentAreaLayout {
+    BOOL const HasBackground;
+    UIEdgeInsets const Insets;
+    ItemGridLayout const ItemGrid;
+} ContentAreaLayout;
+
+
+typedef struct SectionLayout {
+    CGFloat const HeaderHeight;
+    ContentAreaLayout const ContentArea;
+    CGFloat const FooterHeight;
+} SectionLayout;
+
+
+static SectionLayout const SectionLayoutNull;
+
+
+#pragma mark
+
+typedef NS_ENUM(NSInteger, ProjectDetailSection) {
+    ProjectDetailSectionBasicInfo,
+    ProjectDetailSectionSessionProperties,
+    ProjectDetailSectionBehaviors,
+    ProjectDetailSectionActionButtons,
+    ProjectDetailSectionCount
 };
 
-static ItemAreaLayout const BehaviorsItemAreaLayout = {
-    .ColumnCount = 2,
-    .ItemSpacing = 3.0,
-    .ItemHeight = 60.0,
-    .Insets = {
-        .top = 0.0,
-        .left = 8.0,
-        .bottom = 0.0,
-        .right = 8.0
-    }
+
+typedef NS_ENUM(NSInteger, BasicInfoSectionItem) {
+    BasicInfoSectionItemProjectName,
+    BasicInfoSectionItemClientName,
+    BasicInfoSectionItemCount
 };
 
-static ItemAreaLayout const ActionButtonsItemAreaLayout = {
-    .ColumnCount = 2,
-    .ItemSpacing = 3.0,
-    .ItemHeight = 40.0,
-    .Insets = {
-        .top = 0.0,
-        .left = 100.0,
-        .bottom = 0.0,
-        .right = 100.0
-    }
+
+typedef NS_ENUM(NSInteger, SessionPropertiesSectionItem) {
+    SessionPropertiesSectionItemCondition,
+    SessionPropertiesSectionItemLocation,
+    SessionPropertiesSectionItemTherapist,
+    SessionPropertiesSectionItemObserver,
+    SessionPropertiesSectionItemCount
+};
+
+
+typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
+    ActionButtonsSectionItemCreateSession,
+    ActionButtonsSectionItemViewSessionHistory,
+    ActionButtonsSectionItemDeleteProject,
+    ActionButtonsSectionItemCount
 };
 
 
 #pragma mark
 
-@implementation BLMProjectDetailCollectionViewLayout
+@interface SectionHeaderView : UICollectionReusableView
+
+@property (nonatomic, strong, readonly) UILabel *label;
+
+@end
+
+
+@implementation SectionHeaderView
+
+- (instancetype)initWithFrame:(CGRect)frame {
+    self = [super initWithFrame:frame];
+
+    if (self == nil) {
+        return nil;
+    }
+
+    self.layer.borderWidth = 1.0;
+    self.layer.borderColor = [BLMViewUtils colorWithHexValue:BLMColorHexCodeBlue alpha:0.3].CGColor;
+
+    _label = [[UILabel alloc] initWithFrame:CGRectZero];
+
+    [self.label setContentHuggingPriority:UILayoutPriorityRequired forAxis:UILayoutConstraintAxisVertical];
+    [self.label setContentHuggingPriority:UILayoutPriorityRequired forAxis:UILayoutConstraintAxisHorizontal];
+
+    [self.label setContentCompressionResistancePriority:UILayoutPriorityRequired forAxis:UILayoutConstraintAxisVertical];
+    [self.label setContentCompressionResistancePriority:UILayoutPriorityRequired forAxis:UILayoutConstraintAxisHorizontal];
+
+    self.label.textColor = [UIColor darkTextColor];
+    self.label.font = [UIFont boldSystemFontOfSize:SectionHeaderTitleFontSize];
+    self.label.translatesAutoresizingMaskIntoConstraints = NO;
+
+    [self addSubview:self.label];
+    [self addConstraint:[BLMViewUtils constraintWithItem:self.label attribute:NSLayoutAttributeLeft equalToItem:self constant:SectionHeaderTitleLeftInset]];
+    [self addConstraint:[BLMViewUtils constraintWithItem:self.label attribute:NSLayoutAttributeBaseline equalToItem:self attribute:NSLayoutAttributeBottom constant:-SectionHeaderTitleBaselineInset]];
+
+    return self;
+}
+
+
+- (void)layoutSubviews {
+    [super layoutSubviews];
+
+    self.label.preferredMaxLayoutWidth = CGRectGetWidth([self.label alignmentRectForFrame:self.label.frame]);
+
+    [super layoutSubviews];
+}
+
+@end
+
+
+#pragma mark
+
+@interface SectionSeparatorView : UICollectionReusableView
+
+@end
+
+
+@implementation SectionSeparatorView
+
+- (instancetype)initWithFrame:(CGRect)frame {
+    self = [super initWithFrame:frame];
+
+    if (self == nil) {
+        return nil;
+    }
+
+    UIView *separatorView = [[UIView alloc] init];
+
+    separatorView.backgroundColor = [BLMViewUtils colorWithHexValue:BLMColorHexCodeBlue alpha:0.3];
+    separatorView.translatesAutoresizingMaskIntoConstraints = NO;
+
+    [self addSubview:separatorView];
+    [self addConstraint:[BLMViewUtils constraintWithItem:separatorView attribute:NSLayoutAttributeLeft equalToItem:self constant:SectionSeparatorLeftInset]];
+    [self addConstraint:[BLMViewUtils constraintWithItem:separatorView attribute:NSLayoutAttributeRight equalToItem:self constant:-SectionSeparatorRightInset]];
+    [self addConstraint:[BLMViewUtils constraintWithItem:separatorView attribute:NSLayoutAttributeBottom equalToItem:self constant:0.0]];
+    [self addConstraint:[BLMViewUtils constraintWithItem:separatorView attribute:NSLayoutAttributeHeight equalToConstant:1.0]];
+    
+    return self;
+}
+
+@end
+
+
+#pragma mark
+
+@interface SectionBackgroundView : UICollectionReusableView
+
+@end
+
+
+@implementation SectionBackgroundView
+
+- (instancetype)initWithFrame:(CGRect)frame {
+    self = [super initWithFrame:frame];
+
+    if (self == nil) {
+        return nil;
+    }
+
+    self.layer.backgroundColor = [BLMViewUtils colorWithHexValue:BLMColorHexCodeDarkBackground alpha:1.0].CGColor;
+    self.layer.cornerRadius = 10.0;
+
+    return self;
+}
+
+@end
+
+
+#pragma mark
+
+@interface EditBehaviorCell : BLMCollectionViewCell
+
+@property (nonatomic, strong, readonly) UITextField *textField;
+@property (nonatomic, strong, readonly) UISwitch *toggleSwitch;
+
+@end
+
+
+@implementation EditBehaviorCell
+
+- (instancetype)initWithFrame:(CGRect)frame {
+    self = [super initWithFrame:frame];
+
+    if (self == nil) {
+        return nil;
+    }
+
+    self.contentView.layer.borderWidth = 0.0;
+    self.contentView.backgroundColor = [BLMViewUtils colorWithHexValue:BLMColorHexCodePurple alpha:1.0];
+
+    return self;
+}
+
+@end
+
+
+#pragma mark
+
+@class ProjectDetailCollectionViewLayout;
+
+
+@protocol ProjectDetailCollectionViewLayoutDelegate <UICollectionViewDelegate>
+
+- (SectionLayout)projectDetailCollectionViewLayout:(ProjectDetailCollectionViewLayout *)layout layoutForSection:(ProjectDetailSection)section;
+
+@end
+
+
+@interface ProjectDetailCollectionViewLayout : UICollectionViewLayout
+
+@property (nonatomic, weak, readonly) id<ProjectDetailCollectionViewLayoutDelegate> layoutDelegate;
+@property (nonatomic, assign, readonly) CGSize collectionViewContentSize;
+@property (nonatomic, copy, readonly) NSMutableArray<NSValue *> *sectionFrameList;
+@property (nonatomic, copy, readonly) NSMutableDictionary<NSIndexPath *, UICollectionViewLayoutAttributes *> *itemAttributesByIndexPath;
+@property (nonatomic, copy, readonly) NSDictionary<NSIndexPath *, UICollectionViewLayoutAttributes *> *previousItemAttributesByIndexPath;
+
+@end
+
+
+@implementation ProjectDetailCollectionViewLayout
 
 - (instancetype)init {
     self = [super init];
@@ -127,9 +302,6 @@ static ItemAreaLayout const ActionButtonsItemAreaLayout = {
 
     _collectionViewContentSize = CGSizeZero;
     _sectionFrameList = [NSMutableArray array];
-    _sessionIndexPathList = [NSMutableArray array];
-    _itemAttributesByIndexPath = [NSMutableDictionary dictionary];
-    _supplementaryViewAttributesByIndexPathByKind = @{ UICollectionElementKindSectionHeader : [NSMutableDictionary dictionary], UICollectionElementKindSectionFooter : [NSMutableDictionary dictionary] };
 
     return self;
 }
@@ -138,181 +310,161 @@ static ItemAreaLayout const ActionButtonsItemAreaLayout = {
 - (void)prepareLayout {
     [super prepareLayout];
 
-    [self.sectionFrameList removeAllObjects];
-    [self.sessionIndexPathList removeAllObjects];
-    [self.itemAttributesByIndexPath removeAllObjects];
-    [self.supplementaryViewAttributesByIndexPathByKind[UICollectionElementKindSectionHeader] removeAllObjects];
-    [self.supplementaryViewAttributesByIndexPathByKind[UICollectionElementKindSectionFooter] removeAllObjects];
 
-    CGSize collectionViewContentSize = {
+
+    [self.sectionFrameList removeAllObjects];
+
+    _previousItemAttributesByIndexPath = self.itemAttributesByIndexPath;
+    _itemAttributesByIndexPath = [NSMutableDictionary dictionary];
+
+    _collectionViewContentSize = (CGSize) {
         .width = CGRectGetWidth(self.collectionView.bounds),
         .height = 0.0
     };
 
-    for (BLMProjectDetailSection section = 0; section < BLMProjectDetailSectionCount; section += 1) {
-        [self.sessionIndexPathList addObject:[NSMutableArray array]];
+    for (ProjectDetailSection section = 0; section < ProjectDetailSectionCount; section += 1) {
+        SectionLayout Layout = [self.layoutDelegate projectDetailCollectionViewLayout:self layoutForSection:section];
 
-        // Prepare Header Layout
+#pragma mark Section Header Layout
 
         CGRect headerFrame = {
             .origin = {
                 .x = CGRectGetMinX(self.collectionView.bounds),
-                .y = collectionViewContentSize.height // Positioned below previous section at the bottom edge of collectionViewContentSize, the height of which will later increase to accomodate this section
-            },
-            .size = CGSizeZero
-        };
-
-        switch (section) {
-            case BLMProjectDetailSectionSessionProperties:
-            case BLMProjectDetailSectionBehaviors: {
-                headerFrame.size = (CGSize) {
-                    .width = collectionViewContentSize.width,
-                    .height = SectionHeaderHeight
-                };
-
-                NSIndexPath *indexPath = [NSIndexPath indexPathForItem:SupplementaryViewIndexPathItem inSection:section];
-
-                UICollectionViewLayoutAttributes *attributes = [UICollectionViewLayoutAttributes layoutAttributesForSupplementaryViewOfKind:UICollectionElementKindSectionHeader withIndexPath:indexPath];
-                attributes.frame = headerFrame;
-
-                self.supplementaryViewAttributesByIndexPathByKind[UICollectionElementKindSectionHeader][indexPath] = attributes;
-                [self.sessionIndexPathList[section] addObject:indexPath];
-
-                break;
-            }
-
-            case BLMProjectDetailSectionBasicInfo:
-            case BLMProjectDetailSectionActionButtons: {
-                break;
-            }
-
-            case BLMProjectDetailSectionCount: {
-                assert(NO);
-                break;
-            }
-        }
-
-        // Prepare Item Area Layout
-
-        ItemAreaLayout const ItemArea = [BLMProjectDetailCollectionViewLayout itemAreaLayoutForSection:section];
-
-        NSInteger itemCount = [self.collectionView numberOfItemsInSection:section];
-        NSInteger rowCount = ceilf(itemCount / ItemArea.ColumnCount);
-
-        CGRect itemAreaFrame = {
-            .origin = {
-                .x = ItemArea.Insets.left, // Shifted right by item area inset
-                .y = (CGRectGetMaxY(headerFrame) + ItemArea.Insets.top) // Positioned below the header and shifted down by item area top inset
+                .y = _collectionViewContentSize.height // Positioned below previous section at the bottom edge of collectionViewContentSize, the height of which will later increase to accomodate this section
             },
             .size = {
-                .width = (collectionViewContentSize.width - ItemArea.Insets.left - ItemArea.Insets.right), // Width reduced by item area left/right insets
-                .height = ((rowCount * ItemArea.ItemHeight) + (ItemArea.ItemSpacing * (rowCount - 1))) // Height calculated from item height/spacing and the number of rows required
+                .width = CGRectGetWidth(self.collectionView.bounds),
+                .height = Layout.HeaderHeight
             }
         };
 
-        assert(collectionViewContentSize.width == (itemAreaFrame.size.width + ItemArea.Insets.left + ItemArea.Insets.right));
+        if (CGRectGetHeight(headerFrame)) {
+            NSIndexPath *indexPath = [NSIndexPath indexPathForItem:SupplementaryViewItemSectionHeader inSection:section];
+            UICollectionViewLayoutAttributes *attributes = [UICollectionViewLayoutAttributes layoutAttributesForSupplementaryViewOfKind:SectionHeaderViewType withIndexPath:indexPath];
 
-        CGFloat itemWidth = ((CGRectGetWidth(itemAreaFrame) // To find the width of item cells in this section, start with the item area width...
-                              - (ItemArea.ItemSpacing * (ItemArea.ColumnCount - 1))) // ...then isolate the horizontal space available to item cells by subtracting the item spacing...
-                             / ItemArea.ColumnCount); // ...and divide the remaining space by the number of columns
+            attributes.frame = headerFrame;
 
-        for (NSUInteger itemIndex = 0; itemIndex < itemCount; itemIndex += 1) {
-            NSInteger column = (itemIndex % ItemArea.ColumnCount);
-            NSInteger row = (itemIndex / ItemArea.ColumnCount);
+            self.itemAttributesByIndexPath[indexPath] = attributes;
+        }
 
+#pragma mark Content Area Layout
+
+        NSInteger itemCount = [self.collectionView numberOfItemsInSection:section];
+        NSInteger rowCount = ceilf(itemCount / (CGFloat)Layout.ContentArea.ItemGrid.ColumnCount);
+
+        CGRect contentAreaFrame = {
+            .origin = {
+                .x = CGRectGetMinX(self.collectionView.bounds) + Layout.ContentArea.Insets.left, // Shifted right by item area inset
+                .y = (CGRectGetMaxY(headerFrame) + Layout.ContentArea.Insets.top) // Positioned below the header and shifted down by item area top inset
+            },
+            .size = {
+                .width = (CGRectGetWidth(self.collectionView.bounds) - Layout.ContentArea.Insets.left - Layout.ContentArea.Insets.right), // Width reduced by item area left/right insets
+                .height = ((rowCount * Layout.ContentArea.ItemGrid.RowHeight) // Space necessary for the item grid rows...
+                           + (Layout.ContentArea.ItemGrid.RowSpacing * (rowCount - 1)) // ...plus the space necessary for the item grid row spacing...
+                           + Layout.ContentArea.ItemGrid.Insets.top + Layout.ContentArea.ItemGrid.Insets.bottom) // ...plus the splace necessary for the item grid insets
+            }
+        };
+
+        assert(CGRectGetWidth(self.collectionView.bounds) == (CGRectGetWidth(contentAreaFrame) + Layout.ContentArea.Insets.left + Layout.ContentArea.Insets.right));
+
+        if (Layout.ContentArea.HasBackground) {
+            NSIndexPath *indexPath = [NSIndexPath indexPathForItem:SupplementaryViewItemSectionBackground inSection:section];
+            UICollectionViewLayoutAttributes *attributes = [UICollectionViewLayoutAttributes layoutAttributesForSupplementaryViewOfKind:SectionBackgroundViewType withIndexPath:indexPath];
+
+            attributes.frame = contentAreaFrame;
+
+            self.itemAttributesByIndexPath[indexPath] = attributes;
+        }
+
+#pragma mark Item Grid Layout
+
+        CGRect itemGridFrame = {
+            .origin = {
+                .x = (CGRectGetMinX(contentAreaFrame) + Layout.ContentArea.ItemGrid.Insets.left),
+                .y = (CGRectGetMinY(contentAreaFrame) + Layout.ContentArea.ItemGrid.Insets.top)
+            },
+            .size = {
+                .width = (CGRectGetWidth(contentAreaFrame) - Layout.ContentArea.ItemGrid.Insets.left - Layout.ContentArea.ItemGrid.Insets.right),
+                .height = (CGRectGetHeight(contentAreaFrame) - Layout.ContentArea.ItemGrid.Insets.top - Layout.ContentArea.ItemGrid.Insets.bottom)
+            }
+        };
+
+        CGFloat itemWidth = ((CGRectGetWidth(itemGridFrame) // To find the width of item cells in this section, start with the item area width...
+                              - (Layout.ContentArea.ItemGrid.ColumnSpacing * (Layout.ContentArea.ItemGrid.ColumnCount - 1))) // ...then isolate the horizontal space available to item cells by subtracting the inter-column item spacing...
+                             / Layout.ContentArea.ItemGrid.ColumnCount); // ...and divide the remaining space by the number of columns
+
+        for (NSInteger item = 0; item < itemCount; item += 1) {
             CGRect itemFrame = {
                 .origin = {
-                    .x = (CGRectGetMinX(itemAreaFrame) + ((itemWidth + ItemArea.ItemSpacing) * column)), // Start out left--aligned with item area frame, then move over to appropriate column
-                    .y = (CGRectGetMinY(itemAreaFrame) + ((ItemArea.ItemHeight + ItemArea.ItemSpacing) * row)) // Start out top-aligned with item area frame, then move down to appropriate row
+                    .x = (CGRectGetMinX(itemGridFrame) + ((itemWidth + Layout.ContentArea.ItemGrid.ColumnSpacing) * [self columnForItem:item section:section])), // Move from left edge to appropriate column
+                    .y = (CGRectGetMinY(itemGridFrame) + ((Layout.ContentArea.ItemGrid.RowHeight + Layout.ContentArea.ItemGrid.RowSpacing) * [self rowForItem:item section:section])) // Move from top edge to appropriate row
                 },
                 .size = {
                     .width = itemWidth,
-                    .height = ItemArea.ItemHeight
+                    .height = Layout.ContentArea.ItemGrid.RowHeight
                 }
             };
 
-            NSIndexPath *indexPath = [NSIndexPath indexPathForItem:itemIndex inSection:section];
-
+            NSIndexPath *indexPath = [NSIndexPath indexPathForItem:item inSection:section];
             UICollectionViewLayoutAttributes *attributes = [UICollectionViewLayoutAttributes layoutAttributesForCellWithIndexPath:indexPath];
+
             attributes.frame = itemFrame;
+            attributes.zIndex = 1;
 
             self.itemAttributesByIndexPath[indexPath] = attributes;
-            [self.sessionIndexPathList[section] addObject:indexPath];
         }
 
-        // Prepare Section Footer Layout
+#pragma mark Section Footer Layout
 
         CGRect footerFrame = {
             .origin = {
-                .x = 0.0,
-                .y = (CGRectGetMaxY(itemAreaFrame) + ItemArea.Insets.bottom) // Footer positioned below item area, shifted down by item area bottom inset
+                .x = CGRectGetMinX(self.collectionView.bounds),
+                .y = (CGRectGetMaxY(contentAreaFrame) + Layout.ContentArea.Insets.bottom) // Footer positioned below item area, shifted down by item area bottom inset
             },
-            .size = CGSizeZero
+            .size = {
+                .width = CGRectGetWidth(self.collectionView.bounds),
+                .height = Layout.FooterHeight
+            }
         };
 
-        switch (section) {
-            case BLMProjectDetailSectionBasicInfo:
-            case BLMProjectDetailSectionSessionProperties:
-            case BLMProjectDetailSectionBehaviors: {
-                footerFrame.size = (CGSize) {
-                    .width = collectionViewContentSize.width,
-                    .height = SectionFooterHeight
-                };
+        if (CGRectGetHeight(footerFrame) > 0) {
+            NSIndexPath *indexPath = [NSIndexPath indexPathForItem:SupplementaryViewItemSectionFooter inSection:section];
+            UICollectionViewLayoutAttributes *attributes = [UICollectionViewLayoutAttributes layoutAttributesForSupplementaryViewOfKind:SectionSeparatorViewType withIndexPath:indexPath];
 
-                NSIndexPath *indexPath = [NSIndexPath indexPathForItem:SupplementaryViewIndexPathItem inSection:0];
+            attributes.frame = footerFrame;
 
-                UICollectionViewLayoutAttributes *attributes = [UICollectionViewLayoutAttributes layoutAttributesForSupplementaryViewOfKind:UICollectionElementKindSectionHeader withIndexPath:indexPath];
-                attributes.frame = footerFrame;
-
-                self.supplementaryViewAttributesByIndexPathByKind[UICollectionElementKindSectionFooter][indexPath] = attributes;
-                [self.sessionIndexPathList[section] addObject:indexPath];
-
-                break;
-            }
-
-            case BLMProjectDetailSectionActionButtons: {
-                break;
-            }
-
-            case BLMProjectDetailSectionCount: {
-                assert(NO);
-                break;
-            }
+            self.itemAttributesByIndexPath[indexPath] = attributes;
         }
 
-        // Calculate Section Frame
+#pragma mark Section Frame Layout
 
         CGRect sectionFrame = {
             .origin = headerFrame.origin,
             .size = {
-                .width = collectionViewContentSize.width,
+                .width = CGRectGetWidth(self.collectionView.bounds),
                 .height = (CGRectGetHeight(headerFrame)
-                           + ItemArea.Insets.top
-                           + CGRectGetHeight(itemAreaFrame)
-                           + ItemArea.Insets.bottom
+                           + Layout.ContentArea.Insets.top
+                           + CGRectGetHeight(contentAreaFrame)
+                           + Layout.ContentArea.Insets.bottom
                            + CGRectGetHeight(footerFrame))
             }
         };
 
         [self.sectionFrameList addObject:[NSValue valueWithCGRect:sectionFrame]];
 
-        collectionViewContentSize.height += CGRectGetHeight(sectionFrame); // Increase the height of collectionViewContentSize to accomodate the added section
+        _collectionViewContentSize.height += CGRectGetHeight(sectionFrame); // Increase the height of collectionViewContentSize to accomodate the added section
 
-        assert(CGRectGetMaxY(sectionFrame) == collectionViewContentSize.height);
+        assert(CGRectGetMaxY(sectionFrame) == _collectionViewContentSize.height);
         assert(CGRectGetMaxY(sectionFrame) == CGRectGetMaxY(footerFrame));
     }
-
-    _collectionViewContentSize = collectionViewContentSize; // Update the collectionViewContentSize property so UICollectionView knows there's something to render
 }
 
 
 - (NSArray *)layoutAttributesForElementsInRect:(CGRect)rect {
-    NSMutableDictionary<NSIndexPath *, UICollectionViewLayoutAttributes *> *headerAttributesByIndexPath = self.supplementaryViewAttributesByIndexPathByKind[UICollectionElementKindSectionHeader];
-    NSMutableDictionary<NSIndexPath *, UICollectionViewLayoutAttributes *> *footerAttributesByIndexPath = self.supplementaryViewAttributesByIndexPathByKind[UICollectionElementKindSectionFooter];
     NSMutableArray<UICollectionViewLayoutAttributes *> *attributesForRect = [NSMutableArray array];
     BOOL scannedPastRectMaxY = NO;
 
-    for (BLMProjectDetailSection section = 0; ((section < BLMProjectDetailSectionCount) && !scannedPastRectMaxY); section += 1) {
+    for (ProjectDetailSection section = 0; ((section < ProjectDetailSectionCount) && !scannedPastRectMaxY); section += 1) {
         CGRect sectionFrame = self.sectionFrameList[section].CGRectValue;
 
         if (CGRectGetMinY(sectionFrame) > CGRectGetMaxY(rect)) {
@@ -324,10 +476,13 @@ static ItemAreaLayout const ActionButtonsItemAreaLayout = {
             continue;
         }
 
-        for (NSIndexPath *indexPath in self.sessionIndexPathList[section]) {
-            UICollectionViewLayoutAttributes *attributes = (self.itemAttributesByIndexPath[indexPath] ?: headerAttributesByIndexPath[indexPath] ?: footerAttributesByIndexPath[indexPath]);
+        for (NSInteger item = SupplementaryViewItemCount; item < [self.collectionView numberOfItemsInSection:section]; item += 1) {
+            NSIndexPath *indexPath = [NSIndexPath indexPathForItem:item inSection:section];
+            UICollectionViewLayoutAttributes *attributes = self.itemAttributesByIndexPath[indexPath];
 
-            assert(attributes != nil);
+            if (attributes == nil) {
+                continue;
+            }
 
             if (CGRectGetMinY(attributes.frame) > CGRectGetMaxY(rect)) {
                 scannedPastRectMaxY = YES;
@@ -353,10 +508,48 @@ static ItemAreaLayout const ActionButtonsItemAreaLayout = {
 
 
 - (UICollectionViewLayoutAttributes *)layoutAttributesForSupplementaryViewOfKind:(NSString *)elementKind atIndexPath:(NSIndexPath *)indexPath {
-    UICollectionViewLayoutAttributes *attributes = self.supplementaryViewAttributesByIndexPathByKind[elementKind][indexPath];
+    UICollectionViewLayoutAttributes *attributes = self.itemAttributesByIndexPath[indexPath];
     assert(attributes != nil);
 
     return attributes;
+}
+
+
+- (nullable UICollectionViewLayoutAttributes *)initialLayoutAttributesForAppearingItemAtIndexPath:(NSIndexPath *)indexPath {
+    UICollectionViewLayoutAttributes *initialAttributes = self.previousItemAttributesByIndexPath[indexPath];
+
+    switch ((ProjectDetailSection)indexPath.section) {
+        case ProjectDetailSectionBasicInfo:
+        case ProjectDetailSectionSessionProperties:
+        case ProjectDetailSectionActionButtons:
+            break;
+
+        case ProjectDetailSectionBehaviors: {
+            NSUInteger secondToLastItem = ([self.collectionView numberOfItemsInSection:indexPath.section] - 2);
+
+            if (initialAttributes == nil) { // The "add behavior" button is the last item; its initial layout for this animation should be the final layout for the cell being added in front of it
+                assert(indexPath.item == (secondToLastItem + 1));
+                initialAttributes = self.previousItemAttributesByIndexPath[[NSIndexPath indexPathForItem:secondToLastItem inSection:ProjectDetailSectionBehaviors]];
+            } else if (indexPath.item == secondToLastItem) {
+                initialAttributes = [initialAttributes copy];
+                initialAttributes.transform = CGAffineTransformMakeScale(0.01, 0.01);
+            }
+
+            break;
+        }
+
+        case ProjectDetailSectionCount:
+            assert(NO);
+            break;
+    }
+
+    assert(initialAttributes != nil);
+    return initialAttributes;
+}
+
+
+- (nullable UICollectionViewLayoutAttributes *)finalLayoutAttributesForDisappearingItemAtIndexPath:(NSIndexPath *)itemIndexPath {
+    return nil;
 }
 
 
@@ -364,31 +557,27 @@ static ItemAreaLayout const ActionButtonsItemAreaLayout = {
     return (CGRectGetWidth(newBounds) != CGRectGetWidth(self.collectionView.bounds));
 }
 
+
+- (id<ProjectDetailCollectionViewLayoutDelegate>)layoutDelegate {
+    return (id<ProjectDetailCollectionViewLayoutDelegate>)self.collectionView.delegate;
+}
+
 #pragma mark Layout Utilities
 
-+ (ItemAreaLayout const)itemAreaLayoutForSection:(BLMProjectDetailSection)section {
-    switch (section) {
-        case BLMProjectDetailSectionBasicInfo: {
-            return BasicInfoItemAreaLayout;
-        }
+- (NSUInteger)columnForItem:(NSUInteger)item section:(ProjectDetailSection)section {
+    SectionLayout layout = [self.layoutDelegate projectDetailCollectionViewLayout:self layoutForSection:section];
+    NSUInteger columnCount = layout.ContentArea.ItemGrid.ColumnCount;
 
-        case BLMProjectDetailSectionSessionProperties: {
-            return SessionPropertiesItemAreaLayout;
-        }
+    return (item % columnCount);
+}
 
-        case BLMProjectDetailSectionBehaviors: {
-            return BehaviorsItemAreaLayout;
-        }
 
-        case BLMProjectDetailSectionActionButtons: {
-            return ActionButtonsItemAreaLayout;
-        }
+- (NSUInteger)rowForItem:(NSUInteger)item section:(ProjectDetailSection)section {
+    SectionLayout layout = [self.layoutDelegate projectDetailCollectionViewLayout:self layoutForSection:section];
+    NSUInteger columnCount = layout.ContentArea.ItemGrid.ColumnCount;
+    assert(columnCount > 0);
 
-        case BLMProjectDetailSectionCount: {
-            assert(NO);
-            return ItemAreaLayoutNull;
-        }
-    }
+    return (item / columnCount);
 }
 
 @end
@@ -396,125 +585,12 @@ static ItemAreaLayout const ActionButtonsItemAreaLayout = {
 
 #pragma mark
 
-@implementation BLMBasicInfoCell
-
-@end
-
-
-#pragma mark
-
-@implementation BLMSessionPropertyCell
-
-@end
-
-
-#pragma mark
-
-@implementation BLMBehaviorCell
-
-@end
-
-
-#pragma mark
-
-@implementation BLMAddBehaviorCell
-
-@end
-
-
-#pragma mark
-
-@implementation BLMActionButtonCell
-
-@end
-
-
-#pragma mark
-
-@implementation BLMSectionHeaderView
-
-- (instancetype)initWithFrame:(CGRect)frame {
-    self = [super initWithFrame:frame];
-
-    if (self == nil) {
-        return nil;
-    }
-
-    _label = [[UILabel alloc] initWithFrame:CGRectZero];
-
-    self.label.font = [UIFont systemFontOfSize:SectionHeaderFontSize];
-    self.label.translatesAutoresizingMaskIntoConstraints = NO;
-
-    [self.label setContentHuggingPriority:UILayoutPriorityRequired forAxis:UILayoutConstraintAxisVertical];
-    [self.label setContentHuggingPriority:UILayoutPriorityRequired forAxis:UILayoutConstraintAxisHorizontal];
-
-    [self.label setContentCompressionResistancePriority:UILayoutPriorityRequired forAxis:UILayoutConstraintAxisVertical];
-    [self.label setContentCompressionResistancePriority:UILayoutPriorityRequired forAxis:UILayoutConstraintAxisHorizontal];
-
-    [self addSubview:self.label];
-    [self addConstraint:[BLMViewUtils constraintWithItem:self.label attribute:NSLayoutAttributeLeft equalToItem:self constant:0.0]];
-    [self addConstraint:[BLMViewUtils constraintWithItem:self.label attribute:NSLayoutAttributeWidth equalToItem:self constant:0.0]];
-    [self addConstraint:[BLMViewUtils constraintWithItem:self.label attribute:NSLayoutAttributeBaseline equalToItem:self attribute:NSLayoutAttributeBottom constant:SectionHeaderBaselineOffset]];
-
-    UIView *separatorView = [[UIView alloc] initWithFrame:CGRectZero];
-
-    separatorView.backgroundColor = [UIColor lightGrayColor];
-    separatorView.translatesAutoresizingMaskIntoConstraints = NO;
-
-    [self addSubview:separatorView];
-    [self addConstraint:[BLMViewUtils constraintWithItem:separatorView attribute:NSLayoutAttributeHeight equalToConstant:SectionHeaderSeparatorHeight]];
-    [self addConstraint:[BLMViewUtils constraintWithItem:separatorView attribute:NSLayoutAttributeWidth equalToItem:self constant:0.0]];
-    [self addConstraint:[BLMViewUtils constraintWithItem:separatorView attribute:NSLayoutAttributeCenterX equalToItem:self constant:0.0]];
-    [self addConstraint:[BLMViewUtils constraintWithItem:separatorView attribute:NSLayoutAttributeBottom equalToItem:self constant:0.0]];
-
-    return self;
-}
-
-
-- (void)prepareForReuse {
-    [super prepareForReuse];
-
-    self.label.text = @"<HEADER LABEL TEXT MISSING>";
-}
-
-
-- (void)layoutSubviews {
-    NSLog(@"A) Frame: %@", NSStringFromCGRect(self.label.frame));
-    [super layoutSubviews];
-    NSLog(@"B) Frame: %@", NSStringFromCGRect(self.label.frame));
-    self.label.preferredMaxLayoutWidth = CGRectGetWidth([self.label alignmentRectForFrame:self.label.frame]);
-    NSLog(@"C) Frame: %@", NSStringFromCGRect(self.label.frame));
-    [super layoutSubviews];
-    NSLog(@"D) Frame: %@", NSStringFromCGRect(self.label.frame));
-    NSLog(@"");
-}
-
-@end
-
-
-#pragma mark
-
-@implementation BLMSectionFooterView
-
-- (instancetype)initWithFrame:(CGRect)frame {
-    self = [super initWithFrame:frame];
-
-    if (self == nil) {
-        return nil;
-    }
-
-
-    return self;
-}
-
-@end
-
-
-#pragma mark
-
-@interface BLMProjectDetailController () <UICollectionViewDelegate, UICollectionViewDataSource>
+@interface BLMProjectDetailController () <UICollectionViewDataSource, ProjectDetailCollectionViewLayoutDelegate, BLMTextInputCellDelegate, BLMButtonCellDelegate>
 
 @property (nonatomic, strong, readonly) UICollectionView *collectionView;
+
+@property (nonatomic, copy, readonly) NSMutableArray<NSString *> *behaviorNameList;
+@property (nonatomic, copy, readonly) NSMutableIndexSet *continuousBehaviorIndexSet;
 
 @end
 
@@ -531,6 +607,8 @@ static ItemAreaLayout const ActionButtonsItemAreaLayout = {
     }
 
     _projectUid = project.uid;
+    _behaviorNameList = [NSMutableArray array];
+    _continuousBehaviorIndexSet = [NSMutableIndexSet indexSet];
 
     return self;
 }
@@ -544,18 +622,25 @@ static ItemAreaLayout const ActionButtonsItemAreaLayout = {
 - (void)viewDidLoad {
     [super viewDidLoad];
 
-    _collectionView = [[UICollectionView alloc] initWithFrame:CGRectZero collectionViewLayout:[[BLMProjectDetailCollectionViewLayout alloc] init]];
+    [self reloadBehaviorData];
 
-    for (Class cellClass in @[[BLMBasicInfoCell class], [BLMSessionPropertyCell class], [BLMBehaviorCell class], [BLMAddBehaviorCell class], [BLMActionButtonCell class]]) {
-        [self.collectionView registerClass:cellClass forCellWithReuseIdentifier:NSStringFromClass(cellClass)];
-    }
+    self.navigationItem.title = @"Project Details";
 
-    [self.collectionView registerClass:[BLMSectionHeaderView class] forSupplementaryViewOfKind:UICollectionElementKindSectionHeader withReuseIdentifier:NSStringFromClass([BLMSectionHeaderView class])];
-    [self.collectionView registerClass:[BLMSectionFooterView class] forSupplementaryViewOfKind:UICollectionElementKindSectionFooter withReuseIdentifier:NSStringFromClass([BLMSectionFooterView class])];
+    _collectionView = [[UICollectionView alloc] initWithFrame:CGRectZero collectionViewLayout:[[ProjectDetailCollectionViewLayout alloc] init]];
+
+    [self.collectionView registerClass:[SectionHeaderView class] forSupplementaryViewOfKind:SectionHeaderViewType withReuseIdentifier:NSStringFromClass([SectionHeaderView class])];
+    [self.collectionView registerClass:[SectionSeparatorView class] forSupplementaryViewOfKind:SectionSeparatorViewType withReuseIdentifier:NSStringFromClass([SectionSeparatorView class])];
+    [self.collectionView registerClass:[SectionBackgroundView class] forSupplementaryViewOfKind:SectionBackgroundViewType withReuseIdentifier:NSStringFromClass([SectionBackgroundView class])];
+
+    [self.collectionView registerClass:[EditBehaviorCell class] forCellWithReuseIdentifier:NSStringFromClass([EditBehaviorCell class])];
+    [self.collectionView registerClass:[BLMTextInputCell class] forCellWithReuseIdentifier:NSStringFromClass([BLMTextInputCell class])];
+    [self.collectionView registerClass:[BLMButtonCell class] forCellWithReuseIdentifier:NSStringFromClass([BLMButtonCell class])];
 
     self.collectionView.delegate = self;
     self.collectionView.dataSource = self;
-    self.collectionView.backgroundColor = [UIColor grayColor];
+    self.collectionView.scrollEnabled = YES;
+    self.collectionView.bounces = YES;
+    self.collectionView.backgroundColor = [BLMViewUtils colorWithHexValue:BLMColorHexCodeDefaultBackground alpha:1.0];
     self.collectionView.translatesAutoresizingMaskIntoConstraints = NO;
 
     [self.view addSubview:self.collectionView];
@@ -564,6 +649,25 @@ static ItemAreaLayout const ActionButtonsItemAreaLayout = {
     BLMProject *project = [[BLMDataManager sharedManager] projectForUid:self.projectUid];
 
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleProjectUpdated:) name:BLMProjectUpdatedNotification object:project];
+}
+
+
+- (void)reloadBehaviorData {
+    [self.behaviorNameList removeAllObjects];
+    [self.continuousBehaviorIndexSet removeAllIndexes];
+
+    BLMProject *project = [[BLMDataManager sharedManager] projectForUid:self.projectUid];
+    NSArray *behaviorList = project.defaultSessionConfiguration.behaviorList;
+
+    [behaviorList enumerateObjectsUsingBlock:^(BLMBehavior *behavior, NSUInteger index, BOOL *stop) {
+        [self.behaviorNameList addObject:behavior.name];
+
+        if (behavior.isContinuous) {
+            [self.continuousBehaviorIndexSet addIndex:index];
+        }
+    }];
+
+    [self.collectionView reloadSections:[NSIndexSet indexSetWithIndex:ProjectDetailSectionBehaviors]];
 }
 
 #pragma mark Event Handling
@@ -579,41 +683,44 @@ static ItemAreaLayout const ActionButtonsItemAreaLayout = {
 
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleProjectUpdated:) name:BLMProjectUpdatedNotification object:updatedProject];
 
+    [self reloadBehaviorData];
+
     //TODO: Update UI
 }
 
 #pragma mark UICollectionViewDataSource
 
+- (NSInteger)numberOfSectionsInCollectionView:(UICollectionView *)collectionView {
+    return ProjectDetailSectionCount;
+}
+
+
 - (NSInteger)collectionView:(UICollectionView *)collectionView numberOfItemsInSection:(NSInteger)section {
     NSInteger numberOfItems = 0;
 
-    switch ((BLMProjectDetailSection)section) {
-        case BLMProjectDetailSectionBasicInfo: {
-            numberOfItems = BLMBasicInfoSectionItemCount;
+    switch ((ProjectDetailSection)section) {
+        case ProjectDetailSectionBasicInfo: {
+            numberOfItems = BasicInfoSectionItemCount;
             break;
         }
 
-        case BLMProjectDetailSectionSessionProperties: {
-            numberOfItems = BLMSessionPropertiesSectionItemCount;
+        case ProjectDetailSectionSessionProperties: {
+            numberOfItems = SessionPropertiesSectionItemCount;
             break;
         }
 
-        case BLMProjectDetailSectionBehaviors: {
-            BLMProject *project = [[BLMDataManager sharedManager] projectForUid:self.projectUid];
-            NSArray<BLMBehavior *> *behaviorList = project.defaultSessionConfiguration.behaviorList;
-
-            numberOfItems = behaviorList.count;
-            numberOfItems += 1; // Add one for the BLMAddBehaviorCell
-
+        case ProjectDetailSectionBehaviors: {
+            numberOfItems = self.behaviorNameList.count;
+            numberOfItems += 1; // Add one for the AddBehaviorCell
             break;
         }
 
-        case BLMProjectDetailSectionActionButtons: {
-            numberOfItems = BLMActionButtonsSectionItemCount;
+        case ProjectDetailSectionActionButtons: {
+            numberOfItems = ActionButtonsSectionItemCount;
             break;
         }
 
-        case BLMProjectDetailSectionCount: {
+        case ProjectDetailSectionCount: {
             assert(NO);
             break;
         }
@@ -624,113 +731,562 @@ static ItemAreaLayout const ActionButtonsItemAreaLayout = {
 
 
 - (UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath {
-    UICollectionViewCell *cell = nil;
+    BLMCollectionViewCell *cell = nil;
 
-    switch ((BLMProjectDetailSection)indexPath.section) {
-        case BLMProjectDetailSectionBasicInfo: {
-            BLMBasicInfoCell *basicInfoCell = [collectionView dequeueReusableCellWithReuseIdentifier:NSStringFromClass([BLMBasicInfoCell class]) forIndexPath:indexPath];
-            cell = basicInfoCell;
+    switch ((ProjectDetailSection)indexPath.section) {
+        case ProjectDetailSectionBasicInfo:
+        case ProjectDetailSectionSessionProperties: {
+            BLMTextInputCell *textInputCell = (BLMTextInputCell *)[collectionView dequeueReusableCellWithReuseIdentifier:NSStringFromClass([BLMTextInputCell class]) forIndexPath:indexPath];
+            textInputCell.delegate = self;
+
+            cell = textInputCell;
             break;
         }
 
-        case BLMProjectDetailSectionSessionProperties: {
-            BLMSessionPropertyCell *sessionPropertyCell = [collectionView dequeueReusableCellWithReuseIdentifier:NSStringFromClass([BLMSessionPropertyCell class]) forIndexPath:indexPath];
-            cell = sessionPropertyCell;
-            break;
-        }
-
-        case BLMProjectDetailSectionBehaviors: {
-            BLMProject *project = [[BLMDataManager sharedManager] projectForUid:self.projectUid];
-            NSArray<BLMBehavior *> *behaviorList = project.defaultSessionConfiguration.behaviorList;
-
-            if (indexPath.item < behaviorList.count) {
-                BLMBehaviorCell *behaviorCell = [collectionView dequeueReusableCellWithReuseIdentifier:NSStringFromClass([BLMBehaviorCell class]) forIndexPath:indexPath];
+        case ProjectDetailSectionBehaviors: {
+            if (indexPath.item < self.behaviorNameList.count) {
+                EditBehaviorCell *behaviorCell = [collectionView dequeueReusableCellWithReuseIdentifier:NSStringFromClass([EditBehaviorCell class]) forIndexPath:indexPath];
                 cell = behaviorCell;
             } else {
-                assert(indexPath.item == behaviorList.count);
-                BLMAddBehaviorCell *createBLMBehaviorCell = [collectionView dequeueReusableCellWithReuseIdentifier:NSStringFromClass([BLMAddBehaviorCell class]) forIndexPath:indexPath];
-                cell = createBLMBehaviorCell;
+                assert(indexPath.item == self.behaviorNameList.count);
+
+                BLMButtonCell *buttonCell = [collectionView dequeueReusableCellWithReuseIdentifier:NSStringFromClass([BLMButtonCell class]) forIndexPath:indexPath];
+                buttonCell.delegate = self;
+
+                cell = buttonCell;
             }
 
             break;
         }
 
-        case BLMProjectDetailSectionActionButtons: {
-            BLMActionButtonCell *actionButtonCell = [collectionView dequeueReusableCellWithReuseIdentifier:NSStringFromClass([BLMActionButtonCell class]) forIndexPath:indexPath];
-            cell = actionButtonCell;
+        case ProjectDetailSectionActionButtons: {
+            BLMButtonCell *buttonCell = [collectionView dequeueReusableCellWithReuseIdentifier:NSStringFromClass([BLMButtonCell class]) forIndexPath:indexPath];
+            buttonCell.delegate = self;
+
+            cell = buttonCell;
             break;
         }
 
-        case BLMProjectDetailSectionCount: {
+        case ProjectDetailSectionCount: {
             assert(NO);
             break;
         }
     }
 
+    cell.section = indexPath.section;
+    cell.item = indexPath.item;
+
+    [cell updateContent];
+
     return cell;
-}
-
-
-- (NSInteger)numberOfSectionsInCollectionView:(UICollectionView *)collectionView {
-    return BLMProjectDetailSectionCount;
 }
 
 
 - (UICollectionReusableView *)collectionView:(UICollectionView *)collectionView viewForSupplementaryElementOfKind:(NSString *)kind atIndexPath:(NSIndexPath *)indexPath {
     UICollectionReusableView *view = nil;
 
-    if ([kind isEqualToString:UICollectionElementKindSectionHeader]) {
-        BLMSectionHeaderView *headerView = [collectionView dequeueReusableSupplementaryViewOfKind:kind withReuseIdentifier:NSStringFromClass([BLMSectionHeaderView class]) forIndexPath:indexPath];
+    if ([kind isEqualToString:SectionHeaderViewType]) {
+        SectionHeaderView *headerView = [collectionView dequeueReusableSupplementaryViewOfKind:kind withReuseIdentifier:NSStringFromClass([SectionHeaderView class]) forIndexPath:indexPath];
 
         view = headerView;
 
-        switch ((BLMProjectDetailSection)indexPath.section) {
-            case BLMProjectDetailSectionBasicInfo: {
+        switch ((ProjectDetailSection)indexPath.section) {
+            case ProjectDetailSectionBasicInfo: {
+                assert(NO);
                 break;
             }
 
-            case BLMProjectDetailSectionSessionProperties: {
-                headerView.label.text = @"Session Properties";
+            case ProjectDetailSectionSessionProperties: {
+                headerView.label.text = @"Default Session Properties";
                 break;
             }
 
-            case BLMProjectDetailSectionBehaviors: {
+            case ProjectDetailSectionBehaviors: {
                 headerView.label.text = @"Behaviors";
                 break;
             }
 
-            case BLMProjectDetailSectionActionButtons: {
+            case ProjectDetailSectionActionButtons: {
+                assert(NO);
                 break;
             }
-
-            case BLMProjectDetailSectionCount: {
+                
+            case ProjectDetailSectionCount: {
                 assert(NO);
                 break;
             }
         }
-    } else if ([kind isEqualToString:UICollectionElementKindSectionFooter]) {
-        switch ((BLMProjectDetailSection)indexPath.section) {
-            case BLMProjectDetailSectionBasicInfo:
-            case BLMProjectDetailSectionSessionProperties:
-            case BLMProjectDetailSectionBehaviors: {
-                view = [collectionView dequeueReusableSupplementaryViewOfKind:kind withReuseIdentifier:NSStringFromClass([BLMSectionFooterView class]) forIndexPath:indexPath];
-                break;
-            }
-                
-            case BLMProjectDetailSectionActionButtons: {
-                break;
-            }
-                
-            case BLMProjectDetailSectionCount: {
-                assert(NO);
-                break;
-            }
+    } else if ([kind isEqualToString:SectionSeparatorViewType]) {
+        view = [collectionView dequeueReusableSupplementaryViewOfKind:kind withReuseIdentifier:NSStringFromClass([SectionSeparatorView class]) forIndexPath:indexPath];
+    } else if ([kind isEqualToString:SectionBackgroundViewType]) {
+        view = [collectionView dequeueReusableSupplementaryViewOfKind:kind withReuseIdentifier:NSStringFromClass([SectionBackgroundView class]) forIndexPath:indexPath];
+    }
+
+    assert(view != nil);
+    return view;
+}
+
+#pragma mark ProjectDetailCollectionViewLayoutDelegate
+
+- (SectionLayout)projectDetailCollectionViewLayout:(ProjectDetailCollectionViewLayout *)layout layoutForSection:(ProjectDetailSection)section {
+    switch (section) {
+        case ProjectDetailSectionBasicInfo: {
+            return (SectionLayout) {
+                .HeaderHeight = 0.0,
+                .FooterHeight = 0.0,
+                .ContentArea = {
+                    .HasBackground = NO,
+                    .Insets = {
+                        .top = 20.0,
+                        .left = 30.0,
+                        .bottom = 20.0,
+                        .right = 30.0
+                    },
+                    .ItemGrid = {
+                        .ColumnCount = 2,
+                        .ColumnSpacing = 20.0,
+                        .RowSpacing = 0.0,
+                        .RowHeight = 40.0,
+                        .Insets = UIEdgeInsetsZero
+                    }
+                }
+            };
+        }
+
+        case ProjectDetailSectionSessionProperties: {
+            return (SectionLayout) {
+                .HeaderHeight = SectionHeaderHeight,
+                .FooterHeight = 0.0,
+                .ContentArea = {
+                    .HasBackground = NO,
+                    .Insets = {
+                        .top = 10.0,
+                        .left = 30.0,
+                        .bottom = 10.0,
+                        .right = 30.0
+                    },
+                    .ItemGrid = {
+                        .ColumnCount = 2,
+                        .ColumnSpacing = 20.0,
+                        .RowSpacing = 10.0,
+                        .RowHeight = 40.0,
+                        .Insets = UIEdgeInsetsZero
+                    }
+                }
+            };
+        }
+
+        case ProjectDetailSectionBehaviors: {
+            return (SectionLayout) {
+                .HeaderHeight = SectionHeaderHeight,
+                .FooterHeight = SectionSeparatorHeight,
+                .ContentArea = {
+                    .HasBackground = YES,
+                    .Insets = {
+                        .top = 10.0,
+                        .left = 30.0,
+                        .bottom = 10.0,
+                        .right = 30.0
+                    },
+                    .ItemGrid = {
+                        .ColumnCount = 6,
+                        .ColumnSpacing = 10.0,
+                        .RowSpacing = 10.0,
+                        .RowHeight = 60.0,
+                        .Insets = {
+                            .top = 10.0,
+                            .left = 10.0,
+                            .bottom = 10.0,
+                            .right = 10.0
+                        }
+                    }
+                }
+            };
+        }
+
+        case ProjectDetailSectionActionButtons: {
+            return (SectionLayout) {
+                .HeaderHeight = 0.0,
+                .FooterHeight = 0.0,
+                .ContentArea = {
+                    .HasBackground = NO,
+                    .Insets = {
+                        .top = 10.0,
+                        .left = 30.0,
+                        .bottom = 10.0,
+                        .right = 30.0
+                    },
+                    .ItemGrid = {
+                        .ColumnCount = 3,
+                        .ColumnSpacing = 0.0,
+                        .RowSpacing = 10.0,
+                        .RowHeight = 40.0,
+                        .Insets = UIEdgeInsetsZero
+                    }
+                }
+            };
+        }
+
+        case ProjectDetailSectionCount: {
+            assert(NO);
+            return SectionLayoutNull;
         }
     }
-    
-    assert(view != nil);
-    
-    return view;
+}
+
+#pragma mark BLMTextInputCellDelegate
+
+- (NSString *)labelForTextInputCell:(BLMTextInputCell *)cell {
+    switch ((ProjectDetailSection)cell.section) {
+        case ProjectDetailSectionBasicInfo: {
+            switch ((BasicInfoSectionItem)cell.item) {
+                case BasicInfoSectionItemProjectName:
+                    return @"Project Name:";
+
+                case BasicInfoSectionItemClientName:
+                    return @"Client Name:";
+
+                case BasicInfoSectionItemCount: {
+                    break;
+                }
+            }
+        }
+
+        case ProjectDetailSectionSessionProperties: {
+            switch ((SessionPropertiesSectionItem)cell.item) {
+                case SessionPropertiesSectionItemCondition:
+                    return @"Condition:";
+
+                case SessionPropertiesSectionItemLocation:
+                    return @"Location:";
+
+                case SessionPropertiesSectionItemTherapist:
+                    return @"Therapist:";
+
+                case SessionPropertiesSectionItemObserver:
+                    return @"Observer";
+
+                case SessionPropertiesSectionItemCount: {
+                    break;
+                }
+            }
+        }
+
+        case ProjectDetailSectionBehaviors:
+        case ProjectDetailSectionActionButtons:
+        case ProjectDetailSectionCount: {
+            break;
+        }
+    }
+
+    assert(NO);
+    return nil;
+}
+
+
+- (NSString *)defaultInputForTextInputCell:(BLMTextInputCell *)cell {
+    BLMProject *project = [[BLMDataManager sharedManager] projectForUid:self.projectUid];
+
+    switch ((ProjectDetailSection)cell.section) {
+        case ProjectDetailSectionBasicInfo: {
+            switch ((BasicInfoSectionItem)cell.item) {
+                case BasicInfoSectionItemProjectName:
+                    return project.name;
+
+                case BasicInfoSectionItemClientName:
+                    return project.client;
+
+                case BasicInfoSectionItemCount: {
+                    break;
+                }
+            }
+        }
+
+        case ProjectDetailSectionSessionProperties: {
+            switch ((SessionPropertiesSectionItem)cell.item) {
+                case SessionPropertiesSectionItemCondition:
+                    return project.defaultSessionConfiguration.condition;
+
+                case SessionPropertiesSectionItemLocation:
+                    return project.defaultSessionConfiguration.location;
+
+                case SessionPropertiesSectionItemTherapist:
+                    return project.defaultSessionConfiguration.therapist;
+
+                case SessionPropertiesSectionItemObserver:
+                    return project.defaultSessionConfiguration.observer;
+
+                case SessionPropertiesSectionItemCount: {
+                    break;
+                }
+            }
+        }
+
+        case ProjectDetailSectionBehaviors:
+        case ProjectDetailSectionActionButtons:
+        case ProjectDetailSectionCount: {
+            break;
+        }
+    }
+
+    assert(NO);
+    return nil;
+}
+
+
+- (NSUInteger)minimumInputLengthForTextInputCell:(BLMTextInputCell *)cell {
+    switch ((ProjectDetailSection)cell.section) {
+        case ProjectDetailSectionBasicInfo: {
+            switch ((BasicInfoSectionItem)cell.item) {
+                case BasicInfoSectionItemProjectName:
+                    return BLMProjectNameMinimumLength;
+
+                case BasicInfoSectionItemClientName:
+                    return BLMProjectClientMinimumLength;
+
+                case BasicInfoSectionItemCount: {
+                    break;
+                }
+            }
+        }
+
+        case ProjectDetailSectionSessionProperties: {
+            switch ((SessionPropertiesSectionItem)cell.item) {
+                case SessionPropertiesSectionItemCondition:
+                case SessionPropertiesSectionItemLocation:
+                case SessionPropertiesSectionItemTherapist:
+                case SessionPropertiesSectionItemObserver:
+                    return 0;
+
+                case SessionPropertiesSectionItemCount: {
+                    break;
+                }
+            }
+        }
+
+        case ProjectDetailSectionBehaviors:
+        case ProjectDetailSectionActionButtons:
+        case ProjectDetailSectionCount: {
+            break;
+        }
+    }
+
+    assert(NO);
+    return NSNotFound;
+}
+
+
+- (void)didAcceptInputForTextInputCell:(BLMTextInputCell *)cell {
+    BLMProject *project = [[BLMDataManager sharedManager] projectForUid:self.projectUid];
+    BLMProjectProperty updatedProperty = BLMProjectPropertyCount;
+    id updatedValue = nil;
+
+    switch ((ProjectDetailSection)cell.section) {
+        case ProjectDetailSectionBasicInfo: {
+            switch ((BasicInfoSectionItem)cell.item) {
+                case BasicInfoSectionItemProjectName:
+                    updatedProperty = BLMProjectPropertyName;
+                    break;
+
+                case BasicInfoSectionItemClientName:
+                    updatedProperty = BLMProjectPropertyClient;
+                    break;
+
+                case BasicInfoSectionItemCount: {
+                    assert(NO);
+                    break;
+                }
+            }
+
+            updatedValue = cell.textField.text;
+            break;
+        }
+
+        case ProjectDetailSectionSessionProperties: {
+            BLMSessionConfigurationProperty updatedSessionConfigurationProperty;
+
+            switch ((SessionPropertiesSectionItem)cell.item) {
+                case SessionPropertiesSectionItemCondition:
+                    updatedSessionConfigurationProperty = BLMSessionConfigurationPropertyCondition;
+                    break;
+
+                case SessionPropertiesSectionItemLocation:
+                    updatedSessionConfigurationProperty = BLMSessionConfigurationPropertyLocation;
+                    break;
+
+                case SessionPropertiesSectionItemTherapist:
+                    updatedSessionConfigurationProperty = BLMSessionConfigurationPropertyTherapist;
+                    break;
+
+                case SessionPropertiesSectionItemObserver:
+                    updatedSessionConfigurationProperty = BLMSessionConfigurationPropertyObserver;
+                    break;
+
+                case SessionPropertiesSectionItemCount: {
+                    assert(NO);
+                    break;
+                }
+            }
+
+            updatedProperty = BLMProjectPropertyDefaultSessionConfiguration;
+            updatedValue = [project.defaultSessionConfiguration copyWithUpdatedValuesByProperty:@{ @(updatedSessionConfigurationProperty):(cell.textField.text ?: @"") }];
+            break;
+        }
+
+        case ProjectDetailSectionBehaviors:
+        case ProjectDetailSectionActionButtons:
+        case ProjectDetailSectionCount: {
+            assert(NO);
+            break;
+        }
+    }
+
+    assert(updatedProperty < BLMProjectPropertyCount);
+    assert(updatedValue != nil);
+
+    [[BLMDataManager sharedManager] applyUpdateForProjectUid:self.projectUid property:updatedProperty value:updatedValue];
+}
+
+#pragma mark BLMButtonCellDelegate
+
+- (UIImage *)normalImageForButtonCell:(BLMButtonCell *)cell {
+    switch ((ProjectDetailSection)cell.section) {
+        case ProjectDetailSectionBehaviors: {
+            assert(cell.item == self.behaviorNameList.count);
+
+            static UIImage *normalPlusSignImage;
+            static dispatch_once_t onceToken;
+
+            dispatch_once(&onceToken, ^{
+                normalPlusSignImage = [BLMViewUtils plusSignImageWithColor:[BLMViewUtils colorWithHexValue:BLMColorHexCodeGreen alpha:1.0]];
+            });
+
+            return normalPlusSignImage;
+        }
+
+        case ProjectDetailSectionBasicInfo:
+        case ProjectDetailSectionSessionProperties:
+        case ProjectDetailSectionActionButtons: {
+            break;
+        }
+
+        case ProjectDetailSectionCount: {
+            assert(NO);
+            break;
+        }
+    }
+
+    return nil;
+}
+
+
+- (UIImage *)highlightedImageForButtonCell:(BLMButtonCell *)cell {
+    switch ((ProjectDetailSection)cell.section) {
+        case ProjectDetailSectionBehaviors: {
+            assert(cell.item == self.behaviorNameList.count);
+
+            static UIImage *highlightedPlusSignImage;
+            static dispatch_once_t onceToken;
+
+            dispatch_once(&onceToken, ^{
+                highlightedPlusSignImage = [BLMViewUtils plusSignImageWithColor:[BLMViewUtils colorWithHexValue:BLMColorHexCodePurple alpha:1.0]];
+            });
+
+            return highlightedPlusSignImage;
+        }
+
+        case ProjectDetailSectionBasicInfo:
+        case ProjectDetailSectionSessionProperties:
+        case ProjectDetailSectionActionButtons: {
+            break;
+        }
+
+        case ProjectDetailSectionCount: {
+            assert(NO);
+            break;
+        }
+    }
+
+    return nil;
+}
+
+
+- (NSString *)titleForButtonCell:(BLMButtonCell *)cell {
+    switch ((ProjectDetailSection)cell.section) {
+        case ProjectDetailSectionActionButtons: {
+            switch ((ActionButtonsSectionItem)cell.item) {
+                case ActionButtonsSectionItemCreateSession:
+                    return @"Create Session";
+                case ActionButtonsSectionItemViewSessionHistory:
+                    return @"View Session History";
+                case ActionButtonsSectionItemDeleteProject:
+                    return @"Delete Project";
+                case ActionButtonsSectionItemCount:
+                    assert(NO);
+                    return nil;
+            }
+        }
+
+        case ProjectDetailSectionBasicInfo:
+        case ProjectDetailSectionSessionProperties:
+        case ProjectDetailSectionBehaviors: {
+            break;
+        }
+
+        case ProjectDetailSectionCount: {
+            assert(NO);
+            break;
+        }
+    }
+
+    return nil;
+}
+
+
+- (void)didFireActionForButtonCell:(BLMButtonCell *)cell {
+    switch ((ProjectDetailSection)cell.section) {
+        case ProjectDetailSectionBehaviors: {
+            assert(cell.item == self.behaviorNameList.count);
+
+            NSString *lastBehaviorName = self.behaviorNameList.lastObject;
+            if ([BLMUtils isString:lastBehaviorName equalToString:@""]) {
+//                return;
+            }
+
+            [self.behaviorNameList addObject:@""];
+            [self.collectionView insertItemsAtIndexPaths:@[[NSIndexPath indexPathForItem:cell.item inSection:ProjectDetailSectionBehaviors]]];
+
+            cell.item += 1;
+            assert(cell.item == self.behaviorNameList.count);
+            break;
+        }
+
+        case ProjectDetailSectionActionButtons: {
+            switch ((ActionButtonsSectionItem)cell.item) {
+                case ActionButtonsSectionItemCreateSession:
+                    NSLog(@"");
+                    break;
+                case ActionButtonsSectionItemViewSessionHistory:
+                    NSLog(@"");
+                    break;
+                case ActionButtonsSectionItemDeleteProject:
+                    NSLog(@"");
+                    break;
+                case ActionButtonsSectionItemCount:
+                    assert(NO);
+                    break;
+            }
+
+            break;
+        }
+
+        case ProjectDetailSectionBasicInfo:
+        case ProjectDetailSectionSessionProperties:
+        case ProjectDetailSectionCount: {
+            assert(NO);
+            break;
+        }
+    }
 }
 
 @end

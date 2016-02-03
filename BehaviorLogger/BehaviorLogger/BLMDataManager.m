@@ -8,6 +8,7 @@
 
 #import "BLMDataManager.h"
 #import "BLMProject.h"
+#import "BLMSession.h"
 #import "BLMUtils.h"
 
 
@@ -118,7 +119,7 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
 }
 
 
-- (void)createProjectWithName:(NSString *)name client:(NSString *)client completion:(void(^)(BLMProject *createdProject, NSError *error))completion {
+- (void)createProjectWithName:(NSString *)name client:(NSString *)client completion:(void(^)(BLMProject *project, NSError *error))completion {
     assert([NSThread isMainThread]);
     NSParameterAssert(name.length >= BLMProjectNameMinimumLength);
     NSParameterAssert(client.length >= BLMProjectClientMinimumLength);
@@ -155,15 +156,47 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
     completion(project, error);
 }
 
-- (void)updateDefaultSessionConfigurationForProjectUid:(NSNumber *)projectUid configuration:(BLMSessionConfiguration *)configuration {
+
+- (void)applyUpdateForProjectUid:(NSNumber *)projectUid property:(BLMProjectProperty)property value:(id)value {
     assert([NSThread isMainThread]);
 
     BLMProject *project = self.projectByUid[projectUid];
     assert(project != nil);
 
-    if (![BLMUtils isObject:project.defaultSessionConfiguration equalToObject:configuration]) {
-        BLMProject *updatedProject = [[BLMProject alloc] initWithUid:projectUid name:project.name client:project.client defaultSessionConfiguration:configuration sessionByUid:project.sessionByUid];
+    NSString *updatedName = project.name;
+    NSString *updatedClient = project.client;
+    BLMSessionConfiguration *updatedSessionConfiguration = project.defaultSessionConfiguration;
+
+    switch (property) {
+        case BLMProjectPropertyName: {
+            NSParameterAssert([value isKindOfClass:[NSString class]]);
+            updatedName = value;
+            break;
+        }
+
+        case BLMProjectPropertyClient: {
+            NSParameterAssert([value isKindOfClass:[NSString class]]);
+            updatedClient = value;
+            break;
+        }
+
+        case BLMProjectPropertyDefaultSessionConfiguration: {
+            NSParameterAssert([value isKindOfClass:[BLMSessionConfiguration class]]);
+            updatedSessionConfiguration = value;
+            break;
+        }
+
+        case BLMProjectPropertyCount: {
+            assert(NO);
+            break;
+        }
+    }
+
+    if (![BLMUtils isString:project.name equalToString:updatedName] || ![BLMUtils isString:project.client equalToString:updatedClient] || ![BLMUtils isObject:project.defaultSessionConfiguration equalToObject:updatedSessionConfiguration]) {
+        BLMProject *updatedProject = [[BLMProject alloc] initWithUid:projectUid name:updatedName client:updatedClient defaultSessionConfiguration:updatedSessionConfiguration sessionByUid:project.sessionByUid];
         self.projectByUid[projectUid] = updatedProject;
+
+        [self archiveCurrentState];
 
         NSDictionary *userInfo = @{ BLMProjectOldProjectUserInfoKey:project, BLMProjectNewProjectUserInfoKey:updatedProject };
         [[NSNotificationCenter defaultCenter] postNotificationName:BLMProjectUpdatedNotification object:project userInfo:userInfo];

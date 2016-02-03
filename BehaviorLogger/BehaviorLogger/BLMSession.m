@@ -24,7 +24,7 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
 
 @implementation BLMSessionConfiguration
 
-- (instancetype)initWitCondition:(NSString *)condition location:(NSString *)location therapist:(NSString *)therapist observer:(NSString *)observer timeLimitOptions:(BLMTimeLimitOptions)timeLimitOptions behaviorList:(NSArray<BLMBehavior *> *)behaviorList {
+- (instancetype)initWitCondition:(NSString *)condition location:(NSString *)location therapist:(NSString *)therapist observer:(NSString *)observer timeLimit:(BLMTimeInterval)timeLimit timeLimitOptions:(BLMTimeLimitOptions)timeLimitOptions behaviorList:(NSArray<BLMBehavior *> *)behaviorList {
     NSParameterAssert(behaviorList != nil);
 
     self = [super init];
@@ -37,10 +37,22 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
     _location = [location copy];
     _therapist = [therapist copy];
     _observer = [observer copy];
+    _timeLimit = timeLimit;
     _timeLimitOptions = timeLimitOptions;
     _behaviorList = [behaviorList copy];
 
     return self;
+}
+
+
+- (instancetype)copyWithUpdatedValuesByProperty:(NSDictionary<NSNumber *, id> *)valuesByProperty {
+    return [[BLMSessionConfiguration alloc] initWitCondition:(valuesByProperty[@(BLMSessionConfigurationPropertyCondition)] ?: self.condition)
+                                                    location:(valuesByProperty[@(BLMSessionConfigurationPropertyLocation)] ?: self.location)
+                                                   therapist:(valuesByProperty[@(BLMSessionConfigurationPropertyTherapist)] ?: self.therapist)
+                                                    observer:(valuesByProperty[@(BLMSessionConfigurationPropertyObserver)] ?: self.observer)
+                                                   timeLimit:([valuesByProperty[@(BLMSessionConfigurationPropertyTimeLimit)] integerValue] ?: self.timeLimit)
+                                            timeLimitOptions:([valuesByProperty[@(BLMSessionConfigurationPropertyTimeLimitOptions)] integerValue] ?: self.timeLimitOptions)
+                                                behaviorList:(valuesByProperty[@(BLMSessionConfigurationPropertyBehaviorList)] ?: self.behaviorList)];
 }
 
 #pragma mark NSCoding
@@ -50,8 +62,9 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
                          location:[aDecoder decodeObjectOfClass:[NSString class] forKey:@"location"]
                         therapist:[aDecoder decodeObjectOfClass:[NSString class] forKey:@"therapist"]
                          observer:[aDecoder decodeObjectOfClass:[NSString class] forKey:@"observer"]
+                        timeLimit:[aDecoder decodeIntegerForKey:@"timeLimit"]
                  timeLimitOptions:[aDecoder decodeIntegerForKey:@"timeLimitOptions"]
-                           behaviorList:[aDecoder decodeObjectOfClasses:[NSSet setWithArray:@[[NSArray<BLMBehavior *> class], [BLMBehavior class]]] forKey:@"behaviorList"]];
+                     behaviorList:[aDecoder decodeObjectOfClasses:[NSSet setWithArray:@[[NSArray<BLMBehavior *> class], [BLMBehavior class]]] forKey:@"behaviorList"]];
 }
 
 
@@ -60,6 +73,7 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
     [aCoder encodeObject:self.location forKey:@"location"];
     [aCoder encodeObject:self.therapist forKey:@"therapist"];
     [aCoder encodeObject:self.observer forKey:@"observer"];
+    [aCoder encodeInteger:self.timeLimit forKey:@"timeLimit"];
     [aCoder encodeInteger:self.timeLimitOptions forKey:@"timeLimitOptions"];
     [aCoder encodeObject:self.behaviorList forKey:@"behaviorList"];
     [aCoder encodeInteger:ArchiveVersionLatest forKey:ArchiveVersionKey];
@@ -72,7 +86,9 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
     
     return (self.condition.hash
             ^ self.location.hash
+            ^ self.therapist.hash
             ^ self.observer.hash
+            ^ self.timeLimit
             ^ self.timeLimitOptions
             ^ self.behaviorList.hash);
 }
@@ -89,8 +105,10 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
 
     return ([BLMUtils isString:self.condition equalToString:configuration.condition]
             && [BLMUtils isString:self.location equalToString:configuration.location]
+            && [BLMUtils isString:self.therapist equalToString:configuration.therapist]
             && [BLMUtils isString:self.observer equalToString:configuration.observer]
             && [BLMUtils isArray:self.behaviorList equalToArray:configuration.behaviorList]
+            && (self.timeLimit == configuration.timeLimit)
             && (self.timeLimitOptions == configuration.timeLimitOptions));
 }
 

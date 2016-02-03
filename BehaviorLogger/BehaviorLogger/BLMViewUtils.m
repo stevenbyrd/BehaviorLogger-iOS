@@ -84,6 +84,41 @@ static CGFloat const DeleteItemButtonImageDiameter = 24.0;
 }
 
 
++ (UIImage *)plusSignImageWithColor:(UIColor *)color {
+    CGFloat scale = [UIScreen mainScreen].scale;
+    CGFloat lineWidth = 5.0;
+    CGFloat inset = (lineWidth / 2.0);
+    CGSize size = CGSizeMake(60.0, 60.0);
+
+    UIGraphicsBeginImageContextWithOptions(size, NO, scale);
+
+    CGRect circleRect = CGRectMake(0.0 + inset, 0.0 + inset, size.width - (2.0 * inset), size.height - (2.0 * inset));
+    UIBezierPath *path = [UIBezierPath bezierPathWithOvalInRect:circleRect];
+
+    path.lineWidth = lineWidth;
+
+    [color setStroke];
+    [path stroke];
+
+    path = [UIBezierPath bezierPath];
+
+    path.lineWidth = lineWidth;
+
+    [path moveToPoint:CGPointMake((size.width / 4.0), (size.height / 2.0))];
+    [path addLineToPoint:CGPointMake(((3 * size.width) / 4.0), (size.height / 2.0))];
+
+    [path moveToPoint:CGPointMake((size.width / 2.0), (size.height / 4.0))];
+    [path addLineToPoint:CGPointMake((size.width / 2.0), ((3 * size.height) / 4.0))];
+
+    [path stroke];
+
+    UIImage *image = UIGraphicsGetImageFromCurrentImageContext();
+    UIGraphicsEndImageContext();
+    
+    return image;
+}
+
+
 + (UIImage *)acceptImageWithColor:(UIColor *)color {
     CGFloat scale = [UIScreen mainScreen].scale;
     CGSize size = CGSizeMake(31.5, 21.5);
@@ -226,6 +261,14 @@ static CGFloat const DeleteItemButtonImageDiameter = 24.0;
 
 + (NSLayoutConstraint *)constraintWithItem:(id)view1 attribute:(NSLayoutAttribute)attribute1 equalToItem:(id)view2 attribute:(NSLayoutAttribute)attribute2 constant:(CGFloat)constant {
     return [NSLayoutConstraint constraintWithItem:view1 attribute:attribute1 relatedBy:NSLayoutRelationEqual toItem:view2 attribute:attribute2 multiplier:1.0 constant:constant];
+}
+
++ (NSLayoutConstraint *)constraintWithItem:(id)view1 attribute:(NSLayoutAttribute)attribute1 greaterThanOrEqualToItem:(id)view2 attribute:(NSLayoutAttribute)attribute2 constant:(CGFloat)constant {
+    return [NSLayoutConstraint constraintWithItem:view1 attribute:attribute1 relatedBy:NSLayoutRelationGreaterThanOrEqual toItem:view2 attribute:attribute2 multiplier:1.0 constant:constant];
+}
+
++ (NSLayoutConstraint *)constraintWithItem:(id)view1 attribute:(NSLayoutAttribute)attribute1 lessThanOrEqualToItem:(id)view2 attribute:(NSLayoutAttribute)attribute2 constant:(CGFloat)constant {
+    return [NSLayoutConstraint constraintWithItem:view1 attribute:attribute1 relatedBy:NSLayoutRelationLessThanOrEqual toItem:view2 attribute:attribute2 multiplier:1.0 constant:constant];
 }
 
 

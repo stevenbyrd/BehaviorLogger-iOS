@@ -16,5 +16,6 @@
 + (BOOL)isNumber:(NSNumber *)number1 equalToNumber:(NSNumber *)number2;
 + (BOOL)isDate:(NSDate *)date1 equalToDate:(NSDate *)date2;
 + (BOOL)isArray:(NSArray *)array1 equalToArray:(NSArray *)array2;
++ (BOOL)isDictionary:(NSDictionary *)dictionary1 equalToDictionary:(NSDictionary *)dictionary2;
 
 @end

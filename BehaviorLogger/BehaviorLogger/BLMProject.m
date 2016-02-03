@@ -29,8 +29,8 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
 @implementation BLMProject
 
 - (instancetype)initWithUid:(NSNumber *)uid name:(NSString *)name client:(NSString *)client defaultSessionConfiguration:(BLMSessionConfiguration *)defaultSessionConfiguration sessionByUid:(NSDictionary<NSNumber *, BLMSession *> *)sessionByUid {
-    NSParameterAssert(name.length > 0);
-    NSParameterAssert(client.length > 0);
+    NSParameterAssert(name.length > BLMProjectNameMinimumLength);
+    NSParameterAssert(client.length > BLMProjectClientMinimumLength);
 
     self = [super init];
 
@@ -41,7 +41,7 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
     _uid = uid;
     _name = [name copy];
     _client = [client copy];
-    _defaultSessionConfiguration = defaultSessionConfiguration;
+    _defaultSessionConfiguration = (defaultSessionConfiguration ?: [[BLMSessionConfiguration alloc] initWitCondition:nil location:nil therapist:nil observer:nil timeLimit:-1 timeLimitOptions:0 behaviorList:@[]]);
     _sessionByUid = [sessionByUid copy];
 
     return self;

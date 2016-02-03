@@ -318,14 +318,14 @@ typedef NS_ENUM(NSInteger, TableSection) {
     [alertController addTextFieldWithConfigurationHandler:^(UITextField * _Nonnull textField) {
         textField.text = projectName;
         textField.delegate = self;
-        textField.placeholder = [NSString stringWithFormat:@"Project Name (minimum of %ld characters)", (long)BLMProjectNameMinimumLength];
+        textField.placeholder = [NSString stringWithFormat:@"Project Name (%ld characters minimum)", (long)BLMProjectNameMinimumLength];
         projectNameTextFieldDidChangeObserver = [[NSNotificationCenter defaultCenter] addObserverForName:UITextFieldTextDidChangeNotification object:textField queue:[NSOperationQueue mainQueue] usingBlock:textFieldDidChangeBlock];
     }];
 
     [alertController addTextFieldWithConfigurationHandler:^(UITextField * _Nonnull textField) {
         textField.text = client;
         textField.delegate = self;
-        textField.placeholder = [NSString stringWithFormat:@"Client (minimum of %ld character)", (long)BLMProjectClientMinimumLength];
+        textField.placeholder = [NSString stringWithFormat:@"Client (%ld characters minimum)", (long)BLMProjectClientMinimumLength];
         clientTextFieldDidChangeObserver = [[NSNotificationCenter defaultCenter] addObserverForName:UITextFieldTextDidChangeNotification object:textField queue:[NSOperationQueue mainQueue] usingBlock:textFieldDidChangeBlock];
     }];
 

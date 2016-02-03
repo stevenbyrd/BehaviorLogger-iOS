@@ -58,4 +58,14 @@
                 && [array1 isEqualToArray:array2]));
 }
 
++ (BOOL)isDictionary:(NSDictionary *)dictionary1 equalToDictionary:(NSDictionary *)dictionary2 {
+    return ((dictionary1 == dictionary2)
+            || ((dictionary1 != nil)
+                && (dictionary2 != nil)
+                && [dictionary1 respondsToSelector:@selector(isEqualToDictionary:)]
+                && [dictionary2 respondsToSelector:@selector(isEqualToDictionary:)]
+                && [dictionary1 isEqualToDictionary:dictionary2]));
+
+}
+
 @end

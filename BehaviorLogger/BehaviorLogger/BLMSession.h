@@ -12,10 +12,24 @@
 @class BLMBehavior;
 
 
+typedef NSInteger BLMTimeInterval; // Represents an interval of time in seconds
+
+
 typedef NS_OPTIONS(NSInteger, BLMTimeLimitOptions) {
     BLMTimeLimitOptionsPauseAutomatically,
     BLMTimeLimitOptionsChangeTimerColor,
     BLMTimeLimitOptionsPlayBeepSound,
+};
+
+
+typedef NS_ENUM(NSInteger, BLMSessionConfigurationProperty) {
+    BLMSessionConfigurationPropertyCondition,
+    BLMSessionConfigurationPropertyLocation,
+    BLMSessionConfigurationPropertyTherapist,
+    BLMSessionConfigurationPropertyObserver,
+    BLMSessionConfigurationPropertyTimeLimit,
+    BLMSessionConfigurationPropertyTimeLimitOptions,
+    BLMSessionConfigurationPropertyBehaviorList
 };
 
 
@@ -27,10 +41,12 @@ typedef NS_OPTIONS(NSInteger, BLMTimeLimitOptions) {
 @property (nonatomic, copy, readonly) NSString *location;
 @property (nonatomic, copy, readonly) NSString *therapist;
 @property (nonatomic, copy, readonly) NSString *observer;
+@property (nonatomic, assign, readonly) BLMTimeInterval timeLimit;
 @property (nonatomic, assign, readonly) BLMTimeLimitOptions timeLimitOptions;
 @property (nonatomic, copy, readonly) NSArray<BLMBehavior *> *behaviorList;
 
-- (instancetype)initWitCondition:(NSString *)condition location:(NSString *)location therapist:(NSString *)therapist observer:(NSString *)observer timeLimitOptions:(BLMTimeLimitOptions)timeLimitOptions behaviorList:(NSArray<BLMBehavior *> *)behaviorList;
+- (instancetype)initWitCondition:(NSString *)condition location:(NSString *)location therapist:(NSString *)therapist observer:(NSString *)observer timeLimit:(BLMTimeInterval)timeLimit timeLimitOptions:(BLMTimeLimitOptions)timeLimitOptions behaviorList:(NSArray<BLMBehavior *> *)behaviorList;
+- (instancetype)copyWithUpdatedValuesByProperty:(NSDictionary<NSNumber *, id> *)valuesByProperty; // @(BLMSessionConfigurationProperty) -> id
 
 @end
 
