@@ -26,12 +26,12 @@
 
 
 - (CGRect)textRectForBounds:(CGRect)bounds { // placeholder position
-    return CGRectInset(bounds, self.horizontalPadding, self.verticalPadding);
+    return CGRectInset(bounds, (self.horizontalPadding - 1.0), self.verticalPadding); // -1.0 pixel workaround for NSAttributedString size bug
 }
 
 
 - (CGRect)editingRectForBounds:(CGRect)bounds { // text position
-    return CGRectInset(bounds, self.horizontalPadding, self.verticalPadding);
+    return CGRectInset(bounds, (self.horizontalPadding - 1.0), self.verticalPadding); // -1.0 pixel workaround for NSAttributedString size bug
 }
 
 @end

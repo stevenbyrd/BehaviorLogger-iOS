@@ -10,6 +10,9 @@
 #import "BLMUtils.h"
 
 
+NSUInteger const BLMBehaviorNameMinimumLength = 3;
+
+
 static NSString *const ArchiveVersionKey = @"ArchiveVersionKey";
 
 

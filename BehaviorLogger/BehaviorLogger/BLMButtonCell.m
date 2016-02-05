@@ -33,10 +33,13 @@
 
 - (void)updateContent {
     [super updateContent];
+
+    self.button.enabled = [self.delegate isButtonEnabledForButtonCell:self];
     
     [self.button setTitle:[self.delegate titleForButtonCell:self] forState:UIControlStateNormal];
     [self.button setImage:[self.delegate normalImageForButtonCell:self] forState:UIControlStateNormal];
     [self.button setImage:[self.delegate highlightedImageForButtonCell:self] forState:UIControlStateHighlighted];
+    [self.button setImage:[self.delegate highlightedImageForButtonCell:self] forState:UIControlStateSelected];
 }
 
 

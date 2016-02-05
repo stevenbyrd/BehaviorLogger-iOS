@@ -48,16 +48,10 @@
 
 #pragma mark Supplementary View
 
-static NSString *const SectionHeaderViewType = @"SectionHeaderViewType";
-static NSString *const SectionSeparatorViewType = @"SectionSeparatorViewType";
-static NSString *const SectionBackgroundViewType = @"SectionBackgroundViewType";
-
-typedef NS_ENUM(NSInteger, SupplementaryViewItem) {
-    SupplementaryViewItemSectionHeader = -1,
-    SupplementaryViewItemSectionBackground = -2,
-    SupplementaryViewItemSectionFooter = -3,
-    SupplementaryViewItemCount = -4
-};
+static NSString *const HeaderKind = @"HeaderKind";
+static NSString *const ContentBackgroundKind = @"ContentBackgroundKind";
+static NSString *const ItemCellKind = @"ItemCellKind";
+static NSString *const SeparatorKind = @"SeparatorKind";
 
 static CGFloat const SectionHeaderHeight = 30.0;
 static CGFloat const SectionHeaderTitleFontSize = 18.0;
@@ -244,34 +238,6 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
 
 #pragma mark
 
-@interface EditBehaviorCell : BLMCollectionViewCell
-
-@property (nonatomic, strong, readonly) UITextField *textField;
-@property (nonatomic, strong, readonly) UISwitch *toggleSwitch;
-
-@end
-
-
-@implementation EditBehaviorCell
-
-- (instancetype)initWithFrame:(CGRect)frame {
-    self = [super initWithFrame:frame];
-
-    if (self == nil) {
-        return nil;
-    }
-
-    self.contentView.layer.borderWidth = 0.0;
-    self.contentView.backgroundColor = [BLMViewUtils colorWithHexValue:BLMColorHexCodePurple alpha:1.0];
-
-    return self;
-}
-
-@end
-
-
-#pragma mark
-
 @class ProjectDetailCollectionViewLayout;
 
 
@@ -287,8 +253,8 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
 @property (nonatomic, weak, readonly) id<ProjectDetailCollectionViewLayoutDelegate> layoutDelegate;
 @property (nonatomic, assign, readonly) CGSize collectionViewContentSize;
 @property (nonatomic, copy, readonly) NSMutableArray<NSValue *> *sectionFrameList;
-@property (nonatomic, copy, readonly) NSMutableDictionary<NSIndexPath *, UICollectionViewLayoutAttributes *> *itemAttributesByIndexPath;
-@property (nonatomic, copy, readonly) NSDictionary<NSIndexPath *, UICollectionViewLayoutAttributes *> *previousItemAttributesByIndexPath;
+@property (nonatomic, copy, readonly) NSDictionary<NSString *, NSMutableDictionary<NSIndexPath *, UICollectionViewLayoutAttributes *> *> *attributesByIndexPathByKind;
+@property (nonatomic, copy, readonly) NSDictionary<NSString *, NSMutableDictionary<NSIndexPath *, UICollectionViewLayoutAttributes *> *> *previousAttributesByIndexPathByKind;
 
 @end
 
@@ -310,12 +276,10 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
 - (void)prepareLayout {
     [super prepareLayout];
 
-
-
     [self.sectionFrameList removeAllObjects];
 
-    _previousItemAttributesByIndexPath = self.itemAttributesByIndexPath;
-    _itemAttributesByIndexPath = [NSMutableDictionary dictionary];
+    _previousAttributesByIndexPathByKind = self.attributesByIndexPathByKind;
+    _attributesByIndexPathByKind = @{ HeaderKind:[NSMutableDictionary dictionary], ContentBackgroundKind:[NSMutableDictionary dictionary], ItemCellKind:[NSMutableDictionary dictionary], SeparatorKind:[NSMutableDictionary dictionary] };
 
     _collectionViewContentSize = (CGSize) {
         .width = CGRectGetWidth(self.collectionView.bounds),
@@ -339,12 +303,12 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
         };
 
         if (CGRectGetHeight(headerFrame)) {
-            NSIndexPath *indexPath = [NSIndexPath indexPathForItem:SupplementaryViewItemSectionHeader inSection:section];
-            UICollectionViewLayoutAttributes *attributes = [UICollectionViewLayoutAttributes layoutAttributesForSupplementaryViewOfKind:SectionHeaderViewType withIndexPath:indexPath];
+            NSIndexPath *indexPath = [NSIndexPath indexPathForItem:0 inSection:section];
+            UICollectionViewLayoutAttributes *attributes = [UICollectionViewLayoutAttributes layoutAttributesForSupplementaryViewOfKind:HeaderKind withIndexPath:indexPath];
 
             attributes.frame = headerFrame;
 
-            self.itemAttributesByIndexPath[indexPath] = attributes;
+            self.attributesByIndexPathByKind[HeaderKind][indexPath] = attributes;
         }
 
 #pragma mark Content Area Layout
@@ -368,12 +332,12 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
         assert(CGRectGetWidth(self.collectionView.bounds) == (CGRectGetWidth(contentAreaFrame) + Layout.ContentArea.Insets.left + Layout.ContentArea.Insets.right));
 
         if (Layout.ContentArea.HasBackground) {
-            NSIndexPath *indexPath = [NSIndexPath indexPathForItem:SupplementaryViewItemSectionBackground inSection:section];
-            UICollectionViewLayoutAttributes *attributes = [UICollectionViewLayoutAttributes layoutAttributesForSupplementaryViewOfKind:SectionBackgroundViewType withIndexPath:indexPath];
+            NSIndexPath *indexPath = [NSIndexPath indexPathForItem:0 inSection:section];
+            UICollectionViewLayoutAttributes *attributes = [UICollectionViewLayoutAttributes layoutAttributesForSupplementaryViewOfKind:ContentBackgroundKind withIndexPath:indexPath];
 
             attributes.frame = contentAreaFrame;
 
-            self.itemAttributesByIndexPath[indexPath] = attributes;
+            self.attributesByIndexPathByKind[ContentBackgroundKind][indexPath] = attributes;
         }
 
 #pragma mark Item Grid Layout
@@ -390,8 +354,9 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
         };
 
         CGFloat itemWidth = ((CGRectGetWidth(itemGridFrame) // To find the width of item cells in this section, start with the item area width...
-                              - (Layout.ContentArea.ItemGrid.ColumnSpacing * (Layout.ContentArea.ItemGrid.ColumnCount - 1))) // ...then isolate the horizontal space available to item cells by subtracting the inter-column item spacing...
-                             / Layout.ContentArea.ItemGrid.ColumnCount); // ...and divide the remaining space by the number of columns
+                              - (Layout.ContentArea.ItemGrid.ColumnSpacing // ...then subtracting the horizontal inter-column space...
+                                 * (Layout.ContentArea.ItemGrid.ColumnCount - 1))) // ...multiplied by the total number of inter-column spaces...
+                             / Layout.ContentArea.ItemGrid.ColumnCount); // ...and finally dividing the remaining space by the number of columns
 
         for (NSInteger item = 0; item < itemCount; item += 1) {
             CGRect itemFrame = {
@@ -411,7 +376,7 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
             attributes.frame = itemFrame;
             attributes.zIndex = 1;
 
-            self.itemAttributesByIndexPath[indexPath] = attributes;
+            self.attributesByIndexPathByKind[ItemCellKind][indexPath] = attributes;
         }
 
 #pragma mark Section Footer Layout
@@ -428,12 +393,12 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
         };
 
         if (CGRectGetHeight(footerFrame) > 0) {
-            NSIndexPath *indexPath = [NSIndexPath indexPathForItem:SupplementaryViewItemSectionFooter inSection:section];
-            UICollectionViewLayoutAttributes *attributes = [UICollectionViewLayoutAttributes layoutAttributesForSupplementaryViewOfKind:SectionSeparatorViewType withIndexPath:indexPath];
+            NSIndexPath *indexPath = [NSIndexPath indexPathForItem:0 inSection:section];
+            UICollectionViewLayoutAttributes *attributes = [UICollectionViewLayoutAttributes layoutAttributesForSupplementaryViewOfKind:SeparatorKind withIndexPath:indexPath];
 
             attributes.frame = footerFrame;
 
-            self.itemAttributesByIndexPath[indexPath] = attributes;
+            self.attributesByIndexPathByKind[SeparatorKind][indexPath] = attributes;
         }
 
 #pragma mark Section Frame Layout
@@ -476,13 +441,19 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
             continue;
         }
 
-        for (NSInteger item = SupplementaryViewItemCount; item < [self.collectionView numberOfItemsInSection:section]; item += 1) {
-            NSIndexPath *indexPath = [NSIndexPath indexPathForItem:item inSection:section];
-            UICollectionViewLayoutAttributes *attributes = self.itemAttributesByIndexPath[indexPath];
+        for (NSString *kind in @[HeaderKind, ContentBackgroundKind, SeparatorKind]) {
+            [self.attributesByIndexPathByKind[kind] enumerateKeysAndObjectsUsingBlock:^(NSIndexPath *key, UICollectionViewLayoutAttributes *attributes, BOOL *stop) {
+                if (CGRectIntersectsRect(attributes.frame, rect)) {
+                    [attributesForRect addObject:attributes];
+                }
+            }];
+        }
 
-            if (attributes == nil) {
-                continue;
-            }
+        NSInteger itemCount = [self.collectionView numberOfItemsInSection:section];
+
+        for (NSInteger item = 0; item < itemCount; item += 1) {
+            NSIndexPath *indexPath = [NSIndexPath indexPathForItem:item inSection:section];
+            UICollectionViewLayoutAttributes *attributes = self.attributesByIndexPathByKind[ItemCellKind][indexPath];
 
             if (CGRectGetMinY(attributes.frame) > CGRectGetMaxY(rect)) {
                 scannedPastRectMaxY = YES;
@@ -500,7 +471,7 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
 
 
 - (UICollectionViewLayoutAttributes *)layoutAttributesForItemAtIndexPath:(NSIndexPath *)indexPath {
-    UICollectionViewLayoutAttributes *attributes = self.itemAttributesByIndexPath[indexPath];
+    UICollectionViewLayoutAttributes *attributes = self.attributesByIndexPathByKind[ItemCellKind][indexPath];
     assert(attributes != nil);
 
     return attributes;
@@ -508,7 +479,7 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
 
 
 - (UICollectionViewLayoutAttributes *)layoutAttributesForSupplementaryViewOfKind:(NSString *)elementKind atIndexPath:(NSIndexPath *)indexPath {
-    UICollectionViewLayoutAttributes *attributes = self.itemAttributesByIndexPath[indexPath];
+    UICollectionViewLayoutAttributes *attributes = self.attributesByIndexPathByKind[elementKind][indexPath];
     assert(attributes != nil);
 
     return attributes;
@@ -516,7 +487,7 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
 
 
 - (nullable UICollectionViewLayoutAttributes *)initialLayoutAttributesForAppearingItemAtIndexPath:(NSIndexPath *)indexPath {
-    UICollectionViewLayoutAttributes *initialAttributes = self.previousItemAttributesByIndexPath[indexPath];
+    UICollectionViewLayoutAttributes *initialAttributes = self.attributesByIndexPathByKind[ItemCellKind][indexPath];
 
     switch ((ProjectDetailSection)indexPath.section) {
         case ProjectDetailSectionBasicInfo:
@@ -525,11 +496,15 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
             break;
 
         case ProjectDetailSectionBehaviors: {
+            if (self.previousAttributesByIndexPathByKind[ItemCellKind].count == self.attributesByIndexPathByKind[ItemCellKind].count) { // Reloading existing item, don't animate
+                break;
+            }
+
             NSUInteger secondToLastItem = ([self.collectionView numberOfItemsInSection:indexPath.section] - 2);
 
             if (initialAttributes == nil) { // The "add behavior" button is the last item; its initial layout for this animation should be the final layout for the cell being added in front of it
                 assert(indexPath.item == (secondToLastItem + 1));
-                initialAttributes = self.previousItemAttributesByIndexPath[[NSIndexPath indexPathForItem:secondToLastItem inSection:ProjectDetailSectionBehaviors]];
+                initialAttributes = self.attributesByIndexPathByKind[ItemCellKind][[NSIndexPath indexPathForItem:secondToLastItem inSection:ProjectDetailSectionBehaviors]];
             } else if (indexPath.item == secondToLastItem) {
                 initialAttributes = [initialAttributes copy];
                 initialAttributes.transform = CGAffineTransformMakeScale(0.01, 0.01);
@@ -548,8 +523,8 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
 }
 
 
-- (nullable UICollectionViewLayoutAttributes *)finalLayoutAttributesForDisappearingItemAtIndexPath:(NSIndexPath *)itemIndexPath {
-    return nil;
+- (nullable UICollectionViewLayoutAttributes *)initialLayoutAttributesForAppearingSupplementaryElementOfKind:(NSString *)elementKind atIndexPath:(NSIndexPath *)indexPath {
+    return self.attributesByIndexPathByKind[elementKind][indexPath];
 }
 
 
@@ -585,12 +560,13 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
 
 #pragma mark
 
-@interface BLMProjectDetailController () <UICollectionViewDataSource, ProjectDetailCollectionViewLayoutDelegate, BLMTextInputCellDelegate, BLMButtonCellDelegate>
+@interface BLMProjectDetailController () <UICollectionViewDataSource, ProjectDetailCollectionViewLayoutDelegate, BLMToggleSwitchTextInputCellDelegate, BLMButtonCellDelegate>
 
 @property (nonatomic, strong, readonly) UICollectionView *collectionView;
 
-@property (nonatomic, copy, readonly) NSMutableArray<NSString *> *behaviorNameList;
-@property (nonatomic, copy, readonly) NSMutableIndexSet *continuousBehaviorIndexSet;
+@property (nonatomic, copy) NSMutableArray<NSString *> *originalBehaviorNameList;
+@property (nonatomic, copy) NSMutableArray<NSString *> *updatedBehaviorNameList;
+@property (nonatomic, copy) NSMutableIndexSet *continuousBehaviorIndexSet;
 
 @end
 
@@ -607,7 +583,8 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
     }
 
     _projectUid = project.uid;
-    _behaviorNameList = [NSMutableArray array];
+    _originalBehaviorNameList = [NSMutableArray array];
+    _updatedBehaviorNameList = [NSMutableArray array];
     _continuousBehaviorIndexSet = [NSMutableIndexSet indexSet];
 
     return self;
@@ -628,11 +605,11 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
 
     _collectionView = [[UICollectionView alloc] initWithFrame:CGRectZero collectionViewLayout:[[ProjectDetailCollectionViewLayout alloc] init]];
 
-    [self.collectionView registerClass:[SectionHeaderView class] forSupplementaryViewOfKind:SectionHeaderViewType withReuseIdentifier:NSStringFromClass([SectionHeaderView class])];
-    [self.collectionView registerClass:[SectionSeparatorView class] forSupplementaryViewOfKind:SectionSeparatorViewType withReuseIdentifier:NSStringFromClass([SectionSeparatorView class])];
-    [self.collectionView registerClass:[SectionBackgroundView class] forSupplementaryViewOfKind:SectionBackgroundViewType withReuseIdentifier:NSStringFromClass([SectionBackgroundView class])];
+    [self.collectionView registerClass:[SectionHeaderView class] forSupplementaryViewOfKind:HeaderKind withReuseIdentifier:NSStringFromClass([SectionHeaderView class])];
+    [self.collectionView registerClass:[SectionSeparatorView class] forSupplementaryViewOfKind:SeparatorKind withReuseIdentifier:NSStringFromClass([SectionSeparatorView class])];
+    [self.collectionView registerClass:[SectionBackgroundView class] forSupplementaryViewOfKind:ContentBackgroundKind withReuseIdentifier:NSStringFromClass([SectionBackgroundView class])];
 
-    [self.collectionView registerClass:[EditBehaviorCell class] forCellWithReuseIdentifier:NSStringFromClass([EditBehaviorCell class])];
+    [self.collectionView registerClass:[BLMToggleSwitchTextInputCell class] forCellWithReuseIdentifier:NSStringFromClass([BLMToggleSwitchTextInputCell class])];
     [self.collectionView registerClass:[BLMTextInputCell class] forCellWithReuseIdentifier:NSStringFromClass([BLMTextInputCell class])];
     [self.collectionView registerClass:[BLMButtonCell class] forCellWithReuseIdentifier:NSStringFromClass([BLMButtonCell class])];
 
@@ -653,21 +630,60 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
 
 
 - (void)reloadBehaviorData {
-    [self.behaviorNameList removeAllObjects];
+    NSString *unfinishedAddedBehaviorName = nil;
+    BOOL isUnfinishedBehaviorContinuous = NO;
+
+    if ((self.updatedBehaviorNameList.count > self.originalBehaviorNameList.count) && ![self isValidBehaviorNameAtIndex:(self.updatedBehaviorNameList.count - 1)]) {
+        assert(self.updatedBehaviorNameList.count - self.originalBehaviorNameList.count == 1);
+        unfinishedAddedBehaviorName = self.updatedBehaviorNameList.lastObject;
+        isUnfinishedBehaviorContinuous = [self.continuousBehaviorIndexSet containsIndex:(self.updatedBehaviorNameList.count - 1)];
+    }
+
+    [self.originalBehaviorNameList removeAllObjects];
+    [self.updatedBehaviorNameList removeAllObjects];
     [self.continuousBehaviorIndexSet removeAllIndexes];
 
     BLMProject *project = [[BLMDataManager sharedManager] projectForUid:self.projectUid];
-    NSArray *behaviorList = project.defaultSessionConfiguration.behaviorList;
 
-    [behaviorList enumerateObjectsUsingBlock:^(BLMBehavior *behavior, NSUInteger index, BOOL *stop) {
-        [self.behaviorNameList addObject:behavior.name];
+    [project.defaultSessionConfiguration.behaviorList enumerateObjectsUsingBlock:^(BLMBehavior *behavior, NSUInteger index, BOOL *stop) {
+        NSString *behaviorName = behavior.name;
+
+        [self.originalBehaviorNameList addObject:behaviorName];
+        [self.updatedBehaviorNameList addObject:behaviorName];
 
         if (behavior.isContinuous) {
             [self.continuousBehaviorIndexSet addIndex:index];
         }
     }];
 
+    if (unfinishedAddedBehaviorName != nil) {
+        [self.updatedBehaviorNameList addObject:unfinishedAddedBehaviorName];
+
+        if (isUnfinishedBehaviorContinuous) {
+            [self.continuousBehaviorIndexSet addIndex:(self.updatedBehaviorNameList.count - 1)];
+        }
+    }
+    
     [self.collectionView reloadSections:[NSIndexSet indexSetWithIndex:ProjectDetailSectionBehaviors]];
+}
+
+
+- (BOOL)isValidBehaviorNameAtIndex:(NSUInteger)index {
+    assert(index < self.updatedBehaviorNameList.count);
+
+    NSString *updatedBehaviorName = self.updatedBehaviorNameList[index];
+
+    if (updatedBehaviorName.length < BLMBehaviorNameMinimumLength) {
+        return NO;
+    }
+
+    for (NSUInteger originalIndex = 0; originalIndex < self.originalBehaviorNameList.count; originalIndex += 1) {
+        if ([BLMUtils isString:self.originalBehaviorNameList[originalIndex] equalToString:updatedBehaviorName] && (originalIndex != index)) {
+            return NO;
+        }
+    }
+
+    return YES;
 }
 
 #pragma mark Event Handling
@@ -684,8 +700,6 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleProjectUpdated:) name:BLMProjectUpdatedNotification object:updatedProject];
 
     [self reloadBehaviorData];
-
-    //TODO: Update UI
 }
 
 #pragma mark UICollectionViewDataSource
@@ -710,7 +724,7 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
         }
 
         case ProjectDetailSectionBehaviors: {
-            numberOfItems = self.behaviorNameList.count;
+            numberOfItems = self.updatedBehaviorNameList.count;
             numberOfItems += 1; // Add one for the AddBehaviorCell
             break;
         }
@@ -744,11 +758,13 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
         }
 
         case ProjectDetailSectionBehaviors: {
-            if (indexPath.item < self.behaviorNameList.count) {
-                EditBehaviorCell *behaviorCell = [collectionView dequeueReusableCellWithReuseIdentifier:NSStringFromClass([EditBehaviorCell class]) forIndexPath:indexPath];
+            if (indexPath.item < self.updatedBehaviorNameList.count) {
+                BLMToggleSwitchTextInputCell *behaviorCell = (BLMToggleSwitchTextInputCell *)[collectionView dequeueReusableCellWithReuseIdentifier:NSStringFromClass([BLMToggleSwitchTextInputCell class]) forIndexPath:indexPath];
+                behaviorCell.delegate = self;
+                
                 cell = behaviorCell;
             } else {
-                assert(indexPath.item == self.behaviorNameList.count);
+                assert(indexPath.item == self.updatedBehaviorNameList.count);
 
                 BLMButtonCell *buttonCell = [collectionView dequeueReusableCellWithReuseIdentifier:NSStringFromClass([BLMButtonCell class]) forIndexPath:indexPath];
                 buttonCell.delegate = self;
@@ -785,7 +801,7 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
 - (UICollectionReusableView *)collectionView:(UICollectionView *)collectionView viewForSupplementaryElementOfKind:(NSString *)kind atIndexPath:(NSIndexPath *)indexPath {
     UICollectionReusableView *view = nil;
 
-    if ([kind isEqualToString:SectionHeaderViewType]) {
+    if ([kind isEqualToString:HeaderKind]) {
         SectionHeaderView *headerView = [collectionView dequeueReusableSupplementaryViewOfKind:kind withReuseIdentifier:NSStringFromClass([SectionHeaderView class]) forIndexPath:indexPath];
 
         view = headerView;
@@ -816,9 +832,9 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
                 break;
             }
         }
-    } else if ([kind isEqualToString:SectionSeparatorViewType]) {
+    } else if ([kind isEqualToString:SeparatorKind]) {
         view = [collectionView dequeueReusableSupplementaryViewOfKind:kind withReuseIdentifier:NSStringFromClass([SectionSeparatorView class]) forIndexPath:indexPath];
-    } else if ([kind isEqualToString:SectionBackgroundViewType]) {
+    } else if ([kind isEqualToString:ContentBackgroundKind]) {
         view = [collectionView dequeueReusableSupplementaryViewOfKind:kind withReuseIdentifier:NSStringFromClass([SectionBackgroundView class]) forIndexPath:indexPath];
     }
 
@@ -889,10 +905,10 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
                         .right = 30.0
                     },
                     .ItemGrid = {
-                        .ColumnCount = 6,
-                        .ColumnSpacing = 10.0,
+                        .ColumnCount = 4,
+                        .ColumnSpacing = 15.0,
                         .RowSpacing = 10.0,
-                        .RowHeight = 60.0,
+                        .RowHeight = 80.0,
                         .Insets = {
                             .top = 10.0,
                             .left = 10.0,
@@ -934,14 +950,14 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
     }
 }
 
-#pragma mark BLMTextInputCellDelegate
+#pragma mark BLMToggleSwitchTextInputCellDelegate
 
 - (NSString *)labelForTextInputCell:(BLMTextInputCell *)cell {
     switch ((ProjectDetailSection)cell.section) {
         case ProjectDetailSectionBasicInfo: {
             switch ((BasicInfoSectionItem)cell.item) {
                 case BasicInfoSectionItemProjectName:
-                    return @"Project Name:";
+                    return @"Project:";
 
                 case BasicInfoSectionItemClientName:
                     return @"Client Name:";
@@ -964,7 +980,7 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
                     return @"Therapist:";
 
                 case SessionPropertiesSectionItemObserver:
-                    return @"Observer";
+                    return @"Observer:";
 
                 case SessionPropertiesSectionItemCount: {
                     break;
@@ -973,6 +989,9 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
         }
 
         case ProjectDetailSectionBehaviors:
+            assert(cell.item < self.updatedBehaviorNameList.count);
+            return @"Continuous:";
+
         case ProjectDetailSectionActionButtons:
         case ProjectDetailSectionCount: {
             break;
@@ -1022,7 +1041,36 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
             }
         }
 
+        case ProjectDetailSectionBehaviors: {
+            if (cell.item < self.originalBehaviorNameList.count) {
+                return self.originalBehaviorNameList[cell.item];
+            }
+
+            return self.updatedBehaviorNameList[cell.item];
+        }
+
+        case ProjectDetailSectionActionButtons:
+        case ProjectDetailSectionCount: {
+            break;
+        }
+    }
+
+    assert(NO);
+    return nil;
+}
+
+
+- (NSString *)placeholderForTextInputCell:(BLMTextInputCell *)cell {
+    switch ((ProjectDetailSection)cell.section) {
+        case ProjectDetailSectionBasicInfo:
+            return [NSString stringWithFormat:@"Required (%lu+ characters)", (unsigned long)[self minimumInputLengthForTextInputCell:cell]];
+
+        case ProjectDetailSectionSessionProperties:
+            return @"Optional";
+
         case ProjectDetailSectionBehaviors:
+            return [NSString stringWithFormat:@"Name (%lu+ characters)", (unsigned long)[self minimumInputLengthForTextInputCell:cell]];
+
         case ProjectDetailSectionActionButtons:
         case ProjectDetailSectionCount: {
             break;
@@ -1065,6 +1113,8 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
         }
 
         case ProjectDetailSectionBehaviors:
+            return BLMBehaviorNameMinimumLength;
+
         case ProjectDetailSectionActionButtons:
         case ProjectDetailSectionCount: {
             break;
@@ -1076,7 +1126,59 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
 }
 
 
-- (void)didAcceptInputForTextInputCell:(BLMTextInputCell *)cell {
+- (void)didChangeInputForTextInputCell:(BLMTextInputCell *)cell {
+    switch ((ProjectDetailSection)cell.section) {
+        case ProjectDetailSectionBehaviors: {
+            assert(cell.item < self.updatedBehaviorNameList.count);
+            BOOL originalValidity = [self isValidBehaviorNameAtIndex:cell.item];
+
+            [self.updatedBehaviorNameList replaceObjectAtIndex:cell.item withObject:(cell.textField.text ?: @"")];
+
+            if ([self isValidBehaviorNameAtIndex:cell.item] != originalValidity) {
+                [self.collectionView reloadItemsAtIndexPaths:@[[NSIndexPath indexPathForItem:self.updatedBehaviorNameList.count inSection:ProjectDetailSectionBehaviors]]];
+            }
+            break;
+        }
+
+        case ProjectDetailSectionActionButtons:
+        case ProjectDetailSectionBasicInfo:
+        case ProjectDetailSectionSessionProperties:
+        case ProjectDetailSectionCount: {
+            break;
+        }
+    }
+}
+
+
+- (BOOL)shouldAcceptInputForTextInputCell:(BLMTextInputCell *)cell {
+    switch ((ProjectDetailSection)cell.section) {
+        case ProjectDetailSectionBasicInfo:
+            return (cell.textField.text.length >= [self minimumInputLengthForTextInputCell:cell]);
+
+        case ProjectDetailSectionSessionProperties:
+            return YES;
+
+        case ProjectDetailSectionBehaviors: {
+            if ([BLMUtils isString:[self.updatedBehaviorNameList objectAtIndex:cell.item] equalToString:cell.textField.text]) {
+                return [self isValidBehaviorNameAtIndex:cell.item];
+            };
+
+            assert((cell.item == self.originalBehaviorNameList.count)
+                   || [BLMUtils isString:self.updatedBehaviorNameList[cell.item] equalToString:self.originalBehaviorNameList[cell.item]]);
+
+            return NO; // Model was updated between now and when the cell resigned first responder; its UI will be updated appropriately
+        }
+
+        case ProjectDetailSectionActionButtons:
+        case ProjectDetailSectionCount: {
+            assert(NO);
+            break;
+        }
+    }
+}
+
+
+- (void)didAcceptInputForTextInputCell:(BLMTextInputCell *)cell {    
     BLMProject *project = [[BLMDataManager sharedManager] projectForUid:self.projectUid];
     BLMProjectProperty updatedProperty = BLMProjectPropertyCount;
     id updatedValue = nil;
@@ -1129,11 +1231,29 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
             }
 
             updatedProperty = BLMProjectPropertyDefaultSessionConfiguration;
-            updatedValue = [project.defaultSessionConfiguration copyWithUpdatedValuesByProperty:@{ @(updatedSessionConfigurationProperty):(cell.textField.text ?: @"") }];
+            updatedValue = [project.defaultSessionConfiguration copyWithUpdatedValuesByProperty:@{ @(updatedSessionConfigurationProperty) : (cell.textField.text ?: @"") }];
             break;
         }
 
-        case ProjectDetailSectionBehaviors:
+        case ProjectDetailSectionBehaviors: {
+            NSMutableArray<BLMBehavior *> *behaviorList = ([project.defaultSessionConfiguration.behaviorList mutableCopy] ?: [NSMutableArray array]);
+            BLMBehavior *updatedBehavior = [[BLMBehavior alloc] initWithName:self.updatedBehaviorNameList[cell.item] continuous:[self.continuousBehaviorIndexSet containsIndex:cell.item]];
+
+            assert([BLMUtils isString:updatedBehavior.name equalToString:cell.textField.text]);
+            assert([self isValidBehaviorNameAtIndex:cell.item]);
+
+            if (cell.item == behaviorList.count) {
+                [behaviorList addObject:updatedBehavior];
+            } else {
+                assert(updatedBehavior.isContinuous == behaviorList[cell.item].isContinuous);
+                [behaviorList replaceObjectAtIndex:cell.item withObject:updatedBehavior];
+            }
+
+            updatedProperty = BLMProjectPropertyDefaultSessionConfiguration;
+            updatedValue = [project.defaultSessionConfiguration copyWithUpdatedValuesByProperty:@{ @(BLMSessionConfigurationPropertyBehaviorList) : behaviorList }];
+            break;
+        }
+
         case ProjectDetailSectionActionButtons:
         case ProjectDetailSectionCount: {
             assert(NO);
@@ -1147,12 +1267,101 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
     [[BLMDataManager sharedManager] applyUpdateForProjectUid:self.projectUid property:updatedProperty value:updatedValue];
 }
 
+
+- (BOOL)defaultToggleStateForToggleSwitchTextInputCell:(BLMToggleSwitchTextInputCell *)cell {
+    switch ((ProjectDetailSection)cell.section) {
+        case ProjectDetailSectionBehaviors:
+            return [self.continuousBehaviorIndexSet containsIndex:cell.item];
+
+        case ProjectDetailSectionBasicInfo:
+        case ProjectDetailSectionSessionProperties:
+        case ProjectDetailSectionActionButtons:
+        case ProjectDetailSectionCount: {
+            break;
+        }
+    }
+
+    assert(NO);
+    return NO;
+}
+
+
+- (void)didChangeToggleStateForToggleSwitchTextInputCell:(BLMToggleSwitchTextInputCell *)cell {
+    switch ((ProjectDetailSection)cell.section) {
+        case ProjectDetailSectionBehaviors: {
+            assert([self.continuousBehaviorIndexSet containsIndex:cell.item] != cell.toggleSwitch.isOn);
+
+            if (cell.toggleSwitch.isOn) {
+                [self.continuousBehaviorIndexSet addIndex:cell.item];
+            } else {
+                [self.continuousBehaviorIndexSet removeIndex:cell.item];
+            }
+
+            BLMProject *project = [[BLMDataManager sharedManager] projectForUid:self.projectUid];
+            NSArray<BLMBehavior *> *originalBehaviorList = (project.defaultSessionConfiguration.behaviorList ?: @[]);
+            NSString *updatedName = nil;
+
+            if ([self isValidBehaviorNameAtIndex:cell.item]) { // Can create a new behavior or update and existing one, depending on this cell's index
+                updatedName = self.updatedBehaviorNameList[cell.item];
+            } else if (cell.item >= originalBehaviorList.count) { // Cannot create new behavior with invalid name, and this cell's index is too large to update an existing one
+                return;
+            } else { // Updating existing behavior, but keeping original name
+                updatedName = originalBehaviorList[cell.item].name;
+            }
+
+            NSMutableArray<BLMBehavior *> *updatedBehaviorList = [originalBehaviorList mutableCopy];
+            BLMBehavior *updatedBehavior = [[BLMBehavior alloc] initWithName:updatedName continuous:cell.toggleSwitch.isOn];
+
+            if (cell.item >= originalBehaviorList.count) { // Create new behavior
+                [updatedBehaviorList addObject:updatedBehavior];
+            } else { // Update existing behavior
+                [updatedBehaviorList replaceObjectAtIndex:cell.item withObject:updatedBehavior];
+            }
+
+            BLMSessionConfiguration *updatedSessionConfiguration = [project.defaultSessionConfiguration copyWithUpdatedValuesByProperty:@{ @(BLMSessionConfigurationPropertyBehaviorList) : updatedBehaviorList }];
+            [[BLMDataManager sharedManager] applyUpdateForProjectUid:self.projectUid property:BLMProjectPropertyDefaultSessionConfiguration value:updatedSessionConfiguration];
+            break;
+        }
+
+        case ProjectDetailSectionBasicInfo:
+        case ProjectDetailSectionSessionProperties:
+        case ProjectDetailSectionActionButtons:
+        case ProjectDetailSectionCount: {
+            assert(NO);
+            break;
+        }
+    }
+}
+
 #pragma mark BLMButtonCellDelegate
+
+- (BOOL)isButtonEnabledForButtonCell:(BLMButtonCell *)cell {
+    switch ((ProjectDetailSection)cell.section) {
+        case ProjectDetailSectionBehaviors:
+            assert(cell.item == self.updatedBehaviorNameList.count);
+
+            for (NSUInteger index = 0; index < self.updatedBehaviorNameList.count; index += 1) {
+                if (![self isValidBehaviorNameAtIndex:index]) {
+                    return NO;
+                }
+            }
+            break;
+
+        case ProjectDetailSectionActionButtons:
+        case ProjectDetailSectionBasicInfo:
+        case ProjectDetailSectionSessionProperties:
+        case ProjectDetailSectionCount: {
+            break;
+        }
+    }
+
+    return YES;
+}
 
 - (UIImage *)normalImageForButtonCell:(BLMButtonCell *)cell {
     switch ((ProjectDetailSection)cell.section) {
         case ProjectDetailSectionBehaviors: {
-            assert(cell.item == self.behaviorNameList.count);
+            assert(cell.item == self.updatedBehaviorNameList.count);
 
             static UIImage *normalPlusSignImage;
             static dispatch_once_t onceToken;
@@ -1183,7 +1392,7 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
 - (UIImage *)highlightedImageForButtonCell:(BLMButtonCell *)cell {
     switch ((ProjectDetailSection)cell.section) {
         case ProjectDetailSectionBehaviors: {
-            assert(cell.item == self.behaviorNameList.count);
+            assert(cell.item == self.updatedBehaviorNameList.count);
 
             static UIImage *highlightedPlusSignImage;
             static dispatch_once_t onceToken;
@@ -1217,10 +1426,13 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
             switch ((ActionButtonsSectionItem)cell.item) {
                 case ActionButtonsSectionItemCreateSession:
                     return @"Create Session";
+
                 case ActionButtonsSectionItemViewSessionHistory:
                     return @"View Session History";
+
                 case ActionButtonsSectionItemDeleteProject:
                     return @"Delete Project";
+
                 case ActionButtonsSectionItemCount:
                     assert(NO);
                     return nil;
@@ -1246,37 +1458,47 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
 - (void)didFireActionForButtonCell:(BLMButtonCell *)cell {
     switch ((ProjectDetailSection)cell.section) {
         case ProjectDetailSectionBehaviors: {
-            assert(cell.item == self.behaviorNameList.count);
+            assert(cell.item == self.updatedBehaviorNameList.count);
+            assert((self.updatedBehaviorNameList.count == 0) || [self isValidBehaviorNameAtIndex:(self.updatedBehaviorNameList.count - 1)]);
 
-            NSString *lastBehaviorName = self.behaviorNameList.lastObject;
-            if ([BLMUtils isString:lastBehaviorName equalToString:@""]) {
-//                return;
+            if (self.updatedBehaviorNameList.count > self.originalBehaviorNameList.count) { // There is a valid behavior item that has not been officially added to the data model
+                NSIndexPath *blankBehaviorIndexPath = [NSIndexPath indexPathForItem:(cell.item - 1) inSection:ProjectDetailSectionBehaviors];
+                BLMToggleSwitchTextInputCell *addedBehaviorCell = (BLMToggleSwitchTextInputCell *)[self.collectionView cellForItemAtIndexPath:blankBehaviorIndexPath];
+
+                assert([self isValidBehaviorNameAtIndex:addedBehaviorCell.item]); // Add behavior button should be disabled unless everything in self.updatedBehaviorNameList is valid
+                assert(addedBehaviorCell.textField.isFirstResponder); // The "add behavior" must have been enabled in response to the added behavior cell's text becoming valid.
+
+                [addedBehaviorCell.textField resignFirstResponder]; // Resign first responder to force update the data model
             }
 
-            [self.behaviorNameList addObject:@""];
-            [self.collectionView insertItemsAtIndexPaths:@[[NSIndexPath indexPathForItem:cell.item inSection:ProjectDetailSectionBehaviors]]];
+            [self.updatedBehaviorNameList addObject:@""];
 
-            cell.item += 1;
-            assert(cell.item == self.behaviorNameList.count);
+            NSIndexPath *blankBehaviorIndexPath = [NSIndexPath indexPathForItem:cell.item inSection:ProjectDetailSectionBehaviors];
+
+            [self.collectionView performBatchUpdates:^{
+                [self.collectionView insertItemsAtIndexPaths:@[blankBehaviorIndexPath]];
+            } completion:^(BOOL finished) {
+                [self.collectionView reloadItemsAtIndexPaths:@[[NSIndexPath indexPathForItem:self.updatedBehaviorNameList.count inSection:ProjectDetailSectionBehaviors]]];
+                [self.collectionView scrollToItemAtIndexPath:blankBehaviorIndexPath atScrollPosition:UICollectionViewScrollPositionTop animated:YES];
+
+                BLMToggleSwitchTextInputCell *blankBehaviorCell = (BLMToggleSwitchTextInputCell *)[self.collectionView cellForItemAtIndexPath:blankBehaviorIndexPath];
+                [blankBehaviorCell.textField becomeFirstResponder];
+            }];
             break;
         }
 
         case ProjectDetailSectionActionButtons: {
             switch ((ActionButtonsSectionItem)cell.item) {
                 case ActionButtonsSectionItemCreateSession:
-                    NSLog(@"");
                     break;
                 case ActionButtonsSectionItemViewSessionHistory:
-                    NSLog(@"");
                     break;
                 case ActionButtonsSectionItemDeleteProject:
-                    NSLog(@"");
                     break;
                 case ActionButtonsSectionItemCount:
                     assert(NO);
                     break;
             }
-
             break;
         }
 

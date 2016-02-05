@@ -9,6 +9,9 @@
 #import <Foundation/Foundation.h>
 
 
+extern NSUInteger const BLMBehaviorNameMinimumLength;
+
+
 @interface BLMBehavior : NSObject <NSCoding>
 
 @property (nonatomic, copy, readonly) NSString *name;

@@ -9,6 +9,7 @@
 #import "BLMTextInputCell.h"
 #import "BLMPaddedTextField.h"
 #import "BLMViewUtils.h"
+#import "BLMUtils.h"
 
 
 @implementation BLMTextInputCell
@@ -20,7 +21,7 @@
         return nil;
     }
 
-    _label = [[UILabel alloc] init];
+    _label = [[UILabel alloc] initWithFrame:CGRectZero];
 
     [self.label setContentHuggingPriority:UILayoutPriorityRequired forAxis:UILayoutConstraintAxisVertical];
     [self.label setContentHuggingPriority:UILayoutPriorityRequired forAxis:UILayoutConstraintAxisHorizontal];
@@ -44,7 +45,10 @@
     self.textField.backgroundColor = [UIColor whiteColor];
     self.textField.clearButtonMode = UITextFieldViewModeWhileEditing;
     self.textField.autocapitalizationType = UITextAutocapitalizationTypeWords;
+    self.textField.autocorrectionType = UITextAutocorrectionTypeNo;
     self.textField.translatesAutoresizingMaskIntoConstraints = NO;
+
+    [self.textField addTarget:self action:@selector(handleEditingChangedForTextField:) forControlEvents:UIControlEventEditingChanged];
 
     [self.contentView addSubview:self.textField];
     [self.contentView addConstraint:[BLMViewUtils constraintWithItem:self.textField attribute:NSLayoutAttributeCenterY equalToItem:self.contentView constant:0.0]];
@@ -65,32 +69,41 @@
 }
 
 
-- (void)updateContent {
-    [super updateContent];
-
-    NSString *text = [self.delegate defaultInputForTextInputCell:self];
-    self.textField.defaultTextAttributes = [self attributesForText:text];
-    self.textField.text = text;
-
-    NSString *placeholder = nil;
-    NSDictionary *placeholderAttributes = nil;
-    NSUInteger minimumInputLength = [self.delegate minimumInputLengthForTextInputCell:self];
-
-    if (minimumInputLength != 0) {
-        placeholder = [NSString stringWithFormat:@"Required (%lu or more characters)", (unsigned long)minimumInputLength];
-        placeholderAttributes = @{ NSForegroundColorAttributeName:[BLMViewUtils colorWithHexValue:BLMColorHexCodeRed alpha:1.0] };
-    } else {
-        placeholder = @"Optional";
-    }
-
-    self.textField.attributedPlaceholder = [[NSAttributedString alloc] initWithString:placeholder attributes:placeholderAttributes];
-
-    self.label.text = [self.delegate labelForTextInputCell:self];
+- (void)handleEditingChangedForTextField:(UITextField *)textField {
+    assert([BLMUtils isObject:textField equalToObject:self.textField]);
+    [self.delegate didChangeInputForTextInputCell:self];
+    [self updateTextAttributes];
 }
 
 
-- (NSDictionary *)attributesForText:(NSString *)text {
-    return ((text.length >= [self.delegate minimumInputLengthForTextInputCell:self]) ? nil : @{ NSForegroundColorAttributeName:[BLMViewUtils colorWithHexValue:BLMColorHexCodeRed alpha:1.0] });
+- (void)updateTextAttributes {
+    self.textField.defaultTextAttributes = ([self.delegate shouldAcceptInputForTextInputCell:self] ? nil : [BLMTextInputCell errorAttributes]);
+}
+
+
+- (void)updateContent {
+    [super updateContent];
+
+    self.label.text = [self.delegate labelForTextInputCell:self];
+    self.textField.text = [self.delegate defaultInputForTextInputCell:self];
+
+    [self updateTextAttributes];
+
+    NSString *placeholder = [self.delegate placeholderForTextInputCell:self];
+    NSDictionary *placeholderAttributes = (([self.delegate minimumInputLengthForTextInputCell:self] == 0) ? nil : [BLMTextInputCell errorAttributes]);
+    self.textField.attributedPlaceholder = [[NSAttributedString alloc] initWithString:placeholder attributes:placeholderAttributes];
+}
+
+
++ (NSDictionary *)errorAttributes {
+    static NSDictionary *errorAttributes;
+    static dispatch_once_t onceToken;
+
+    dispatch_once(&onceToken, ^{
+        errorAttributes = @{ NSForegroundColorAttributeName:[BLMViewUtils colorWithHexValue:BLMColorHexCodeRed alpha:1.0] };
+    });
+
+    return errorAttributes;
 }
 
 #pragma UITextFieldDelegate
@@ -102,19 +115,74 @@
 }
 
 
-- (BOOL)textField:(UITextField *)textField shouldChangeCharactersInRange:(NSRange)range replacementString:(NSString *)string {
-    NSString *currentText = self.textField.text;
-    NSString *updatedText = [currentText stringByReplacingCharactersInRange:range withString:string];
-    self.textField.defaultTextAttributes = [self attributesForText:updatedText];
-
-    return YES;
+- (void)textFieldDidEndEditing:(UITextField *)textField {
+    if ([self.delegate shouldAcceptInputForTextInputCell:self]) {
+        [self.delegate didAcceptInputForTextInputCell:self];
+    } else {
+        [self updateContent];
+    }
 }
 
-- (void)textFieldDidEndEditing:(UITextField *)textField {
-    if (textField.text.length < [self.delegate minimumInputLengthForTextInputCell:self]) {
-        [self updateContent];
-    } else {
-        [self.delegate didAcceptInputForTextInputCell:self];
+@end
+
+
+#pragma mark
+
+@implementation BLMToggleSwitchTextInputCell
+
+@dynamic delegate;
+
+- (instancetype)initWithFrame:(CGRect)frame {
+    self = [super initWithFrame:frame];
+
+    if (self == nil) {
+        return nil;
+    }
+
+    [self.contentView removeConstraints:[self.contentView.constraints filteredArrayUsingPredicate:[NSPredicate predicateWithBlock:^BOOL(NSLayoutConstraint *constraint, NSDictionary<NSString *,id> *bindings) {
+        return ([BLMUtils isObject:constraint.firstItem equalToObject:self.label]
+                || [BLMUtils isObject:constraint.secondItem equalToObject:self.label]
+                || (constraint.firstAttribute == NSLayoutAttributeCenterY));
+    }]]];
+
+    _toggleSwitch = [[UISwitch alloc] initWithFrame:CGRectZero];
+
+    [self.toggleSwitch addTarget:self action:@selector(handleValueChangedForToggleSwitch:forEvent:) forControlEvents:UIControlEventValueChanged];
+
+    self.toggleSwitch.translatesAutoresizingMaskIntoConstraints = NO;
+
+    [self.contentView addSubview:self.toggleSwitch];
+    [self.contentView addConstraint:[BLMViewUtils constraintWithItem:self.toggleSwitch attribute:NSLayoutAttributeBottom equalToItem:self.contentView constant:-3.0]];
+    [self.contentView addConstraint:[BLMViewUtils constraintWithItem:self.toggleSwitch attribute:NSLayoutAttributeRight equalToItem:self.textField constant:-3.0]];
+
+    [self.contentView addConstraint:[BLMViewUtils constraintWithItem:self.label attribute:NSLayoutAttributeCenterY equalToItem:self.toggleSwitch constant:0.0]];
+    [self.contentView addConstraint:[BLMViewUtils constraintWithItem:self.label attribute:NSLayoutAttributeRight equalToItem:self.toggleSwitch attribute:NSLayoutAttributeLeft constant:-8.0]];
+
+    [self.contentView addConstraint:[BLMViewUtils constraintWithItem:self.textField attribute:NSLayoutAttributeTop equalToItem:self.contentView constant:0.0]];
+    [self.contentView addConstraint:[BLMViewUtils constraintWithItem:self.textField attribute:NSLayoutAttributeLeft equalToItem:self.contentView constant:0.0]];
+    [self.contentView addConstraint:[BLMViewUtils constraintWithItem:self.textField attribute:NSLayoutAttributeBottom equalToItem:self.toggleSwitch attribute:NSLayoutAttributeTop constant:-8.0]];
+
+    self.toggleSwitch.layer.borderWidth = 1.0;
+    self.toggleSwitch.layer.borderColor = [BLMViewUtils colorWithHexValue:BLMColorHexCodeGreen alpha:0.3].CGColor;
+
+    self.label.layer.borderWidth = 1.0;
+    self.label.layer.borderColor = [BLMViewUtils colorWithHexValue:BLMColorHexCodeGreen alpha:0.3].CGColor;
+
+    return self;
+}
+
+
+- (void)updateContent {
+    [super updateContent];
+
+    self.toggleSwitch.on = [self.delegate defaultToggleStateForToggleSwitchTextInputCell:self];
+}
+
+
+- (void)handleValueChangedForToggleSwitch:(UISwitch *)toggleSwitch forEvent:(UIControlEvents)events {
+    assert([self.toggleSwitch isEqual:toggleSwitch]);
+    if (events & UIControlEventValueChanged) {
+        [self.delegate didChangeToggleStateForToggleSwitchTextInputCell:self];
     }
 }
 

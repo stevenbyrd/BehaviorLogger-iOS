@@ -12,6 +12,7 @@
 
 @protocol BLMButtonCellDelegate <NSObject>
 
+- (BOOL)isButtonEnabledForButtonCell:(BLMButtonCell *)cell;
 - (UIImage *)normalImageForButtonCell:(BLMButtonCell *)cell;
 - (UIImage *)highlightedImageForButtonCell:(BLMButtonCell *)cell;
 - (NSString *)titleForButtonCell:(BLMButtonCell *)cell;
