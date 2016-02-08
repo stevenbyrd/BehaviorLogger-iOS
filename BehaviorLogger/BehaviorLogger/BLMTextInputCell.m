@@ -77,7 +77,11 @@
 
 
 - (void)updateTextAttributes {
-    self.textField.defaultTextAttributes = ([self.delegate shouldAcceptInputForTextInputCell:self] ? nil : [BLMTextInputCell errorAttributes]);
+    NSDictionary *attributes = ([self.delegate shouldAcceptInputForTextInputCell:self] ? nil : [BLMTextInputCell errorAttributes]);
+
+    if (![BLMUtils isDictionary:attributes equalToDictionary:self.textField.defaultTextAttributes]) {
+        self.textField.defaultTextAttributes = attributes;
+    }
 }
 
 
@@ -86,12 +90,9 @@
 
     self.label.text = [self.delegate labelForTextInputCell:self];
     self.textField.text = [self.delegate defaultInputForTextInputCell:self];
+    self.textField.attributedPlaceholder = [self.delegate attributedPlaceholderForTextInputCell:self];
 
     [self updateTextAttributes];
-
-    NSString *placeholder = [self.delegate placeholderForTextInputCell:self];
-    NSDictionary *placeholderAttributes = (([self.delegate minimumInputLengthForTextInputCell:self] == 0) ? nil : [BLMTextInputCell errorAttributes]);
-    self.textField.attributedPlaceholder = [[NSAttributedString alloc] initWithString:placeholder attributes:placeholderAttributes];
 }
 
 
@@ -147,7 +148,7 @@
 
     _toggleSwitch = [[UISwitch alloc] initWithFrame:CGRectZero];
 
-    [self.toggleSwitch addTarget:self action:@selector(handleValueChangedForToggleSwitch:forEvent:) forControlEvents:UIControlEventValueChanged];
+    [self.toggleSwitch addTarget:self action:@selector(handleValueChangedForToggleSwitch:forEvent:) forControlEvents:UIControlEventTouchUpInside];
 
     self.toggleSwitch.translatesAutoresizingMaskIntoConstraints = NO;
 
@@ -179,9 +180,10 @@
 }
 
 
-- (void)handleValueChangedForToggleSwitch:(UISwitch *)toggleSwitch forEvent:(UIControlEvents)events {
+- (void)handleValueChangedForToggleSwitch:(UISwitch *)toggleSwitch forEvent:(UIEvent *)event {
     assert([self.toggleSwitch isEqual:toggleSwitch]);
-    if (events & UIControlEventValueChanged) {
+
+    if (self.toggleSwitch.isOn != [self.delegate defaultToggleStateForToggleSwitchTextInputCell:self]) {
         [self.delegate didChangeToggleStateForToggleSwitchTextInputCell:self];
     }
 }

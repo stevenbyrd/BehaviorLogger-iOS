@@ -16,7 +16,7 @@
 
 - (NSString *)labelForTextInputCell:(BLMTextInputCell *)cell;
 - (NSString *)defaultInputForTextInputCell:(BLMTextInputCell *)cell;
-- (NSString *)placeholderForTextInputCell:(BLMTextInputCell *)cell;
+- (NSAttributedString *)attributedPlaceholderForTextInputCell:(BLMTextInputCell *)cell;
 - (NSUInteger)minimumInputLengthForTextInputCell:(BLMTextInputCell *)cell;
 - (void)didChangeInputForTextInputCell:(BLMTextInputCell *)cell;
 - (BOOL)shouldAcceptInputForTextInputCell:(BLMTextInputCell *)cell;
@@ -30,6 +30,10 @@
 @property (nonatomic, strong, readonly) UILabel *label;
 @property (nonatomic, strong, readonly) UITextField *textField;
 @property (nonatomic, weak) id<BLMTextInputCellDelegate> delegate;
+
+- (void)updateTextAttributes;
+
++ (NSDictionary *)errorAttributes;
 
 @end
 

@@ -15,7 +15,7 @@
 
 @interface BLMProjectDetailController : UIViewController
 
-@property (nonatomic, strong, readonly) NSNumber *projectUid;
+@property (nonatomic, strong, readonly) NSUUID *projectUUID;
 
 - (instancetype)initWithProject:(BLMProject *)project;
 

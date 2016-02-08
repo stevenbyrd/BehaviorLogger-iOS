@@ -99,8 +99,8 @@ typedef NS_ENUM(NSInteger, TableSection) {
 @interface BLMProjectMenuController () <UITableViewDelegate, UITableViewDataSource, UITextFieldDelegate>
 
 @property (nonatomic, strong, readonly) UITableView *tableView;
-@property (nonatomic, copy, readonly) NSMutableArray<NSNumber *> *projectUidList;
-@property (nonatomic, strong) NSNumber *selectedProjectUid;
+@property (nonatomic, copy, readonly) NSMutableArray<NSUUID *> *projectUUIDs;
+@property (nonatomic, strong) NSUUID *selectedProjectUUID;
 
 @end
 
@@ -114,7 +114,7 @@ typedef NS_ENUM(NSInteger, TableSection) {
         return nil;
     }
 
-    _projectUidList = [NSMutableArray array];
+    _projectUUIDs = [NSMutableArray array];
 
     return self;
 }
@@ -153,53 +153,54 @@ typedef NS_ENUM(NSInteger, TableSection) {
     assert([NSThread isMainThread]);
     assert(![BLMDataManager sharedManager].isRestoringArchive);
 
-    [self.projectUidList removeAllObjects];
+    [self.projectUUIDs removeAllObjects];
+    [self.projectUUIDs addObjectsFromArray:[BLMDataManager sharedManager].projectUUIDEnumerator.allObjects];
 
-    [[BLMDataManager sharedManager].allProjectUids enumerateIndexesUsingBlock:^(NSUInteger uid, BOOL * _Nonnull stop) {
-        [self.projectUidList addObject:@(uid)];
+    [self.projectUUIDs sortUsingComparator:^NSComparisonResult(NSUUID *leftUUID, NSUUID *rightUUID) {
+        return [[[BLMDataManager sharedManager] projectForUUID:leftUUID].name compare:[[BLMDataManager sharedManager] projectForUUID:rightUUID].name];
     }];
 
     [self.tableView reloadData];
 
-    if (self.selectedProjectUid == nil) {
-        [self showDetailsForProjectUid:self.projectUidList.lastObject];
+    if (self.selectedProjectUUID == nil) {
+        [self showDetailsForProjectWithUUID:self.projectUUIDs.lastObject];
     }
 }
 
-- (void)showDetailsForProjectUid:(NSNumber *)projectUid {
+- (void)showDetailsForProjectWithUUID:(NSUUID *)UUID {
     assert([NSThread isMainThread]);
 
     UINavigationController *detailController = self.splitViewController.viewControllers.lastObject;
 
-    if ((projectUid == nil) && (self.selectedProjectUid == nil)) {
+    if ((UUID == nil) && (self.selectedProjectUUID == nil)) {
         assert(detailController.viewControllers.count == 0);
         return;
     }
 
-    if (projectUid == nil) {
-        assert(self.selectedProjectUid != nil);
+    if (UUID == nil) {
+        assert(self.selectedProjectUUID != nil);
         assert([detailController.topViewController isKindOfClass:[BLMProjectDetailController class]]);
 
-        NSInteger selectedIndex = [self.projectUidList indexOfObject:self.selectedProjectUid];
+        NSInteger selectedIndex = [self.projectUUIDs indexOfObject:self.selectedProjectUUID];
         NSIndexPath *selectedIndexPath = [NSIndexPath indexPathForRow:selectedIndex inSection:TableSectionProjectList];
 
         [self.tableView deselectRowAtIndexPath:selectedIndexPath animated:NO];
 
         detailController.viewControllers = @[];
-    } else if (![BLMUtils isNumber:self.selectedProjectUid equalToNumber:projectUid]) {
+    } else if (![BLMUtils isObject:self.selectedProjectUUID equalToObject:UUID]) {
         assert(detailController.viewControllers.count <= 1);
 
-        NSInteger selectedIndex = [self.projectUidList indexOfObject:projectUid];
+        NSInteger selectedIndex = [self.projectUUIDs indexOfObject:UUID];
         NSIndexPath *indexPath = [NSIndexPath indexPathForRow:selectedIndex inSection:TableSectionProjectList];
-        UITableViewScrollPosition scrollPosition = ((self.selectedProjectUid == nil) ? UITableViewScrollPositionBottom : UITableViewScrollPositionNone);
+        UITableViewScrollPosition scrollPosition = ((self.selectedProjectUUID == nil) ? UITableViewScrollPositionBottom : UITableViewScrollPositionNone);
 
         [self.tableView selectRowAtIndexPath:indexPath animated:YES scrollPosition:scrollPosition];
 
-        BLMProject *project = [[BLMDataManager sharedManager] projectForUid:projectUid];
+        BLMProject *project = [[BLMDataManager sharedManager] projectForUUID:UUID];
         detailController.viewControllers = @[[[BLMProjectDetailController alloc] initWithProject:project]];
     }
 
-    self.selectedProjectUid = projectUid;
+    self.selectedProjectUUID = UUID;
 }
 
 #pragma mark Event Handling
@@ -212,15 +213,12 @@ typedef NS_ENUM(NSInteger, TableSection) {
 - (void)handleDataModelProjectCreated:(NSNotification *)notification {
     assert([NSThread isMainThread]);
 
-    BLMProject *project = (BLMProject *)notification.object;
-    NSNumber *projectUid = project.uid;
-    assert(![self.projectUidList containsObject:projectUid]);
-
     [self.tableView beginUpdates];
-    [self.projectUidList addObject:projectUid];
 
-    NSIndexPath *indexPath = [NSIndexPath indexPathForItem:(self.projectUidList.count - 1) inSection:TableSectionProjectList];
-    [self.tableView insertRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationNone];
+    BLMProject *project = (BLMProject *)notification.object;
+    [self.projectUUIDs addObject:project.UUID];
+
+    [self.tableView insertRowsAtIndexPaths:@[[NSIndexPath indexPathForItem:(self.projectUUIDs.count - 1) inSection:TableSectionProjectList]] withRowAnimation:UITableViewRowAnimationNone];
     [self.tableView endUpdates];
 }
 
@@ -229,20 +227,19 @@ typedef NS_ENUM(NSInteger, TableSection) {
     assert([NSThread isMainThread]);
 
     BLMProject *project = (BLMProject *)notification.object;
-    NSNumber *projectUid = project.uid;
-    NSInteger index = [self.projectUidList indexOfObject:projectUid];
+    NSInteger index = [self.projectUUIDs indexOfObject:project.UUID];
 
     if (index != NSNotFound) {
         [self.tableView beginUpdates];
-        [self.projectUidList removeObjectAtIndex:index];
+        
+        [self.projectUUIDs removeObjectAtIndex:index];
 
-        NSIndexPath *indexPath = [NSIndexPath indexPathForItem:index inSection:TableSectionProjectList];
-        [self.tableView deleteRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationNone];
+        [self.tableView deleteRowsAtIndexPaths:@[[NSIndexPath indexPathForItem:index inSection:TableSectionProjectList]] withRowAnimation:UITableViewRowAnimationNone];
         [self.tableView endUpdates];
     }
 
-    if (self.selectedProjectUid == projectUid) {
-        [self showDetailsForProjectUid:nil];
+    if ([BLMUtils isObject:self.selectedProjectUUID equalToObject:project.UUID]) {
+        [self showDetailsForProjectWithUUID:nil];
     }
 }
 
@@ -251,11 +248,10 @@ typedef NS_ENUM(NSInteger, TableSection) {
     assert([NSThread isMainThread]);
 
     BLMProject *project = (BLMProject *)notification.object;
-    NSInteger index = [self.projectUidList indexOfObject:project.uid];
+    NSInteger index = [self.projectUUIDs indexOfObject:project.UUID];
 
     if (index != NSNotFound) {
-        NSIndexPath *indexPath = [NSIndexPath indexPathForItem:index inSection:TableSectionProjectList];
-        [self.tableView reloadRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationNone];
+        [self.tableView reloadRowsAtIndexPaths:@[[NSIndexPath indexPathForItem:index inSection:TableSectionProjectList]] withRowAnimation:UITableViewRowAnimationNone];
     }
 }
 
@@ -290,9 +286,9 @@ typedef NS_ENUM(NSInteger, TableSection) {
                 [self presentViewController:errorAlertController animated:YES completion:nil];
             } else {
                 assert(createdProject != nil);
-                assert([BLMUtils isObject:self.projectUidList.lastObject equalToObject:createdProject.uid]);
+                assert([BLMUtils isObject:self.projectUUIDs.lastObject equalToObject:createdProject.UUID]);
 
-                [self showDetailsForProjectUid:createdProject.uid];
+                [self showDetailsForProjectWithUUID:createdProject.UUID];
             }
         }];
     }];
@@ -301,12 +297,11 @@ typedef NS_ENUM(NSInteger, TableSection) {
         [[NSNotificationCenter defaultCenter] removeObserver:projectNameTextFieldDidChangeObserver];
         [[NSNotificationCenter defaultCenter] removeObserver:clientTextFieldDidChangeObserver];
 
-        if (self.selectedProjectUid != nil) {
-            NSInteger index = [self.projectUidList indexOfObject:self.selectedProjectUid];
+        if (self.selectedProjectUUID != nil) {
+            NSInteger index = [self.projectUUIDs indexOfObject:self.selectedProjectUUID];
             assert(index != NSNotFound);
 
-            NSIndexPath *indexPath = [NSIndexPath indexPathForItem:index inSection:TableSectionProjectList];
-            [self.tableView selectRowAtIndexPath:indexPath animated:NO scrollPosition:UITableViewScrollPositionNone];
+            [self.tableView selectRowAtIndexPath:[NSIndexPath indexPathForItem:index inSection:TableSectionProjectList] animated:NO scrollPosition:UITableViewScrollPositionNone];
         }
     }];
 
@@ -355,7 +350,7 @@ typedef NS_ENUM(NSInteger, TableSection) {
 
     switch ((TableSection)section) {
         case TableSectionProjectList: {
-            rowCount = self.projectUidList.count;
+            rowCount = self.projectUUIDs.count;
             break;
         }
 
@@ -381,8 +376,8 @@ typedef NS_ENUM(NSInteger, TableSection) {
         case TableSectionProjectList: {
             ProjectCell *projectCell = [tableView dequeueReusableCellWithIdentifier:@"ProjectCell"];
 
-            NSNumber *projectUid = self.projectUidList[indexPath.row];
-            BLMProject *project = [[BLMDataManager sharedManager] projectForUid:projectUid];
+            NSUUID *UUID = self.projectUUIDs[indexPath.row];
+            BLMProject *project = [[BLMDataManager sharedManager] projectForUUID:UUID];
             projectCell.textLabel.text = project.name;
 
             cell = projectCell;
@@ -411,8 +406,8 @@ typedef NS_ENUM(NSInteger, TableSection) {
 
     switch ((TableSection)indexPath.section) {
         case TableSectionProjectList: {
-            NSNumber *projectUid = self.projectUidList[indexPath.row];
-            [self showDetailsForProjectUid:projectUid];
+            NSUUID *UUID = self.projectUUIDs[indexPath.row];
+            [self showDetailsForProjectWithUUID:UUID];
             break;
         }
 

@@ -29,7 +29,7 @@ typedef NS_ENUM(NSInteger, BLMSessionConfigurationProperty) {
     BLMSessionConfigurationPropertyObserver,
     BLMSessionConfigurationPropertyTimeLimit,
     BLMSessionConfigurationPropertyTimeLimitOptions,
-    BLMSessionConfigurationPropertyBehaviorList
+    BLMSessionConfigurationPropertyBehaviorUUIDs
 };
 
 
@@ -43,9 +43,9 @@ typedef NS_ENUM(NSInteger, BLMSessionConfigurationProperty) {
 @property (nonatomic, copy, readonly) NSString *observer;
 @property (nonatomic, assign, readonly) BLMTimeInterval timeLimit;
 @property (nonatomic, assign, readonly) BLMTimeLimitOptions timeLimitOptions;
-@property (nonatomic, copy, readonly) NSArray<BLMBehavior *> *behaviorList;
+@property (nonatomic, copy, readonly) NSArray<NSUUID *> *behaviorUUIDs;
 
-- (instancetype)initWitCondition:(NSString *)condition location:(NSString *)location therapist:(NSString *)therapist observer:(NSString *)observer timeLimit:(BLMTimeInterval)timeLimit timeLimitOptions:(BLMTimeLimitOptions)timeLimitOptions behaviorList:(NSArray<BLMBehavior *> *)behaviorList;
+- (instancetype)initWitCondition:(NSString *)condition location:(NSString *)location therapist:(NSString *)therapist observer:(NSString *)observer timeLimit:(BLMTimeInterval)timeLimit timeLimitOptions:(BLMTimeLimitOptions)timeLimitOptions behaviorUUIDs:(NSArray<NSUUID *> *)behaviorUUIDs;
 - (instancetype)copyWithUpdatedValuesByProperty:(NSDictionary<NSNumber *, id> *)valuesByProperty; // @(BLMSessionConfigurationProperty) -> id
 
 @end
@@ -55,10 +55,10 @@ typedef NS_ENUM(NSInteger, BLMSessionConfigurationProperty) {
 
 @interface BLMSession : NSObject <NSCoding>
 
-@property (nonatomic, strong, readonly) NSNumber *uid;
+@property (nonatomic, strong, readonly) NSUUID *UUID;
 @property (nonatomic, copy, readonly) NSString *name;
 @property (nonatomic, strong, readonly) BLMSessionConfiguration *configuration;
 
-- (instancetype)initWithUid:(NSNumber *)uid name:(NSString *)name configuration:(BLMSessionConfiguration *)configuration;
+- (instancetype)initWithUUID:(NSUUID *)UUID name:(NSString *)name configuration:(BLMSessionConfiguration *)configuration;
 
 @end

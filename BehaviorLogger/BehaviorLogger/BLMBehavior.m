@@ -12,6 +12,13 @@
 
 NSUInteger const BLMBehaviorNameMinimumLength = 3;
 
+NSString *const BLMBehaviorCreatedNotification = @"BLMBehaviorCreatedNotification";;
+NSString *const BLMBehaviorDeletedNotification = @"BLMBehaviorDeletedNotification";
+NSString *const BLMBehaviorUpdatedNotification = @"BLMBehaviorUpdatedNotification";
+
+NSString *const BLMBehaviorOldBehaviorUserInfoKey = @"BLMBehaviorOldBehaviorUserInfoKey";
+NSString *const BLMBehaviorNewBehaviorUserInfoKey = @"BLMBehaviorNewBehaviorUserInfoKey";
+
 
 static NSString *const ArchiveVersionKey = @"ArchiveVersionKey";
 
@@ -26,8 +33,8 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
 
 @implementation BLMBehavior
 
-- (instancetype)initWithName:(NSString *)name continuous:(BOOL)continuous {
-    NSParameterAssert(name.length > 0);
+- (instancetype)initWithUUID:(NSUUID *)UUID name:(NSString *)name continuous:(BOOL)continuous {
+    assert(UUID != nil);
 
     self = [super init];
 
@@ -35,6 +42,7 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
         return nil;
     }
 
+    _UUID = UUID;
     _name = [name copy];
     _continuous = continuous;
 
@@ -44,12 +52,14 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
 #pragma mark NSCoding
 
 - (nullable instancetype)initWithCoder:(NSCoder *)aDecoder {
-    return [self initWithName:[aDecoder decodeObjectOfClass:[NSString class] forKey:@"name"]
+    return [self initWithUUID:[aDecoder decodeObjectForKey:@"UUID"]
+                         name:[aDecoder decodeObjectForKey:@"name"]
                    continuous:[aDecoder decodeBoolForKey:@"continuous"]];
 }
 
 
 - (void)encodeWithCoder:(NSCoder *)aCoder {
+    [aCoder encodeObject:self.UUID forKey:@"UUID"];
     [aCoder encodeObject:self.name forKey:@"name"];
     [aCoder encodeBool:self.isContinuous forKey:@"continuous"];
     [aCoder encodeInteger:ArchiveVersionLatest forKey:ArchiveVersionKey];
@@ -60,8 +70,7 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
 - (NSUInteger)hash {
     assert([NSThread isMainThread]);
 
-    return (self.name.hash
-            ^ self.isContinuous);
+    return self.UUID.hash;
 }
 
 
@@ -72,10 +81,11 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
         return NO;
     }
 
-    BLMBehavior *behavior = (BLMBehavior *)object;
+    BLMBehavior *other = (BLMBehavior *)object;
 
-    return ([BLMUtils isString:self.name equalToString:behavior.name]
-            && (self.isContinuous == behavior.isContinuous));
+    return ([BLMUtils isObject:self.UUID equalToObject:other.UUID]
+            && [BLMUtils isString:self.name equalToString:other.name]
+            && (self.isContinuous == other.isContinuous));
 }
 
 @end

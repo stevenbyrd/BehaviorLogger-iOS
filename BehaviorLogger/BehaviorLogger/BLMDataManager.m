@@ -14,14 +14,8 @@
 
 NSString *const BLMDataManagerArchiveRestoredNotification = @"BLMDataManagerArchiveRestoredNotification";
 
-NSString *const BLMProjectCreatedNotification = @"BLMProjectCreatedNotification";
-NSString *const BLMProjectDeletedNotification = @"BLMProjectDeletedNotification";
-NSString *const BLMProjectUpdatedNotification = @"BLMProjectUpdatedNotification";
-
-NSString *const BLMProjectOldProjectUserInfoKey = @"BLMProjectOldProjectUserInfoKey";
-NSString *const BLMProjectNewProjectUserInfoKey = @"BLMProjectNewProjectUserInfoKey";
-
 NSString *const BLMDataManagerProjectErrorDomain = @"com.3bird.BehaviorLogger.Project";
+NSString *const BLMDataManagerBehaviorErrorDomain = @"com.3bird.BehaviorLogger.Behavior";
 
 
 static NSString *const ArchiveFileName = @"project.dat";
@@ -51,14 +45,16 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
 
 @interface BLMDataManager ()
 
-@property (nonatomic, strong, readonly) NSMutableIndexSet *projectUidSet;
-@property (nonatomic, copy, readonly) NSMutableDictionary<NSNumber*, BLMProject *> *projectByUid;
+@property (nonatomic, copy, readonly) NSMutableDictionary<NSUUID*, BLMProject *> *projectByUUID;
+@property (nonatomic, copy, readonly) NSMutableDictionary<NSUUID*, BLMBehavior *> *behaviorByUUID;
 @property (nonatomic, strong, readonly) NSOperationQueue *archiveQueue;
 
 @end
 
 
 @implementation BLMDataManager
+
+#pragma Lifecycle
 
 + (void)initializeWithCompletion:(dispatch_block_t)completion {
     static dispatch_once_t onceToken;
@@ -88,9 +84,8 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
         return nil;
     }
 
-    _projectUidSet = [NSMutableIndexSet indexSet];
-
-    _projectByUid = [NSMutableDictionary dictionary];
+    _projectByUUID = [NSMutableDictionary dictionary];
+    _behaviorByUUID = [NSMutableDictionary dictionary];
 
     _archiveQueue = [[NSOperationQueue alloc] init];
     _archiveQueue.name = [NSString stringWithFormat:@"%@ - Archive Queue", NSStringFromClass([self class])];
@@ -100,106 +95,152 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
     return self;
 }
 
-#pragma mark Internal State
+#pragma mark Project State
 
-- (NSIndexSet *)allProjectUids {
+- (NSEnumerator<NSUUID *> *)projectUUIDEnumerator {
     assert([NSThread isMainThread]);
 
-    return self.projectUidSet.copy;
+    return self.projectByUUID.keyEnumerator;
 }
 
 
-- (BLMProject *)projectForUid:(NSNumber *)uid {
+- (BLMProject *)projectForUUID:(NSUUID *)UUID {
     assert([NSThread isMainThread]);
+    assert(UUID != nil);
 
-    BLMProject *project = self.projectByUid[uid];
-    assert(project != nil);
-
-    return project;
+    return self.projectByUUID[UUID];
 }
 
 
 - (void)createProjectWithName:(NSString *)name client:(NSString *)client completion:(void(^)(BLMProject *project, NSError *error))completion {
     assert([NSThread isMainThread]);
-    NSParameterAssert(name.length >= BLMProjectNameMinimumLength);
-    NSParameterAssert(client.length >= BLMProjectClientMinimumLength);
-    NSParameterAssert(completion != nil);
+    assert(name.length >= BLMProjectNameMinimumLength);
+    assert(client.length >= BLMProjectClientMinimumLength);
+    assert(completion != nil);
 
-    __block BLMProject *project = nil;
-    __block NSError *error = nil;
+    NSString *lowercaseName = [name.lowercaseString stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
 
-    NSString *lowerCaseName = [name.lowercaseString stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
-
-    [self.projectUidSet enumerateIndexesUsingBlock:^(NSUInteger uid, BOOL * _Nonnull stop) {
-        if ([BLMUtils isString:self.projectByUid[@(uid)].name.lowercaseString equalToString:lowerCaseName]) {
-            error = [NSError errorWithDomain:BLMDataManagerProjectErrorDomain code:-1 userInfo:@{ NSLocalizedDescriptionKey : @"A project with that name already exists." }];
-            *stop = YES;
+    for (NSUUID *UUID in self.projectByUUID.keyEnumerator) {
+        if ([BLMUtils isString:self.projectByUUID[UUID].name.lowercaseString equalToString:lowercaseName]) {
+            completion(nil, [NSError errorWithDomain:BLMDataManagerProjectErrorDomain code:-1 userInfo:@{ NSLocalizedDescriptionKey : @"A project with that name already exists." }]);
             return;
         }
-    }];
-
-    if (error == nil) {
-        NSUInteger lastUid = ((self.projectUidSet.count > 0) ? self.projectUidSet.lastIndex : 0);
-        NSNumber *uid = @(lastUid + 1);
-
-        [self.projectUidSet addIndex:uid.integerValue];
-
-        project = [[BLMProject alloc] initWithUid:uid name:name client:client defaultSessionConfiguration:nil sessionByUid:nil];
-        self.projectByUid[uid] = project;
-
-        [self archiveCurrentState];
-
-        NSDictionary *userInfo = @{ BLMProjectNewProjectUserInfoKey:project };
-        [[NSNotificationCenter defaultCenter] postNotificationName:BLMProjectCreatedNotification object:project userInfo:userInfo];
     }
 
-    completion(project, error);
+    NSUUID *UUID = [NSUUID UUID];
+    BLMProject *project = [[BLMProject alloc] initWithUUID:UUID name:name client:client defaultSessionConfiguration:nil sessionByUUID:nil];
+
+    self.projectByUUID[UUID] = project;
+
+    [self archiveCurrentState];
+
+    NSDictionary *userInfo = @{ BLMProjectNewProjectUserInfoKey:project };
+    [[NSNotificationCenter defaultCenter] postNotificationName:BLMProjectCreatedNotification object:project userInfo:userInfo];
+
+    completion(project, nil);
 }
 
 
-- (void)applyUpdateForProjectUid:(NSNumber *)projectUid property:(BLMProjectProperty)property value:(id)value {
+- (void)updateProjectForUUID:(NSUUID *)UUID property:(BLMProjectProperty)property value:(id)value {
     assert([NSThread isMainThread]);
 
-    BLMProject *project = self.projectByUid[projectUid];
-    assert(project != nil);
+    BLMProject *originalProject = self.projectByUUID[UUID];
+    assert(originalProject != nil);
 
-    NSString *updatedName = project.name;
-    NSString *updatedClient = project.client;
-    BLMSessionConfiguration *updatedSessionConfiguration = project.defaultSessionConfiguration;
+    BLMProject *updatedProject;
 
     switch (property) {
         case BLMProjectPropertyName: {
-            NSParameterAssert([value isKindOfClass:[NSString class]]);
-            updatedName = value;
+            updatedProject = [[BLMProject alloc] initWithUUID:UUID name:value client:originalProject.client defaultSessionConfiguration:originalProject.defaultSessionConfiguration sessionByUUID:originalProject.sessionByUUID];
             break;
         }
 
         case BLMProjectPropertyClient: {
-            NSParameterAssert([value isKindOfClass:[NSString class]]);
-            updatedClient = value;
+            updatedProject = [[BLMProject alloc] initWithUUID:UUID name:originalProject.name client:value defaultSessionConfiguration:originalProject.defaultSessionConfiguration sessionByUUID:originalProject.sessionByUUID];
             break;
         }
 
         case BLMProjectPropertyDefaultSessionConfiguration: {
-            NSParameterAssert([value isKindOfClass:[BLMSessionConfiguration class]]);
-            updatedSessionConfiguration = value;
-            break;
-        }
-
-        case BLMProjectPropertyCount: {
-            assert(NO);
+            updatedProject = [[BLMProject alloc] initWithUUID:UUID name:originalProject.name client:originalProject.client defaultSessionConfiguration:value sessionByUUID:originalProject.sessionByUUID];
             break;
         }
     }
 
-    if (![BLMUtils isString:project.name equalToString:updatedName] || ![BLMUtils isString:project.client equalToString:updatedClient] || ![BLMUtils isObject:project.defaultSessionConfiguration equalToObject:updatedSessionConfiguration]) {
-        BLMProject *updatedProject = [[BLMProject alloc] initWithUid:projectUid name:updatedName client:updatedClient defaultSessionConfiguration:updatedSessionConfiguration sessionByUid:project.sessionByUid];
-        self.projectByUid[projectUid] = updatedProject;
+    if (![BLMUtils isObject:originalProject equalToObject:updatedProject]) {
+        assert(updatedProject != nil);
+        self.projectByUUID[UUID] = updatedProject;
 
         [self archiveCurrentState];
 
-        NSDictionary *userInfo = @{ BLMProjectOldProjectUserInfoKey:project, BLMProjectNewProjectUserInfoKey:updatedProject };
-        [[NSNotificationCenter defaultCenter] postNotificationName:BLMProjectUpdatedNotification object:project userInfo:userInfo];
+        NSDictionary *userInfo = @{ BLMProjectOldProjectUserInfoKey:originalProject, BLMProjectNewProjectUserInfoKey:updatedProject };
+        [[NSNotificationCenter defaultCenter] postNotificationName:BLMProjectUpdatedNotification object:originalProject userInfo:userInfo];
+    }
+}
+
+#pragma mark Behavior State
+
+- (NSEnumerator<NSUUID *> *)behaviorUUIDEnumerator {
+    assert([NSThread isMainThread]);
+
+    return self.behaviorByUUID.keyEnumerator;
+
+}
+
+
+- (BLMBehavior *)behaviorForUUID:(NSUUID *)UUID {
+    assert([NSThread isMainThread]);
+    assert(UUID != nil);
+
+    return self.behaviorByUUID[UUID];
+}
+
+
+- (void)createBehaviorWithName:(NSString *)name continuous:(BOOL)continuous completion:(void(^)(BLMBehavior *behavior, NSError *error))completion {
+    assert([NSThread isMainThread]);
+    assert(completion != nil);
+
+    NSUUID *UUID = [NSUUID UUID];
+    BLMBehavior *behavior = [[BLMBehavior alloc] initWithUUID:UUID name:name continuous:continuous];
+
+    self.behaviorByUUID[UUID] = behavior;
+
+    [self archiveCurrentState];
+
+    NSDictionary *userInfo = @{ BLMBehaviorNewBehaviorUserInfoKey:behavior };
+    [[NSNotificationCenter defaultCenter] postNotificationName:BLMBehaviorCreatedNotification object:behavior userInfo:userInfo];
+
+    completion(behavior, nil);
+}
+
+
+- (void)updateBehaviorForUUID:(NSUUID *)UUID property:(BLMBehaviorProperty)property value:(id)value {
+    assert([NSThread isMainThread]);
+
+    BLMBehavior *originalBehavior = self.behaviorByUUID[UUID];
+    assert(originalBehavior != nil);
+
+    BLMBehavior *updatedBehavior;
+
+    switch (property) {
+        case BLMBehaviorPropertyName: {
+            updatedBehavior = [[BLMBehavior alloc] initWithUUID:UUID name:value continuous:originalBehavior.isContinuous];
+            break;
+        }
+
+        case BLMBehaviorPropertyContinuous: {
+            updatedBehavior = [[BLMBehavior alloc] initWithUUID:UUID name:originalBehavior.name continuous:[(NSNumber *)value boolValue]];
+            break;
+        }
+    }
+
+    if (![BLMUtils isObject:originalBehavior equalToObject:updatedBehavior]) {
+        assert(updatedBehavior != nil);
+        self.behaviorByUUID[UUID] = updatedBehavior;
+
+        [self archiveCurrentState];
+
+        NSDictionary *userInfo = @{ BLMBehaviorOldBehaviorUserInfoKey:originalBehavior, BLMBehaviorNewBehaviorUserInfoKey:updatedBehavior };
+        [[NSNotificationCenter defaultCenter] postNotificationName:BLMBehaviorUpdatedNotification object:originalBehavior userInfo:userInfo];
     }
 }
 
@@ -213,8 +254,8 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
         [self.archiveQueue cancelAllOperations];
     }
 
-    NSIndexSet *projectUidSet = self.projectUidSet.copy;
-    NSDictionary *projectByUid = self.projectByUid.copy;
+    NSDictionary *projectByUUID = [self.projectByUUID copy];
+    NSDictionary *behaviorByUUID = [self.behaviorByUUID copy];
 
     [self.archiveQueue addOperationWithBlock:^{
         BOOL isDirectory = NO;
@@ -235,7 +276,8 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
 
         NSString *filePath = [ArchiveDirectory() stringByAppendingPathComponent:ArchiveFileName];
 
-        if (![[NSFileManager defaultManager] fileExistsAtPath:filePath] && ![[NSFileManager defaultManager] createFileAtPath:filePath contents:nil attributes:@{ NSFileProtectionKey : NSFileProtectionNone }]) {
+        if (![[NSFileManager defaultManager] fileExistsAtPath:filePath]
+            && ![[NSFileManager defaultManager] createFileAtPath:filePath contents:nil attributes:@{ NSFileProtectionKey : NSFileProtectionNone }]) {
             assert(NO);
             return;
         }
@@ -244,8 +286,8 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
         NSKeyedArchiver *archiver = [[NSKeyedArchiver alloc] initForWritingWithMutableData:archiveData];
 
         [archiver encodeInteger:ArchiveVersionLatest forKey:ArchiveVersionKey];
-        [archiver encodeObject:projectUidSet forKey:@"projectUidSet"];
-        [archiver encodeObject:projectByUid forKey:@"projectByUid"];
+        [archiver encodeObject:projectByUUID forKey:@"projectByUUID"];
+        [archiver encodeObject:behaviorByUUID forKey:@"behaviorByUUID"];
         [archiver finishEncoding];
 
         NSFileHandle *archiveFile = [NSFileHandle fileHandleForWritingAtPath:filePath];
@@ -264,37 +306,58 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
     _restoringArchive = YES;
 
     [self.archiveQueue addOperationWithBlock:^{
-        NSIndexSet *projectUidSet = [NSIndexSet indexSet];
-        NSDictionary *projectByUid = @{};
+        NSDictionary<NSUUID *, BLMProject *> *projectByUUID = nil;
+        NSDictionary<NSUUID *, BLMBehavior *> *behaviorByUUID = nil;
         NSString *filePath = [ArchiveDirectory() stringByAppendingPathComponent:ArchiveFileName];
         NSData *archiveData = [NSData dataWithContentsOfFile:filePath];
 
-        if (archiveData.length > 0) {
+        if (archiveData.length == 0) {
+            [[NSFileManager defaultManager] removeItemAtPath:filePath error:NULL];
+        } else {
             NSKeyedUnarchiver *unarchiver = [[NSKeyedUnarchiver alloc] initForReadingWithData:archiveData];
-            ArchiveVersion version = [unarchiver decodeIntegerForKey:ArchiveVersionKey];
 
-            switch (version) {
+            switch ((ArchiveVersion)[unarchiver decodeIntegerForKey:ArchiveVersionKey]) {
                 case ArchiveVersionUnknown:
                     assert(NO);
                     break;
 
                 case ArchiveVersionLatest:
-                    projectUidSet = [unarchiver decodeObjectForKey:@"projectUidSet"];
-                    projectByUid = [unarchiver decodeObjectForKey:@"projectByUid"];
+                    projectByUUID = [unarchiver decodeObjectForKey:@"projectByUUID"];
+                    behaviorByUUID = [unarchiver decodeObjectForKey:@"behaviorByUUID"];
                     break;
             }
 
             [unarchiver finishDecoding];
-        } else {
-            [[NSFileManager defaultManager] removeItemAtPath:filePath error:NULL];
+        }
+
+        NSMutableSet<NSUUID *> *referenedBehaviorUUIDs = [NSMutableSet set];
+
+        for (BLMProject *project in projectByUUID.objectEnumerator) {
+            [referenedBehaviorUUIDs addObjectsFromArray:project.defaultSessionConfiguration.behaviorUUIDs];
+
+            for (BLMSession *session in project.sessionByUUID.objectEnumerator) {
+                [referenedBehaviorUUIDs addObjectsFromArray:session.configuration.behaviorUUIDs];
+            }
+        }
+
+        if (referenedBehaviorUUIDs.count > behaviorByUUID.count) {
+            NSMutableDictionary<NSUUID *, BLMBehavior *> *sanitizedBehaviorByUUID = [behaviorByUUID mutableCopy];
+
+            for (NSUUID *UUID in behaviorByUUID.keyEnumerator) {
+                if (![referenedBehaviorUUIDs containsObject:UUID]) {
+                    [sanitizedBehaviorByUUID removeObjectForKey:UUID];
+                }
+            }
+
+            behaviorByUUID = sanitizedBehaviorByUUID;
         }
 
         [[NSOperationQueue mainQueue] addOperationWithBlock:^{
-            assert(self.projectUidSet.count == 0);
-            [self.projectUidSet addIndexes:projectUidSet];
+            assert(self.projectByUUID.count == 0);
+            [self.projectByUUID addEntriesFromDictionary:projectByUUID];
 
-            assert(self.projectByUid.count == 0);
-            [self.projectByUid addEntriesFromDictionary:projectByUid];
+            assert(self.behaviorByUUID.count == 0);
+            [self.behaviorByUUID addEntriesFromDictionary:behaviorByUUID];
 
             assert(self.isRestoringArchive);
             _restoringArchive = NO;

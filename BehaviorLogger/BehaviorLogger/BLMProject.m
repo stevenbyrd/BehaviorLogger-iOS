@@ -14,6 +14,13 @@
 NSUInteger const BLMProjectNameMinimumLength = 3;
 NSUInteger const BLMProjectClientMinimumLength = 3;
 
+NSString *const BLMProjectCreatedNotification = @"BLMProjectCreatedNotification";
+NSString *const BLMProjectDeletedNotification = @"BLMProjectDeletedNotification";
+NSString *const BLMProjectUpdatedNotification = @"BLMProjectUpdatedNotification";
+
+NSString *const BLMProjectOldProjectUserInfoKey = @"BLMProjectOldProjectUserInfoKey";
+NSString *const BLMProjectNewProjectUserInfoKey = @"BLMProjectNewProjectUserInfoKey";
+
 
 static NSString *const ArchiveVersionKey = @"ArchiveVersionKey";
 
@@ -28,9 +35,10 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
 
 @implementation BLMProject
 
-- (instancetype)initWithUid:(NSNumber *)uid name:(NSString *)name client:(NSString *)client defaultSessionConfiguration:(BLMSessionConfiguration *)defaultSessionConfiguration sessionByUid:(NSDictionary<NSNumber *, BLMSession *> *)sessionByUid {
-    NSParameterAssert(name.length > BLMProjectNameMinimumLength);
-    NSParameterAssert(client.length > BLMProjectClientMinimumLength);
+- (instancetype)initWithUUID:(NSUUID *)UUID name:(NSString *)name client:(NSString *)client defaultSessionConfiguration:(BLMSessionConfiguration *)defaultSessionConfiguration sessionByUUID:(NSDictionary<NSUUID *, BLMSession *> *)sessionByUUID {
+    assert(UUID != nil);
+    assert(name.length > BLMProjectNameMinimumLength);
+    assert(client.length > BLMProjectClientMinimumLength);
 
     self = [super init];
 
@@ -38,11 +46,11 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
         return nil;
     }
 
-    _uid = uid;
+    _UUID = UUID;
     _name = [name copy];
     _client = [client copy];
-    _defaultSessionConfiguration = (defaultSessionConfiguration ?: [[BLMSessionConfiguration alloc] initWitCondition:nil location:nil therapist:nil observer:nil timeLimit:-1 timeLimitOptions:0 behaviorList:@[]]);
-    _sessionByUid = [sessionByUid copy];
+    _defaultSessionConfiguration = (defaultSessionConfiguration ?: [[BLMSessionConfiguration alloc] initWitCondition:nil location:nil therapist:nil observer:nil timeLimit:-1 timeLimitOptions:0 behaviorUUIDs:@[]]);
+    _sessionByUUID = [sessionByUUID copy];
 
     return self;
 }
@@ -50,20 +58,20 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
 #pragma mark NSCoding
 
 - (nullable instancetype)initWithCoder:(NSCoder *)aDecoder {
-    return [self initWithUid:[aDecoder decodeObjectOfClass:[NSNumber class] forKey:@"uid"]
-                        name:[aDecoder decodeObjectOfClass:[NSString class] forKey:@"name"]
-                      client:[aDecoder decodeObjectOfClass:[NSString class] forKey:@"client"]
- defaultSessionConfiguration:[aDecoder decodeObjectOfClass:[BLMSessionConfiguration class] forKey:@"defaultSessionConfiguration"]
-                sessionByUid:[aDecoder decodeObjectOfClasses:[NSSet setWithArray:@[[NSDictionary<NSNumber *, BLMSession *> class], [NSNumber class], [BLMSession class]]] forKey:@"sessionByUid"]];
+    return [self initWithUUID:[aDecoder decodeObjectForKey:@"UUID"]
+                         name:[aDecoder decodeObjectForKey:@"name"]
+                       client:[aDecoder decodeObjectForKey:@"client"]
+  defaultSessionConfiguration:[aDecoder decodeObjectForKey:@"defaultSessionConfiguration"]
+                sessionByUUID:[aDecoder decodeObjectForKey:@"sessionByUUID"]];
 }
 
 
 - (void)encodeWithCoder:(NSCoder *)aCoder {
-    [aCoder encodeObject:self.uid forKey:@"uid"];
+    [aCoder encodeObject:self.UUID forKey:@"UUID"];
     [aCoder encodeObject:self.name forKey:@"name"];
     [aCoder encodeObject:self.client forKey:@"client"];
     [aCoder encodeObject:self.defaultSessionConfiguration forKey:@"defaultSessionConfiguration"];
-    [aCoder encodeObject:self.sessionByUid forKey:@"sessionByUid"];
+    [aCoder encodeObject:self.sessionByUUID forKey:@"sessionByUUID"];
     [aCoder encodeInteger:ArchiveVersionLatest forKey:ArchiveVersionKey];
 }
 
@@ -72,11 +80,7 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
 - (NSUInteger)hash {
     assert([NSThread isMainThread]);
 
-    return (self.uid.hash
-            ^ self.name.hash
-            ^ self.client.hash
-            ^ self.defaultSessionConfiguration.hash
-            ^ self.sessionByUid.hash);
+    return self.UUID.hash;
 }
 
 
@@ -87,13 +91,13 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
         return NO;
     }
 
-    BLMProject *project = (BLMProject *)object;
+    BLMProject *other = (BLMProject *)object;
 
-    return ([BLMUtils isNumber:self.uid equalToNumber:project.uid]
-            && [BLMUtils isString:self.name equalToString:project.name]
-            && [BLMUtils isString:self.client equalToString:project.client]
-            && [BLMUtils isObject:self.defaultSessionConfiguration equalToObject:project.defaultSessionConfiguration]
-            && [self.sessionByUid isEqualToDictionary:project.sessionByUid]);
+    return ([BLMUtils isObject:self.UUID equalToObject:other.UUID]
+            && [BLMUtils isString:self.name equalToString:other.name]
+            && [BLMUtils isString:self.client equalToString:other.client]
+            && [BLMUtils isObject:self.defaultSessionConfiguration equalToObject:other.defaultSessionConfiguration]
+            && [self.sessionByUUID isEqualToDictionary:other.sessionByUUID]);
 }
 
 @end

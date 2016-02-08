@@ -11,12 +11,26 @@
 
 extern NSUInteger const BLMBehaviorNameMinimumLength;
 
+extern NSString *const BLMBehaviorCreatedNotification;
+extern NSString *const BLMBehaviorDeletedNotification;
+extern NSString *const BLMBehaviorUpdatedNotification;
+
+extern NSString *const BLMBehaviorOldBehaviorUserInfoKey;
+extern NSString *const BLMBehaviorNewBehaviorUserInfoKey;
+
+
+typedef NS_ENUM(NSInteger, BLMBehaviorProperty) {
+    BLMBehaviorPropertyName,
+    BLMBehaviorPropertyContinuous
+};
+
 
 @interface BLMBehavior : NSObject <NSCoding>
 
+@property (nonatomic, strong, readonly) NSUUID *UUID;
 @property (nonatomic, copy, readonly) NSString *name;
 @property (nonatomic, assign, readonly, getter=isContinuous) BOOL continuous;
 
-- (instancetype)initWithName:(NSString *)name continuous:(BOOL)continuous;
+- (instancetype)initWithUUID:(NSUUID *)UUID name:(NSString *)name continuous:(BOOL)continuous;
 
 @end

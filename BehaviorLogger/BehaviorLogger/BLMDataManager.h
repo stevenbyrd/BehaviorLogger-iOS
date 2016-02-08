@@ -7,42 +7,38 @@
 //
 
 #import <Foundation/Foundation.h>
+#import "BLMBehavior.h"
+#import "BLMProject.h"
+#import "BLMSession.h"
 
 
 extern NSString *const BLMDataManagerArchiveRestoredNotification;
 
-extern NSString *const BLMProjectCreatedNotification;
-extern NSString *const BLMProjectDeletedNotification;
-extern NSString *const BLMProjectUpdatedNotification;
-
-extern NSString *const BLMProjectOldProjectUserInfoKey;
-extern NSString *const BLMProjectNewProjectUserInfoKey;
-
-
-typedef NS_ENUM(NSUInteger, BLMProjectProperty) {
-    BLMProjectPropertyName,
-    BLMProjectPropertyClient,
-    BLMProjectPropertyDefaultSessionConfiguration,
-    BLMProjectPropertyCount
-};
-
-
-@class BLMProject;
-@class BLMSession;
-@class BLMSessionConfiguration;
+extern NSString *const BLMDataManagerProjectErrorDomain;
+extern NSString *const BLMDataManagerBehaviorErrorDomain;
 
 
 @interface BLMDataManager : NSObject
+
+#pragma Lifecycle
 
 @property (nonatomic, assign, readonly, getter=isRestoringArchive) BOOL restoringArchive;
 
 + (void)initializeWithCompletion:(dispatch_block_t)completion;
 + (instancetype)sharedManager;
 
-- (NSIndexSet *)allProjectUids;
-- (BLMProject *)projectForUid:(NSNumber *)uid;
+#pragma Project State
 
+- (NSEnumerator<NSUUID *> *)projectUUIDEnumerator;
+- (BLMProject *)projectForUUID:(NSUUID *)UUID;
 - (void)createProjectWithName:(NSString *)name client:(NSString *)client completion:(void(^)(BLMProject *project, NSError *error))completion;
-- (void)applyUpdateForProjectUid:(NSNumber *)projectUid property:(BLMProjectProperty)property value:(id)value;
+- (void)updateProjectForUUID:(NSUUID *)UUID property:(BLMProjectProperty)property value:(id)value;
+
+#pragma Behavior State
+
+- (NSEnumerator<NSUUID *> *)behaviorUUIDEnumerator;
+- (BLMBehavior *)behaviorForUUID:(NSUUID *)UUID;
+- (void)createBehaviorWithName:(NSString *)name continuous:(BOOL)continuous completion:(void(^)(BLMBehavior *behavior, NSError *error))completion;
+- (void)updateBehaviorForUUID:(NSUUID *)UUID property:(BLMBehaviorProperty)property value:(id)value;
 
 @end
