@@ -25,7 +25,16 @@
 @end
 
 
-@interface BLMTextInputCell : BLMCollectionViewCell
+@protocol BLMTextInputCellLayoutDelegate <NSObject>
+
+- (void)configureLabelSubviewsPreferredMaxLayoutWidth;
+- (NSArray<NSLayoutConstraint *> *)uniqueVerticalPositionConstraintsForSubview:(UIView *)subview;
+- (NSArray<NSLayoutConstraint *> *)uniqueHorizontalPositionConstraintsForSubview:(UIView *)subview;
+
+@end
+
+
+@interface BLMTextInputCell : BLMCollectionViewCell <BLMTextInputCellLayoutDelegate>
 
 @property (nonatomic, strong, readonly) UILabel *label;
 @property (nonatomic, strong, readonly) UITextField *textField;

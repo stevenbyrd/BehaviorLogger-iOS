@@ -19,9 +19,6 @@
         return nil;
     }
 
-    self.contentView.layer.borderWidth = 1.0;
-    self.contentView.layer.borderColor = [BLMViewUtils colorWithHexValue:BLMColorHexCodeBlue alpha:0.3].CGColor;
-
     [self resetIndexPathState];
 
     return self;

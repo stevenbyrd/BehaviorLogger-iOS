@@ -238,11 +238,96 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
 
 #pragma mark
 
+@interface BehaviorCellBackgroundView : UIView
+
+@end
+
+
+@implementation BehaviorCellBackgroundView
+
+- (instancetype)init {
+    self = [super init];
+
+    if (self == nil) {
+        return nil;
+    }
+
+    self.backgroundColor = [UIColor clearColor];//[BLMViewUtils colorWithHexValue:BLMColorHexCodeDarkBackground alpha:1.0];
+
+    return self;
+}
+
+
+- (void)drawRect:(CGRect)rect {
+    [super drawRect:rect];
+
+    [[BLMViewUtils colorWithHexValue:BLMColorHexCodeDarkBorder alpha:0.75] setStroke];
+
+    CGFloat const CornerRadius = 5.0;
+    CGFloat const DeleteButtonOffset = 20.0;
+
+    UIBezierPath *path = [UIBezierPath bezierPath];
+
+    [path moveToPoint:(CGPoint) {
+        .x = CGRectGetMinX(rect) + 0.5 + DeleteButtonOffset,
+        .y = CGRectGetMinY(rect) + 0.5
+    }];
+
+    [path addLineToPoint:(CGPoint) {
+        .x = CGRectGetMaxX(rect) - 0.5 - CornerRadius,
+        .y = CGRectGetMinY(rect) + 0.5
+    }];
+
+    CGPoint arcCenter = (CGPoint) {
+        .x = CGRectGetMaxX(rect) - 0.5 - CornerRadius,
+        .y = CGRectGetMinY(rect) + 0.5 + CornerRadius
+    };
+
+    [path addArcWithCenter:arcCenter radius:CornerRadius startAngle:(3 * M_PI_2) endAngle:0 clockwise:YES];
+
+    [path addLineToPoint:(CGPoint) {
+        .x = CGRectGetMaxX(rect) - 0.5,
+        .y = CGRectGetMaxY(rect) - 0.5 - CornerRadius
+    }];
+
+    arcCenter = (CGPoint) {
+        .x = CGRectGetMaxX(rect) - 0.5 - CornerRadius,
+        .y = CGRectGetMaxY(rect) - 0.5 - CornerRadius
+    };
+
+    [path addArcWithCenter:arcCenter radius:CornerRadius startAngle:0 endAngle:M_PI_2 clockwise:YES];
+
+    [path addLineToPoint:(CGPoint) {
+        .x = CGRectGetMinX(rect) + 0.5 + CornerRadius,
+        .y = CGRectGetMaxY(rect) - 0.5
+    }];
+
+    arcCenter = (CGPoint) {
+        .x = CGRectGetMinX(rect) + 0.5 + CornerRadius,
+        .y = CGRectGetMaxY(rect) - 0.5 - CornerRadius
+    };
+
+    [path addArcWithCenter:arcCenter radius:CornerRadius startAngle:M_PI_2 endAngle:M_PI clockwise:YES];
+
+    [path addLineToPoint:(CGPoint) {
+        .x = CGRectGetMinX(rect) + 0.5,
+        .y = CGRectGetMinY(rect) + 0.5 + DeleteButtonOffset
+    }];
+
+    path.lineWidth = 1.0;
+
+    [path stroke];
+}
+
+@end
+
+
 @class BehaviorCell;
 
 
 @protocol BehaviorCellDelegate <BLMTextInputCellDelegate>
 
+- (void)didFireDeleteButtonActionForBehaviorCell:(BehaviorCell *)cell;
 - (void)didChangeToggleSwitchStateForBehaviorCell:(BehaviorCell *)cell;
 
 @end
@@ -250,7 +335,9 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
 
 @interface BehaviorCell : BLMTextInputCell
 
+@property (nonatomic, strong, readonly) UIButton *deleteButton;
 @property (nonatomic, strong, readonly) UISwitch *toggleSwitch;
+@property (nonatomic, strong, readonly) UILabel *toggleSwitchLabel;
 @property (nonatomic, weak) id<BehaviorCellDelegate> delegate;
 @property (nonatomic, strong) BLMBehavior *behavior;
 
@@ -268,34 +355,67 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
         return nil;
     }
 
-    [self.contentView removeConstraints:[self.contentView.constraints filteredArrayUsingPredicate:[NSPredicate predicateWithBlock:^BOOL(NSLayoutConstraint *constraint, NSDictionary<NSString *,id> *bindings) {
-        return ([BLMUtils isObject:constraint.firstItem equalToObject:self.label]
-                || [BLMUtils isObject:constraint.secondItem equalToObject:self.label]
-                || (constraint.firstAttribute == NSLayoutAttributeCenterY));
-    }]]];
+    self.clipsToBounds = NO;
+    self.backgroundView = [[BehaviorCellBackgroundView alloc] init];
+
+    self.contentView.clipsToBounds = NO;
+    self.contentView.backgroundColor = [UIColor clearColor];
+
+    // Delete Button
+
+    static UIImage *deleteButtonDefaultImage = nil;
+    static UIImage *deleteButtonSelectedImage = nil;
+    static dispatch_once_t onceToken = 0;
+
+    dispatch_once(&onceToken, ^{
+        deleteButtonDefaultImage = [BLMViewUtils deleteItemImageWithBackgroundColor:[BLMViewUtils colorWithHexValue:0x000000 alpha:0.6]];
+        deleteButtonSelectedImage = [BLMViewUtils deleteItemImageWithBackgroundColor:[BLMViewUtils colorWithHexValue:0xB73B23 alpha:0.8]];
+    });
+
+    _deleteButton = [UIButton buttonWithType:UIButtonTypeCustom];
+
+    [self.deleteButton setImage:deleteButtonDefaultImage forState:UIControlStateNormal];
+    [self.deleteButton setImage:deleteButtonSelectedImage forState:UIControlStateSelected];
+
+    [self.deleteButton addTarget:self action:@selector(handleActionForDeleteButton:forEvent:) forControlEvents:UIControlEventTouchUpInside];
+
+    self.deleteButton.backgroundColor = [BLMViewUtils colorWithHexValue:BLMColorHexCodeDarkBackground alpha:1.0];
+    self.deleteButton.translatesAutoresizingMaskIntoConstraints = NO;
+
+    [self.contentView addSubview:self.deleteButton];
+    [self.contentView addConstraint:[BLMViewUtils constraintWithItem:self.deleteButton attribute:NSLayoutAttributeLeft equalToItem:self.contentView constant:-8.0]];
+    [self.contentView addConstraint:[BLMViewUtils constraintWithItem:self.deleteButton attribute:NSLayoutAttributeTop equalToItem:self.contentView constant:-8.0]];
+    [self.contentView addConstraint:[BLMViewUtils constraintWithItem:self.deleteButton attribute:NSLayoutAttributeWidth equalToConstant:32.0]];
+    [self.contentView addConstraint:[BLMViewUtils constraintWithItem:self.deleteButton attribute:NSLayoutAttributeHeight equalToConstant:32.0]];
+
+    // Toggle Switch
 
     _toggleSwitch = [[UISwitch alloc] initWithFrame:CGRectZero];
 
-    [self.toggleSwitch addTarget:self action:@selector(handleValueChangedForToggleSwitch:forEvent:) forControlEvents:UIControlEventTouchUpInside];
+    [self.toggleSwitch addTarget:self action:@selector(handleActionToggleSwitch:forEvent:) forControlEvents:UIControlEventTouchUpInside];
 
     self.toggleSwitch.translatesAutoresizingMaskIntoConstraints = NO;
 
     [self.contentView addSubview:self.toggleSwitch];
-    [self.contentView addConstraint:[BLMViewUtils constraintWithItem:self.toggleSwitch attribute:NSLayoutAttributeBottom equalToItem:self.contentView constant:-3.0]];
-    [self.contentView addConstraint:[BLMViewUtils constraintWithItem:self.toggleSwitch attribute:NSLayoutAttributeRight equalToItem:self.textField constant:-3.0]];
+    [self.contentView addConstraint:[BLMViewUtils constraintWithItem:self.toggleSwitch attribute:NSLayoutAttributeTop equalToItem:self.textField attribute:NSLayoutAttributeBottom constant:10.0]];
+    [self.contentView addConstraint:[BLMViewUtils constraintWithItem:self.toggleSwitch attribute:NSLayoutAttributeRight equalToItem:self.textField attribute:NSLayoutAttributeRight constant:-3.0]];
 
-    [self.contentView addConstraint:[BLMViewUtils constraintWithItem:self.label attribute:NSLayoutAttributeCenterY equalToItem:self.toggleSwitch constant:0.0]];
-    [self.contentView addConstraint:[BLMViewUtils constraintWithItem:self.label attribute:NSLayoutAttributeRight equalToItem:self.toggleSwitch attribute:NSLayoutAttributeLeft constant:-8.0]];
+    // Toggle Switch Label
 
-    [self.contentView addConstraint:[BLMViewUtils constraintWithItem:self.textField attribute:NSLayoutAttributeTop equalToItem:self.contentView constant:0.0]];
-    [self.contentView addConstraint:[BLMViewUtils constraintWithItem:self.textField attribute:NSLayoutAttributeLeft equalToItem:self.contentView constant:0.0]];
-    [self.contentView addConstraint:[BLMViewUtils constraintWithItem:self.textField attribute:NSLayoutAttributeBottom equalToItem:self.toggleSwitch attribute:NSLayoutAttributeTop constant:-8.0]];
+    _toggleSwitchLabel = [[UILabel alloc] init];
 
-    self.toggleSwitch.layer.borderWidth = 1.0;
-    self.toggleSwitch.layer.borderColor = [BLMViewUtils colorWithHexValue:BLMColorHexCodeGreen alpha:0.3].CGColor;
+    [self.toggleSwitchLabel setContentHuggingPriority:UILayoutPriorityRequired forAxis:UILayoutConstraintAxisVertical];
+    [self.toggleSwitchLabel setContentHuggingPriority:UILayoutPriorityRequired forAxis:UILayoutConstraintAxisHorizontal];
 
-    self.label.layer.borderWidth = 1.0;
-    self.label.layer.borderColor = [BLMViewUtils colorWithHexValue:BLMColorHexCodeGreen alpha:0.3].CGColor;
+    [self.toggleSwitchLabel setContentCompressionResistancePriority:UILayoutPriorityRequired forAxis:UILayoutConstraintAxisVertical];
+    [self.toggleSwitchLabel setContentCompressionResistancePriority:UILayoutPriorityRequired forAxis:UILayoutConstraintAxisHorizontal];
+
+    self.toggleSwitchLabel.text = @"Continuous:";
+    self.toggleSwitchLabel.translatesAutoresizingMaskIntoConstraints = NO;
+
+    [self.contentView addSubview:self.toggleSwitchLabel];
+    [self.contentView addConstraint:[BLMViewUtils constraintWithItem:self.toggleSwitchLabel attribute:NSLayoutAttributeCenterY equalToItem:self.toggleSwitch constant:0.0]];
+    [self.contentView addConstraint:[BLMViewUtils constraintWithItem:self.toggleSwitchLabel attribute:NSLayoutAttributeLeft equalToItem:self.label constant:0.0]];
 
     return self;
 }
@@ -308,8 +428,15 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
 }
 
 
-- (void)handleValueChangedForToggleSwitch:(UISwitch *)toggleSwitch forEvent:(UIEvent *)event {
-    assert([self.toggleSwitch isEqual:toggleSwitch]);
+- (void)handleActionForDeleteButton:(UIButton *)deleteButton forEvent:(UIEvent *)event {
+    assert([BLMUtils isObject:deleteButton equalToObject:self.deleteButton]);
+
+    [self.delegate didFireDeleteButtonActionForBehaviorCell:self];
+}
+
+
+- (void)handleActionToggleSwitch:(UISwitch *)toggleSwitch forEvent:(UIEvent *)event {
+    assert([BLMUtils isObject:toggleSwitch equalToObject:self.toggleSwitch]);
 
     if (self.toggleSwitch.isOn != self.behavior.isContinuous) {
         [self.delegate didChangeToggleSwitchStateForBehaviorCell:self];
@@ -344,6 +471,41 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
     self.behavior = updatedBehavior;
 
     [self updateContent];
+}
+
+#pragma mark BLMTextInputCellLayoutDelegate
+
+- (void)configureLabelSubviewsPreferredMaxLayoutWidth {
+    [super configureLabelSubviewsPreferredMaxLayoutWidth];
+    
+    self.toggleSwitchLabel.preferredMaxLayoutWidth = CGRectGetWidth([self.toggleSwitchLabel alignmentRectForFrame:self.toggleSwitchLabel.frame]);
+}
+
+
+- (NSArray<NSLayoutConstraint *> *)uniqueVerticalPositionConstraintsForSubview:(UIView *)subview {
+    NSMutableArray *constraints = [NSMutableArray array];
+
+    if ([BLMUtils isObject:subview equalToObject:self.label]) {
+        [constraints addObject:[BLMViewUtils constraintWithItem:subview attribute:NSLayoutAttributeTop equalToItem:self.contentView constant:25.0]];
+    } else if ([BLMUtils isObject:subview equalToObject:self.textField]) {
+        [constraints addObject:[BLMViewUtils constraintWithItem:subview attribute:NSLayoutAttributeBaseline equalToItem:self.label constant:0.0]];
+    }
+
+    return constraints;
+}
+
+
+- (NSArray<NSLayoutConstraint *> *)uniqueHorizontalPositionConstraintsForSubview:(UIView *)subview {
+    NSMutableArray *constraints = [NSMutableArray array];
+
+    if ([BLMUtils isObject:subview equalToObject:self.label]) {
+        [constraints addObject:[BLMViewUtils constraintWithItem:subview attribute:NSLayoutAttributeLeft equalToItem:self.contentView constant:8.0]];
+    } else if ([BLMUtils isObject:subview equalToObject:self.textField]) {
+        [constraints addObject:[BLMViewUtils constraintWithItem:subview attribute:NSLayoutAttributeRight equalToItem:self.contentView constant:-8.0]];
+        [constraints addObject:[BLMViewUtils constraintWithItem:subview attribute:NSLayoutAttributeLeft equalToItem:self.label attribute:NSLayoutAttributeRight constant:5.0]];
+    }
+
+    return constraints;
 }
 
 @end
@@ -470,6 +632,8 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
                               - (Layout.ContentArea.ItemGrid.ColumnSpacing // ...then subtracting the horizontal inter-column space...
                                  * (Layout.ContentArea.ItemGrid.ColumnCount - 1))) // ...multiplied by the total number of inter-column spaces...
                              / Layout.ContentArea.ItemGrid.ColumnCount); // ...and finally dividing the remaining space by the number of columns
+
+        itemWidth = ((itemWidth + 0.5) / 1); // Round to the nearest whole number so that item frames are pixel-aligned
 
         for (NSInteger item = 0; item < itemCount; item += 1) {
             CGRect itemFrame = {
@@ -1034,9 +1198,9 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
                     .HasBackground = NO,
                     .Insets = {
                         .top = 20.0,
-                        .left = 30.0,
+                        .left = 20.0,
                         .bottom = 20.0,
-                        .right = 30.0
+                        .right = 20.0
                     },
                     .ItemGrid = {
                         .ColumnCount = 2,
@@ -1057,9 +1221,9 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
                     .HasBackground = NO,
                     .Insets = {
                         .top = 10.0,
-                        .left = 30.0,
+                        .left = 20.0,
                         .bottom = 10.0,
-                        .right = 30.0
+                        .right = 20.0
                     },
                     .ItemGrid = {
                         .ColumnCount = 2,
@@ -1080,15 +1244,15 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
                     .HasBackground = YES,
                     .Insets = {
                         .top = 10.0,
-                        .left = 30.0,
+                        .left = 20.0,
                         .bottom = 10.0,
-                        .right = 30.0
+                        .right = 20.0
                     },
                     .ItemGrid = {
                         .ColumnCount = 4,
                         .ColumnSpacing = 15.0,
                         .RowSpacing = 10.0,
-                        .RowHeight = 80.0,
+                        .RowHeight = 105.0,
                         .Insets = {
                             .top = 10.0,
                             .left = 10.0,
@@ -1108,9 +1272,9 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
                     .HasBackground = NO,
                     .Insets = {
                         .top = 10.0,
-                        .left = 30.0,
+                        .left = 20.0,
                         .bottom = 10.0,
-                        .right = 30.0
+                        .right = 20.0
                     },
                     .ItemGrid = {
                         .ColumnCount = 3,
@@ -1169,7 +1333,7 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
         }
 
         case ProjectDetailSectionBehaviors:
-            return @"Continuous:";
+            return @"Name:";
 
         case ProjectDetailSectionActionButtons:
         case ProjectDetailSectionCount: {
@@ -1221,13 +1385,8 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
         }
 
         case ProjectDetailSectionBehaviors: {
-            NSArray<NSUUID *> *behaviorUUIDs = [[BLMDataManager sharedManager] projectForUUID:self.projectUUID].defaultSessionConfiguration.behaviorUUIDs;
-
-            assert((cell.item < behaviorUUIDs.count)
-                   || ((cell.item == behaviorUUIDs.count)
-                       && (self.addedBehaviorUUID != nil)));
-
-            NSUUID *UUID = ((cell.item < behaviorUUIDs.count) ? behaviorUUIDs[cell.item] : self.addedBehaviorUUID);
+            BehaviorCell *behaviorCell = (BehaviorCell *)cell;
+            NSUUID *UUID = behaviorCell.behavior.UUID;
 
             return [[BLMDataManager sharedManager] behaviorForUUID:UUID].name;
         }
@@ -1453,6 +1612,11 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
 }
 
 #pragma mark BehaviorCellDelegate
+
+- (void)didFireDeleteButtonActionForBehaviorCell:(BehaviorCell *)cell {
+    [[BLMDataManager sharedManager] deleteBehaviorForUUID:cell.behavior.UUID completion:nil];
+}
+
 
 - (void)didChangeToggleSwitchStateForBehaviorCell:(BehaviorCell *)cell {
     assert(cell.toggleSwitch.isOn != cell.behavior.isContinuous);
