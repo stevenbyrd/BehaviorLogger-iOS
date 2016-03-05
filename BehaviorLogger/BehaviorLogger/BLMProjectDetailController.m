@@ -731,6 +731,7 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
     BLMProject *project = [[BLMDataManager sharedManager] projectForUUID:self.projectUUID];
 
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleProjectUpdated:) name:BLMProjectUpdatedNotification object:project];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleBehaviorUpdated:) name:BLMBehaviorUpdatedNotification object:nil];
 }
 
 
@@ -742,7 +743,7 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
         NSUInteger cellItem = ([self.collectionView numberOfItemsInSection:ProjectDetailSectionBehaviors] - 2);
 
         if ([self isValidBehaviorName:addedBehavior.name forItem:cellItem]) {
-            [self updateProjectDefaultSessionConfigurationByAddingBehaviorUUID:self.addedBehaviorUUID];
+            [self updateProjectDefaultSessionConfigurationWithAddedBehaviorUUID];
         } else {
             [[BLMDataManager sharedManager] deleteBehaviorForUUID:self.addedBehaviorUUID completion:nil];
         }
@@ -777,17 +778,26 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
 }
 
 
-- (void)updateProjectDefaultSessionConfigurationByAddingBehaviorUUID:(NSUUID *)UUID {
+- (void)updateProjectDefaultSessionConfigurationWithAddedBehaviorUUID {
     BLMProject *project = [[BLMDataManager sharedManager] projectForUUID:self.projectUUID];
     NSArray<NSUUID *> *behaviorUUIDs = project.defaultSessionConfiguration.behaviorUUIDs;
 
-    assert(UUID != nil);
-    assert(![behaviorUUIDs containsObject:UUID]);
+    assert(self.addedBehaviorUUID != nil);
+    assert(![behaviorUUIDs containsObject:self.addedBehaviorUUID]);
+    assert([self isValidBehaviorName:[[BLMDataManager sharedManager] behaviorForUUID:self.addedBehaviorUUID].name forItem:([self.collectionView numberOfItemsInSection:ProjectDetailSectionBehaviors] - 2)]);
 
-    NSDictionary *updatedSessionConfigurationValuesByProperty = @{ @(BLMSessionConfigurationPropertyBehaviorUUIDs):[behaviorUUIDs arrayByAddingObject:UUID] };
+    NSDictionary *updatedSessionConfigurationValuesByProperty = @{ @(BLMSessionConfigurationPropertyBehaviorUUIDs):[behaviorUUIDs arrayByAddingObject:self.addedBehaviorUUID] };
     BLMSessionConfiguration *updatedSessionConfiguration = [project.defaultSessionConfiguration copyWithUpdatedValuesByProperty:updatedSessionConfigurationValuesByProperty];
 
     [[BLMDataManager sharedManager] updateProjectForUUID:self.projectUUID property:BLMProjectPropertyDefaultSessionConfiguration value:updatedSessionConfiguration completion:nil];
+
+    assert(self.addedBehaviorUUID == nil);
+}
+
+
+- (NSIndexPath *)addBehaviorButtonCellIndexPath {
+    NSUInteger cellItem = ([self.collectionView numberOfItemsInSection:ProjectDetailSectionBehaviors] - 1);
+    return [NSIndexPath indexPathForItem:cellItem inSection:ProjectDetailSectionBehaviors];
 }
 
 #pragma mark Event Handling
@@ -821,7 +831,7 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
             [insertedUUIDs minusSet:[NSMutableSet setWithArray:startingBehaviorUUIDs]];
 
             NSMutableArray *insertedIndexPaths = [NSMutableArray array];
-            NSMutableArray *reloadIndexPaths = [NSMutableArray arrayWithObject:[NSIndexPath indexPathForItem:endingBehaviorUUIDs.count inSection:ProjectDetailSectionBehaviors]]; // Reload add behavior cell
+            NSMutableArray *reloadIndexPaths = [NSMutableArray arrayWithObject:[self addBehaviorButtonCellIndexPath]];
 
             if ([insertedUUIDs containsObject:self.addedBehaviorUUID]) {
                 [insertedUUIDs removeObject:self.addedBehaviorUUID];
@@ -840,6 +850,23 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
         } completion:^(BOOL finished) {
             assert(finished);
         }];
+    }
+}
+
+
+- (void)handleBehaviorUpdated:(NSNotification *)notification {
+    BLMBehavior *behavior = (BLMBehavior *)notification.object;
+
+    if (![BLMUtils isObject:behavior.UUID equalToObject:self.addedBehaviorUUID]) { // Currently only interested in updates to the added behavior; used to reload the add behavior button cell
+        return;
+    }
+
+    BLMBehavior *updatedBehavior = notification.userInfo[BLMBehaviorNewBehaviorUserInfoKey];
+    NSUInteger cellItem = [[BLMDataManager sharedManager] projectForUUID:self.projectUUID].defaultSessionConfiguration.behaviorUUIDs.count;
+    BOOL nameValidityChanged = ([self isValidBehaviorName:behavior.name forItem:cellItem] != [self isValidBehaviorName:updatedBehavior.name forItem:cellItem]);
+    
+    if (nameValidityChanged) { // Reload only when the validity of the added behavior's name changes to avoid strobing of the add behavior button cell image
+        [self.collectionView reloadItemsAtIndexPaths:@[[self addBehaviorButtonCellIndexPath]]];
     }
 }
 
@@ -868,10 +895,10 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
             numberOfItems = [[BLMDataManager sharedManager] projectForUUID:self.projectUUID].defaultSessionConfiguration.behaviorUUIDs.count;
 
             if (self.addedBehaviorUUID != nil) {
-                numberOfItems += 1; // +1 for the BLMBehavior that that's been added to the data model but not to a session configuration
+                numberOfItems += 1; // +1 for the BLMBehavior that's been added to the data model but not to a session configuration
             }
 
-            numberOfItems += 1; // +1 for the "add behavior" button
+            numberOfItems += 1; // +1 for the add behavior button cell
             break;
         }
 
@@ -1304,18 +1331,11 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
 
         case ProjectDetailSectionBehaviors: {
             BehaviorCell *behaviorCell = (BehaviorCell *)cell;
-            if (![BLMUtils isObject:behaviorCell.behavior.UUID equalToObject:self.addedBehaviorUUID]) {
-                return;
+            NSUUID *UUID = behaviorCell.behavior.UUID;
+
+            if ([BLMUtils isObject:UUID equalToObject:self.addedBehaviorUUID]) { // Update the added behavior on every cell text change, but ignore established behaviors' cells until they call didAcceptInputForTextInputCell:
+                [[BLMDataManager sharedManager] updateBehaviorForUUID:UUID property:BLMBehaviorPropertyName value:cell.textField.text completion:nil];
             }
-
-            NSString *originalName = behaviorCell.behavior.name;
-            NSString *updatedName = cell.textField.text;
-
-            if ([self isValidBehaviorName:originalName forItem:cell.item] != [self isValidBehaviorName:updatedName forItem:cell.item]) {
-                [self.collectionView reloadItemsAtIndexPaths:@[[NSIndexPath indexPathForItem:(cell.item + 1) inSection:ProjectDetailSectionBehaviors]]];
-            }
-
-            [[BLMDataManager sharedManager] updateBehaviorForUUID:self.addedBehaviorUUID property:BLMBehaviorPropertyName value:updatedName completion:nil];
             break;
         }
 
@@ -1419,7 +1439,7 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
             [[BLMDataManager sharedManager] updateBehaviorForUUID:UUID property:BLMBehaviorPropertyName value:updatedName completion:nil];
             
             if ([BLMUtils isObject:UUID equalToObject:self.addedBehaviorUUID]) {
-                [self updateProjectDefaultSessionConfigurationByAddingBehaviorUUID:UUID];
+                [self updateProjectDefaultSessionConfigurationWithAddedBehaviorUUID];
             }
             break;
         }
