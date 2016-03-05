@@ -32,13 +32,15 @@ extern NSString *const BLMDataManagerBehaviorErrorDomain;
 - (NSEnumerator<NSUUID *> *)projectUUIDEnumerator;
 - (BLMProject *)projectForUUID:(NSUUID *)UUID;
 - (void)createProjectWithName:(NSString *)name client:(NSString *)client completion:(void(^)(BLMProject *project, NSError *error))completion;
-- (void)updateProjectForUUID:(NSUUID *)UUID property:(BLMProjectProperty)property value:(id)value;
+- (void)updateProjectForUUID:(NSUUID *)UUID property:(BLMProjectProperty)property value:(id)value completion:(void(^)(BLMProject *updatedProject, NSError *error))completion;
+- (void)deleteProjectForUUID:(NSUUID *)UUID completion:(void(^)(NSError *error))completion;
 
 #pragma Behavior State
 
 - (NSEnumerator<NSUUID *> *)behaviorUUIDEnumerator;
 - (BLMBehavior *)behaviorForUUID:(NSUUID *)UUID;
 - (void)createBehaviorWithName:(NSString *)name continuous:(BOOL)continuous completion:(void(^)(BLMBehavior *behavior, NSError *error))completion;
-- (void)updateBehaviorForUUID:(NSUUID *)UUID property:(BLMBehaviorProperty)property value:(id)value;
+- (void)updateBehaviorForUUID:(NSUUID *)UUID property:(BLMBehaviorProperty)property value:(id)value completion:(void(^)(BLMBehavior *updatedBehavior, NSError *error))completion;
+- (void)deleteBehaviorForUUID:(NSUUID *)UUID completion:(void(^)(NSError *error))completion;
 
 @end

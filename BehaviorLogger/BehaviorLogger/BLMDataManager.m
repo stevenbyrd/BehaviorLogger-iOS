@@ -141,7 +141,7 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
 }
 
 
-- (void)updateProjectForUUID:(NSUUID *)UUID property:(BLMProjectProperty)property value:(id)value {
+- (void)updateProjectForUUID:(NSUUID *)UUID property:(BLMProjectProperty)property value:(id)value completion:(void(^)(BLMProject *updatedProject, NSError *error))completion {
     assert([NSThread isMainThread]);
 
     BLMProject *originalProject = self.projectByUUID[UUID];
@@ -174,6 +174,26 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
 
         NSDictionary *userInfo = @{ BLMProjectOldProjectUserInfoKey:originalProject, BLMProjectNewProjectUserInfoKey:updatedProject };
         [[NSNotificationCenter defaultCenter] postNotificationName:BLMProjectUpdatedNotification object:originalProject userInfo:userInfo];
+    }
+
+    if (completion != nil) {
+        completion(self.projectByUUID[UUID], nil);
+    }
+}
+
+
+- (void)deleteProjectForUUID:(NSUUID *)UUID completion:(void(^)(NSError *error))completion {
+    assert([NSThread isMainThread]);
+
+    BLMProject *project = self.projectByUUID[UUID];
+    assert(project != nil);
+
+    [self.projectByUUID removeObjectForKey:UUID];
+
+    [[NSNotificationCenter defaultCenter] postNotificationName:BLMProjectDeletedNotification object:project userInfo:nil];
+
+    if (completion != nil) {
+        completion(nil);
     }
 }
 
@@ -213,7 +233,7 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
 }
 
 
-- (void)updateBehaviorForUUID:(NSUUID *)UUID property:(BLMBehaviorProperty)property value:(id)value {
+- (void)updateBehaviorForUUID:(NSUUID *)UUID property:(BLMBehaviorProperty)property value:(id)value completion:(void(^)(BLMBehavior *updatedBehavior, NSError *error))completion {
     assert([NSThread isMainThread]);
 
     BLMBehavior *originalBehavior = self.behaviorByUUID[UUID];
@@ -241,6 +261,26 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
 
         NSDictionary *userInfo = @{ BLMBehaviorOldBehaviorUserInfoKey:originalBehavior, BLMBehaviorNewBehaviorUserInfoKey:updatedBehavior };
         [[NSNotificationCenter defaultCenter] postNotificationName:BLMBehaviorUpdatedNotification object:originalBehavior userInfo:userInfo];
+    }
+
+    if (completion != nil) {
+        completion(self.behaviorByUUID[UUID], nil);
+    }
+}
+
+
+- (void)deleteBehaviorForUUID:(NSUUID *)UUID completion:(void(^)(NSError *error))completion {
+    assert([NSThread isMainThread]);
+
+    BLMBehavior *behavior = self.behaviorByUUID[UUID];
+    assert(behavior != nil);
+
+    [self.behaviorByUUID removeObjectForKey:UUID];
+
+    [[NSNotificationCenter defaultCenter] postNotificationName:BLMBehaviorDeletedNotification object:behavior userInfo:nil];
+
+    if (completion != nil) {
+        completion(nil);
     }
 }
 

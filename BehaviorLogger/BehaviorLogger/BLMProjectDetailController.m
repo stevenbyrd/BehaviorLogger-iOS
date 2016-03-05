@@ -760,6 +760,20 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
     return YES;
 }
 
+
+- (void)updateProjectDefaultSessionConfigurationByAddingBehaviorUUID:(NSUUID *)UUID {
+    BLMProject *project = [[BLMDataManager sharedManager] projectForUUID:self.projectUUID];
+    NSArray<NSUUID *> *behaviorUUIDs = project.defaultSessionConfiguration.behaviorUUIDs;
+
+    assert(UUID != nil);
+    assert(![behaviorUUIDs containsObject:UUID]);
+
+    NSDictionary *updatedSessionConfigurationValuesByProperty = @{ @(BLMSessionConfigurationPropertyBehaviorUUIDs):[behaviorUUIDs arrayByAddingObject:UUID] };
+    BLMSessionConfiguration *updatedSessionConfiguration = [project.defaultSessionConfiguration copyWithUpdatedValuesByProperty:updatedSessionConfigurationValuesByProperty];
+
+    [[BLMDataManager sharedManager] updateProjectForUUID:self.projectUUID property:BLMProjectPropertyDefaultSessionConfiguration value:updatedSessionConfiguration completion:nil];
+}
+
 #pragma mark Event Handling
 
 - (void)handleProjectUpdated:(NSNotification *)notification {
@@ -1285,7 +1299,7 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
                 [self.collectionView reloadItemsAtIndexPaths:@[[NSIndexPath indexPathForItem:(cell.item + 1) inSection:ProjectDetailSectionBehaviors]]];
             }
 
-            [[BLMDataManager sharedManager] updateBehaviorForUUID:self.addedBehaviorUUID property:BLMBehaviorPropertyName value:updatedName];
+            [[BLMDataManager sharedManager] updateBehaviorForUUID:self.addedBehaviorUUID property:BLMBehaviorPropertyName value:updatedName completion:nil];
             break;
         }
 
@@ -1340,7 +1354,7 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
                 }
             }
 
-            [[BLMDataManager sharedManager] updateProjectForUUID:self.projectUUID property:updatedProjectProperty value:cell.textField.text];
+            [[BLMDataManager sharedManager] updateProjectForUUID:self.projectUUID property:updatedProjectProperty value:cell.textField.text completion:nil];
             break;
         }
 
@@ -1373,7 +1387,7 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
             BLMSessionConfiguration *originalSessionConfiguration = [[BLMDataManager sharedManager] projectForUUID:self.projectUUID].defaultSessionConfiguration;
             BLMSessionConfiguration *updatedSessionConfiguration = [originalSessionConfiguration copyWithUpdatedValuesByProperty:@{ @(updatedSessionConfigurationProperty) : (cell.textField.text ?: @"") }];
 
-            [[BLMDataManager sharedManager] updateProjectForUUID:self.projectUUID property:BLMProjectPropertyDefaultSessionConfiguration value:updatedSessionConfiguration];
+            [[BLMDataManager sharedManager] updateProjectForUUID:self.projectUUID property:BLMProjectPropertyDefaultSessionConfiguration value:updatedSessionConfiguration completion:nil];
             break;
         }
 
@@ -1386,22 +1400,11 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
             NSString *updatedName = cell.textField.text;
             assert([self isValidBehaviorName:updatedName forItem:cell.item]);
 
-            [[BLMDataManager sharedManager] updateBehaviorForUUID:UUID property:BLMBehaviorPropertyName value:updatedName];
+            [[BLMDataManager sharedManager] updateBehaviorForUUID:UUID property:BLMBehaviorPropertyName value:updatedName completion:nil];
             
-            if (![BLMUtils isObject:UUID equalToObject:self.addedBehaviorUUID]) {
-                return;
+            if ([BLMUtils isObject:UUID equalToObject:self.addedBehaviorUUID]) {
+                [self updateProjectDefaultSessionConfigurationByAddingBehaviorUUID:UUID];
             }
-
-            BLMProject *project = [[BLMDataManager sharedManager] projectForUUID:self.projectUUID];
-            NSArray<NSUUID *> *behaviorUUIDs = project.defaultSessionConfiguration.behaviorUUIDs;
-
-            assert(cell.item == behaviorUUIDs.count);
-            assert(![behaviorUUIDs containsObject:UUID]);
-
-            NSDictionary *updatedSessionConfigurationValuesByProperty = @{ @(BLMSessionConfigurationPropertyBehaviorUUIDs):[behaviorUUIDs arrayByAddingObject:UUID] };
-            BLMSessionConfiguration *updatedSessionConfiguration = [project.defaultSessionConfiguration copyWithUpdatedValuesByProperty:updatedSessionConfigurationValuesByProperty];
-
-            [[BLMDataManager sharedManager] updateProjectForUUID:self.projectUUID property:BLMProjectPropertyDefaultSessionConfiguration value:updatedSessionConfiguration];
             break;
         }
 
@@ -1418,7 +1421,7 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
 - (void)didChangeToggleSwitchStateForBehaviorCell:(BehaviorCell *)cell {
     assert(cell.toggleSwitch.isOn != cell.behavior.isContinuous);
     
-    [[BLMDataManager sharedManager] updateBehaviorForUUID:cell.behavior.UUID property:BLMBehaviorPropertyContinuous value:@(cell.toggleSwitch.isOn)];
+    [[BLMDataManager sharedManager] updateBehaviorForUUID:cell.behavior.UUID property:BLMBehaviorPropertyContinuous value:@(cell.toggleSwitch.isOn) completion:nil];
 }
 
 #pragma mark BLMButtonCellDelegate
