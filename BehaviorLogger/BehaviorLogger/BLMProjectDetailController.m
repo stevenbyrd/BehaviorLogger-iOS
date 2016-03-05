@@ -369,24 +369,25 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
 
     dispatch_once(&onceToken, ^{
         deleteButtonDefaultImage = [BLMViewUtils deleteItemImageWithBackgroundColor:[BLMViewUtils colorWithHexValue:0x000000 alpha:0.6]];
-        deleteButtonSelectedImage = [BLMViewUtils deleteItemImageWithBackgroundColor:[BLMViewUtils colorWithHexValue:0xB73B23 alpha:0.8]];
+        deleteButtonSelectedImage = [BLMViewUtils deleteItemImageWithBackgroundColor:[BLMViewUtils colorWithHexValue:0xB83020 alpha:0.8]];
     });
 
     _deleteButton = [UIButton buttonWithType:UIButtonTypeCustom];
 
     [self.deleteButton setImage:deleteButtonDefaultImage forState:UIControlStateNormal];
     [self.deleteButton setImage:deleteButtonSelectedImage forState:UIControlStateSelected];
+    [self.deleteButton setImage:deleteButtonSelectedImage forState:UIControlStateHighlighted];
 
     [self.deleteButton addTarget:self action:@selector(handleActionForDeleteButton:forEvent:) forControlEvents:UIControlEventTouchUpInside];
 
-    self.deleteButton.backgroundColor = [BLMViewUtils colorWithHexValue:BLMColorHexCodeDarkBackground alpha:1.0];
+    self.deleteButton.backgroundColor = [UIColor clearColor];
     self.deleteButton.translatesAutoresizingMaskIntoConstraints = NO;
 
     [self.contentView addSubview:self.deleteButton];
     [self.contentView addConstraint:[BLMViewUtils constraintWithItem:self.deleteButton attribute:NSLayoutAttributeLeft equalToItem:self.contentView constant:-8.0]];
     [self.contentView addConstraint:[BLMViewUtils constraintWithItem:self.deleteButton attribute:NSLayoutAttributeTop equalToItem:self.contentView constant:-8.0]];
-    [self.contentView addConstraint:[BLMViewUtils constraintWithItem:self.deleteButton attribute:NSLayoutAttributeWidth equalToConstant:32.0]];
-    [self.contentView addConstraint:[BLMViewUtils constraintWithItem:self.deleteButton attribute:NSLayoutAttributeHeight equalToConstant:32.0]];
+    [self.contentView addConstraint:[BLMViewUtils constraintWithItem:self.deleteButton attribute:NSLayoutAttributeWidth equalToConstant:34.0]];
+    [self.contentView addConstraint:[BLMViewUtils constraintWithItem:self.deleteButton attribute:NSLayoutAttributeHeight equalToConstant:34.0]];
 
     // Toggle Switch
 
