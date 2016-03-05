@@ -530,6 +530,9 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
 @property (nonatomic, copy, readonly) NSMutableArray<NSValue *> *sectionFrameList;
 @property (nonatomic, copy, readonly) NSDictionary<NSString *, NSMutableDictionary<NSIndexPath *, UICollectionViewLayoutAttributes *> *> *attributesByIndexPathByKind;
 @property (nonatomic, copy, readonly) NSDictionary<NSString *, NSMutableDictionary<NSIndexPath *, UICollectionViewLayoutAttributes *> *> *previousAttributesByIndexPathByKind;
+@property (nonatomic, copy, readonly) NSMutableDictionary<NSIndexPath *, NSIndexPath *> *reloadedIndexPathByOriginalIndexPath;
+@property (nonatomic, copy, readonly) NSMutableArray<NSIndexPath *> *deletedIndexPaths;
+@property (nonatomic, copy, readonly) NSMutableArray<NSIndexPath *> *insertedIndexPaths;
 
 @end
 
@@ -543,6 +546,9 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
 
     _collectionViewContentSize = CGSizeZero;
     _sectionFrameList = [NSMutableArray array];
+    _reloadedIndexPathByOriginalIndexPath = [NSMutableDictionary dictionary];
+    _deletedIndexPaths = [NSMutableArray array];
+    _insertedIndexPaths = [NSMutableArray array];
 
     return self;
 }
@@ -764,7 +770,7 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
 
 
 - (nullable UICollectionViewLayoutAttributes *)initialLayoutAttributesForAppearingItemAtIndexPath:(NSIndexPath *)indexPath {
-    UICollectionViewLayoutAttributes *initialAttributes = self.attributesByIndexPathByKind[ItemCellKind][indexPath];
+    UICollectionViewLayoutAttributes *initialAttributes = [super initialLayoutAttributesForAppearingItemAtIndexPath:indexPath];
 
     switch ((ProjectDetailSection)indexPath.section) {
         case ProjectDetailSectionBasicInfo:
@@ -773,35 +779,100 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
             break;
 
         case ProjectDetailSectionBehaviors: {
-            if (self.previousAttributesByIndexPathByKind[ItemCellKind].count == self.attributesByIndexPathByKind[ItemCellKind].count) { // Reloading existing item, don't animate
+            if ([self.insertedIndexPaths containsObject:indexPath]) {
+                initialAttributes.transform = CGAffineTransformMakeScale(0.01, 0.01);
                 break;
             }
 
-            NSUInteger secondToLastItem = ([self.collectionView numberOfItemsInSection:indexPath.section] - 2);
-
-            if (initialAttributes == nil) { // The "add behavior" button is the last item; its initial layout for this animation should be the final layout for the cell being added in front of it
-                assert(indexPath.item == (secondToLastItem + 1));
-                initialAttributes = self.attributesByIndexPathByKind[ItemCellKind][[NSIndexPath indexPathForItem:secondToLastItem inSection:ProjectDetailSectionBehaviors]];
-            } else if (indexPath.item == secondToLastItem) {
-                initialAttributes = [initialAttributes copy];
-                initialAttributes.transform = CGAffineTransformMakeScale(0.01, 0.01);
+            for (NSIndexPath *originalIndexPath in self.reloadedIndexPathByOriginalIndexPath) {
+                if ([BLMUtils isObject:self.reloadedIndexPathByOriginalIndexPath[originalIndexPath] equalToObject:indexPath]) {
+                    initialAttributes = [self.previousAttributesByIndexPathByKind[ItemCellKind][originalIndexPath] copy];
+                    break;
+                }
             }
-
             break;
         }
 
-        case ProjectDetailSectionCount:
+        case ProjectDetailSectionCount: {
             assert(NO);
             break;
+        }
     }
 
-    assert(initialAttributes != nil);
     return initialAttributes;
+}
+
+
+- (nullable UICollectionViewLayoutAttributes *)finalLayoutAttributesForDisappearingItemAtIndexPath:(NSIndexPath *)indexPath {
+    UICollectionViewLayoutAttributes *finalAttributes = [super finalLayoutAttributesForDisappearingItemAtIndexPath:indexPath];
+
+    switch ((ProjectDetailSection)indexPath.section) {
+        case ProjectDetailSectionBasicInfo:
+        case ProjectDetailSectionSessionProperties:
+        case ProjectDetailSectionActionButtons:
+            break;
+
+        case ProjectDetailSectionBehaviors: {
+            if ([self.deletedIndexPaths containsObject:indexPath]) {
+                finalAttributes.transform = CGAffineTransformMakeScale(0.01, 0.01);
+                break;
+            }
+
+            NSIndexPath *indexPathAfterUpdate = self.reloadedIndexPathByOriginalIndexPath[indexPath];
+
+            if (indexPathAfterUpdate != nil) {
+                finalAttributes = [self layoutAttributesForItemAtIndexPath:indexPathAfterUpdate];
+            }
+            break;
+        }
+
+        case ProjectDetailSectionCount: {
+            assert(NO);
+            break;
+        }
+    }
+
+    return finalAttributes;
 }
 
 
 - (nullable UICollectionViewLayoutAttributes *)initialLayoutAttributesForAppearingSupplementaryElementOfKind:(NSString *)elementKind atIndexPath:(NSIndexPath *)indexPath {
     return self.attributesByIndexPathByKind[elementKind][indexPath];
+}
+
+
+- (void)prepareForCollectionViewUpdates:(NSArray<UICollectionViewUpdateItem *> *)updateItems {
+    [super prepareForCollectionViewUpdates:updateItems];
+
+    for (UICollectionViewUpdateItem *update in updateItems) {
+        switch (update.updateAction) {
+            case UICollectionUpdateActionInsert:
+                [self.insertedIndexPaths addObject:update.indexPathAfterUpdate];
+                break;
+
+            case UICollectionUpdateActionDelete:
+                [self.deletedIndexPaths addObject:update.indexPathBeforeUpdate];
+                break;
+
+            case UICollectionUpdateActionReload:
+                self.reloadedIndexPathByOriginalIndexPath[update.indexPathBeforeUpdate] = update.indexPathAfterUpdate;
+                break;
+
+            case UICollectionUpdateActionMove:
+            case UICollectionUpdateActionNone: {
+                break;
+            }
+        }
+    }
+}
+
+
+- (void)finalizeCollectionViewUpdates {
+    [super finalizeCollectionViewUpdates];
+
+    [self.reloadedIndexPathByOriginalIndexPath removeAllObjects];
+    [self.deletedIndexPaths removeAllObjects];
+    [self.insertedIndexPaths removeAllObjects];
 }
 
 
@@ -896,6 +967,7 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
 
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleProjectUpdated:) name:BLMProjectUpdatedNotification object:project];
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleBehaviorUpdated:) name:BLMBehaviorUpdatedNotification object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleBehaviorDeleted:) name:BLMBehaviorDeletedNotification object:nil];
 }
 
 
@@ -1031,6 +1103,39 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
     
     if (nameValidityChanged) { // Reload only when the validity of the added behavior's name changes to avoid strobing of the add behavior button cell image
         [self.collectionView reloadItemsAtIndexPaths:@[[self addBehaviorButtonCellIndexPath]]];
+    }
+}
+
+
+- (void)handleBehaviorDeleted:(NSNotification *)notification {
+    BLMBehavior *behavior = (BLMBehavior *)notification.object;
+    BLMProject *project = [[BLMDataManager sharedManager] projectForUUID:self.projectUUID];
+    NSArray<NSUUID *> *behaviorUUIDs = project.defaultSessionConfiguration.behaviorUUIDs;
+
+    if ([BLMUtils isObject:behavior.UUID equalToObject:self.addedBehaviorUUID]) {
+        assert(![behaviorUUIDs containsObject:self.addedBehaviorUUID]);
+
+        [self.collectionView performBatchUpdates:^{
+            self.addedBehaviorUUID = nil;
+            [self.collectionView deleteItemsAtIndexPaths:@[[NSIndexPath indexPathForItem:behaviorUUIDs.count inSection:ProjectDetailSectionBehaviors]]];
+            [self.collectionView reloadItemsAtIndexPaths:@[[self addBehaviorButtonCellIndexPath]]];
+        } completion:^(BOOL finished) {
+            assert(finished);
+        }];
+
+        return;
+    }
+
+    NSUInteger index = [behaviorUUIDs indexOfObject:behavior.UUID];
+
+    if (index != NSNotFound) {
+        NSMutableArray *updatedBehaviorUIDs = behaviorUUIDs.mutableCopy;
+        [updatedBehaviorUIDs removeObjectAtIndex:index];
+
+        NSDictionary *updatedSessionConfigurationValuesByProperty = @{ @(BLMSessionConfigurationPropertyBehaviorUUIDs):updatedBehaviorUIDs };
+        BLMSessionConfiguration *updatedSessionConfiguration = [project.defaultSessionConfiguration copyWithUpdatedValuesByProperty:updatedSessionConfigurationValuesByProperty];
+
+        [[BLMDataManager sharedManager] updateProjectForUUID:self.projectUUID property:BLMProjectPropertyDefaultSessionConfiguration value:updatedSessionConfiguration completion:nil];
     }
 }
 

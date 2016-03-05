@@ -277,6 +277,8 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
 
     [self.behaviorByUUID removeObjectForKey:UUID];
 
+    [self archiveCurrentState];
+
     [[NSNotificationCenter defaultCenter] postNotificationName:BLMBehaviorDeletedNotification object:behavior userInfo:nil];
 
     if (completion != nil) {
