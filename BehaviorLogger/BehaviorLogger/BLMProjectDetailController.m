@@ -734,6 +734,22 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
 }
 
 
+- (void)viewDidDisappear:(BOOL)animated {
+    [super viewDidDisappear:animated];
+
+    if (self.addedBehaviorUUID != nil) {
+        BLMBehavior *addedBehavior = [[BLMDataManager sharedManager] behaviorForUUID:self.addedBehaviorUUID];
+        NSUInteger cellItem = ([self.collectionView numberOfItemsInSection:ProjectDetailSectionBehaviors] - 2);
+
+        if ([self isValidBehaviorName:addedBehavior.name forItem:cellItem]) {
+            [self updateProjectDefaultSessionConfigurationByAddingBehaviorUUID:self.addedBehaviorUUID];
+        } else {
+            [[BLMDataManager sharedManager] deleteBehaviorForUUID:self.addedBehaviorUUID completion:nil];
+        }
+    }
+}
+
+
 - (BOOL)isValidBehaviorName:(NSString *)name forItem:(NSUInteger)item {
     NSString *lowercaseName = [name.lowercaseString stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
 
