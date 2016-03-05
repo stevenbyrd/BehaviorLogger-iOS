@@ -238,14 +238,84 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
 
 #pragma mark
 
-@interface BehaviorCell : BLMToggleSwitchTextInputCell
+@class BehaviorCell;
 
+
+@protocol BehaviorCellDelegate <BLMTextInputCellDelegate>
+
+- (void)didChangeToggleSwitchStateForBehaviorCell:(BehaviorCell *)cell;
+
+@end
+
+
+@interface BehaviorCell : BLMTextInputCell
+
+@property (nonatomic, strong, readonly) UISwitch *toggleSwitch;
+@property (nonatomic, weak) id<BehaviorCellDelegate> delegate;
 @property (nonatomic, strong) BLMBehavior *behavior;
 
 @end
 
 
 @implementation BehaviorCell
+
+@dynamic delegate;
+
+- (instancetype)initWithFrame:(CGRect)frame {
+    self = [super initWithFrame:frame];
+
+    if (self == nil) {
+        return nil;
+    }
+
+    [self.contentView removeConstraints:[self.contentView.constraints filteredArrayUsingPredicate:[NSPredicate predicateWithBlock:^BOOL(NSLayoutConstraint *constraint, NSDictionary<NSString *,id> *bindings) {
+        return ([BLMUtils isObject:constraint.firstItem equalToObject:self.label]
+                || [BLMUtils isObject:constraint.secondItem equalToObject:self.label]
+                || (constraint.firstAttribute == NSLayoutAttributeCenterY));
+    }]]];
+
+    _toggleSwitch = [[UISwitch alloc] initWithFrame:CGRectZero];
+
+    [self.toggleSwitch addTarget:self action:@selector(handleValueChangedForToggleSwitch:forEvent:) forControlEvents:UIControlEventTouchUpInside];
+
+    self.toggleSwitch.translatesAutoresizingMaskIntoConstraints = NO;
+
+    [self.contentView addSubview:self.toggleSwitch];
+    [self.contentView addConstraint:[BLMViewUtils constraintWithItem:self.toggleSwitch attribute:NSLayoutAttributeBottom equalToItem:self.contentView constant:-3.0]];
+    [self.contentView addConstraint:[BLMViewUtils constraintWithItem:self.toggleSwitch attribute:NSLayoutAttributeRight equalToItem:self.textField constant:-3.0]];
+
+    [self.contentView addConstraint:[BLMViewUtils constraintWithItem:self.label attribute:NSLayoutAttributeCenterY equalToItem:self.toggleSwitch constant:0.0]];
+    [self.contentView addConstraint:[BLMViewUtils constraintWithItem:self.label attribute:NSLayoutAttributeRight equalToItem:self.toggleSwitch attribute:NSLayoutAttributeLeft constant:-8.0]];
+
+    [self.contentView addConstraint:[BLMViewUtils constraintWithItem:self.textField attribute:NSLayoutAttributeTop equalToItem:self.contentView constant:0.0]];
+    [self.contentView addConstraint:[BLMViewUtils constraintWithItem:self.textField attribute:NSLayoutAttributeLeft equalToItem:self.contentView constant:0.0]];
+    [self.contentView addConstraint:[BLMViewUtils constraintWithItem:self.textField attribute:NSLayoutAttributeBottom equalToItem:self.toggleSwitch attribute:NSLayoutAttributeTop constant:-8.0]];
+
+    self.toggleSwitch.layer.borderWidth = 1.0;
+    self.toggleSwitch.layer.borderColor = [BLMViewUtils colorWithHexValue:BLMColorHexCodeGreen alpha:0.3].CGColor;
+
+    self.label.layer.borderWidth = 1.0;
+    self.label.layer.borderColor = [BLMViewUtils colorWithHexValue:BLMColorHexCodeGreen alpha:0.3].CGColor;
+
+    return self;
+}
+
+
+- (void)updateContent {
+    [super updateContent];
+
+    self.toggleSwitch.on = self.behavior.isContinuous;
+}
+
+
+- (void)handleValueChangedForToggleSwitch:(UISwitch *)toggleSwitch forEvent:(UIEvent *)event {
+    assert([self.toggleSwitch isEqual:toggleSwitch]);
+
+    if (self.toggleSwitch.isOn != self.behavior.isContinuous) {
+        [self.delegate didChangeToggleSwitchStateForBehaviorCell:self];
+    }
+}
+
 
 - (void)dealloc {
     [[NSNotificationCenter defaultCenter] removeObserver:self];
@@ -603,7 +673,7 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
 
 #pragma mark
 
-@interface BLMProjectDetailController () <UICollectionViewDataSource, ProjectDetailCollectionViewLayoutDelegate, BLMToggleSwitchTextInputCellDelegate, BLMButtonCellDelegate>
+@interface BLMProjectDetailController () <UICollectionViewDataSource, ProjectDetailCollectionViewLayoutDelegate, BehaviorCellDelegate, BLMButtonCellDelegate>
 
 @property (nonatomic, strong, readonly) UICollectionView *collectionView;
 @property (nonatomic, strong) NSUUID *addedBehaviorUUID;
@@ -1312,7 +1382,7 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
             BehaviorCell *behaviorCell = (BehaviorCell *)cell;
             NSUUID *UUID = behaviorCell.behavior.UUID;
 
-            assert([[BLMDataManager sharedManager] behaviorForUUID:UUID].isContinuous == [(BLMToggleSwitchTextInputCell *)cell toggleSwitch].isOn);
+            assert([[BLMDataManager sharedManager] behaviorForUUID:UUID].isContinuous == behaviorCell.toggleSwitch.isOn);
 
             NSString *updatedName = cell.textField.text;
             assert([self isValidBehaviorName:updatedName forItem:cell.item]);
@@ -1344,49 +1414,12 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
     }
 }
 
+#pragma mark BehaviorCellDelegate
 
-- (BOOL)defaultToggleStateForToggleSwitchTextInputCell:(BLMToggleSwitchTextInputCell *)cell {
-    switch ((ProjectDetailSection)cell.section) {
-        case ProjectDetailSectionBehaviors: {
-            BehaviorCell *behaviorCell = (BehaviorCell *)cell;
-
-            return behaviorCell.behavior.isContinuous;
-        }
-        case ProjectDetailSectionBasicInfo:
-        case ProjectDetailSectionSessionProperties:
-        case ProjectDetailSectionActionButtons:
-        case ProjectDetailSectionCount: {
-            break;
-        }
-    }
-
-    assert(NO);
-    return NO;
-}
-
-
-- (void)didChangeToggleStateForToggleSwitchTextInputCell:(BLMToggleSwitchTextInputCell *)cell {
-    switch ((ProjectDetailSection)cell.section) {
-        case ProjectDetailSectionBehaviors: {
-            BehaviorCell *behaviorCell = (BehaviorCell *)cell;
-            NSUUID *UUID = behaviorCell.behavior.UUID;
-
-            [[BLMDataManager sharedManager] updateBehaviorForUUID:UUID property:BLMBehaviorPropertyContinuous value:@(cell.toggleSwitch.isOn)];
-
-            if (cell.textField.isFirstResponder) {
-                [cell.textField resignFirstResponder];
-            }
-            break;
-        }
-
-        case ProjectDetailSectionBasicInfo:
-        case ProjectDetailSectionSessionProperties:
-        case ProjectDetailSectionActionButtons:
-        case ProjectDetailSectionCount: {
-            assert(NO);
-            break;
-        }
-    }
+- (void)didChangeToggleSwitchStateForBehaviorCell:(BehaviorCell *)cell {
+    assert(cell.toggleSwitch.isOn != cell.behavior.isContinuous);
+    
+    [[BLMDataManager sharedManager] updateBehaviorForUUID:cell.behavior.UUID property:BLMBehaviorPropertyContinuous value:@(cell.toggleSwitch.isOn)];
 }
 
 #pragma mark BLMButtonCellDelegate
@@ -1415,6 +1448,7 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
 
     return YES;
 }
+
 
 - (UIImage *)normalImageForButtonCell:(BLMButtonCell *)cell {
     switch ((ProjectDetailSection)cell.section) {

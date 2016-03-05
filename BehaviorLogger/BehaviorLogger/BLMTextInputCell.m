@@ -12,6 +12,11 @@
 #import "BLMUtils.h"
 
 
+@interface BLMTextInputCell () <UITextFieldDelegate>
+
+@end
+
+
 @implementation BLMTextInputCell
 
 - (instancetype)initWithFrame:(CGRect)frame {
@@ -121,70 +126,6 @@
         [self.delegate didAcceptInputForTextInputCell:self];
     } else {
         [self updateContent];
-    }
-}
-
-@end
-
-
-#pragma mark
-
-@implementation BLMToggleSwitchTextInputCell
-
-@dynamic delegate;
-
-- (instancetype)initWithFrame:(CGRect)frame {
-    self = [super initWithFrame:frame];
-
-    if (self == nil) {
-        return nil;
-    }
-
-    [self.contentView removeConstraints:[self.contentView.constraints filteredArrayUsingPredicate:[NSPredicate predicateWithBlock:^BOOL(NSLayoutConstraint *constraint, NSDictionary<NSString *,id> *bindings) {
-        return ([BLMUtils isObject:constraint.firstItem equalToObject:self.label]
-                || [BLMUtils isObject:constraint.secondItem equalToObject:self.label]
-                || (constraint.firstAttribute == NSLayoutAttributeCenterY));
-    }]]];
-
-    _toggleSwitch = [[UISwitch alloc] initWithFrame:CGRectZero];
-
-    [self.toggleSwitch addTarget:self action:@selector(handleValueChangedForToggleSwitch:forEvent:) forControlEvents:UIControlEventTouchUpInside];
-
-    self.toggleSwitch.translatesAutoresizingMaskIntoConstraints = NO;
-
-    [self.contentView addSubview:self.toggleSwitch];
-    [self.contentView addConstraint:[BLMViewUtils constraintWithItem:self.toggleSwitch attribute:NSLayoutAttributeBottom equalToItem:self.contentView constant:-3.0]];
-    [self.contentView addConstraint:[BLMViewUtils constraintWithItem:self.toggleSwitch attribute:NSLayoutAttributeRight equalToItem:self.textField constant:-3.0]];
-
-    [self.contentView addConstraint:[BLMViewUtils constraintWithItem:self.label attribute:NSLayoutAttributeCenterY equalToItem:self.toggleSwitch constant:0.0]];
-    [self.contentView addConstraint:[BLMViewUtils constraintWithItem:self.label attribute:NSLayoutAttributeRight equalToItem:self.toggleSwitch attribute:NSLayoutAttributeLeft constant:-8.0]];
-
-    [self.contentView addConstraint:[BLMViewUtils constraintWithItem:self.textField attribute:NSLayoutAttributeTop equalToItem:self.contentView constant:0.0]];
-    [self.contentView addConstraint:[BLMViewUtils constraintWithItem:self.textField attribute:NSLayoutAttributeLeft equalToItem:self.contentView constant:0.0]];
-    [self.contentView addConstraint:[BLMViewUtils constraintWithItem:self.textField attribute:NSLayoutAttributeBottom equalToItem:self.toggleSwitch attribute:NSLayoutAttributeTop constant:-8.0]];
-
-    self.toggleSwitch.layer.borderWidth = 1.0;
-    self.toggleSwitch.layer.borderColor = [BLMViewUtils colorWithHexValue:BLMColorHexCodeGreen alpha:0.3].CGColor;
-
-    self.label.layer.borderWidth = 1.0;
-    self.label.layer.borderColor = [BLMViewUtils colorWithHexValue:BLMColorHexCodeGreen alpha:0.3].CGColor;
-
-    return self;
-}
-
-
-- (void)updateContent {
-    [super updateContent];
-
-    self.toggleSwitch.on = [self.delegate defaultToggleStateForToggleSwitchTextInputCell:self];
-}
-
-
-- (void)handleValueChangedForToggleSwitch:(UISwitch *)toggleSwitch forEvent:(UIEvent *)event {
-    assert([self.toggleSwitch isEqual:toggleSwitch]);
-
-    if (self.toggleSwitch.isOn != [self.delegate defaultToggleStateForToggleSwitchTextInputCell:self]) {
-        [self.delegate didChangeToggleStateForToggleSwitchTextInputCell:self];
     }
 }
 

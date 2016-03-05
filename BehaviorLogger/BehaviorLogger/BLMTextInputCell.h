@@ -25,7 +25,7 @@
 @end
 
 
-@interface BLMTextInputCell : BLMCollectionViewCell <UITextFieldDelegate>
+@interface BLMTextInputCell : BLMCollectionViewCell
 
 @property (nonatomic, strong, readonly) UILabel *label;
 @property (nonatomic, strong, readonly) UITextField *textField;
@@ -38,22 +38,4 @@
 @end
 
 
-#pragma mark
 
-@class BLMToggleSwitchTextInputCell;
-
-
-@protocol BLMToggleSwitchTextInputCellDelegate <BLMTextInputCellDelegate>
-
-- (BOOL)defaultToggleStateForToggleSwitchTextInputCell:(BLMToggleSwitchTextInputCell *)cell;
-- (void)didChangeToggleStateForToggleSwitchTextInputCell:(BLMToggleSwitchTextInputCell *)cell;
-
-@end
-
-
-@interface BLMToggleSwitchTextInputCell : BLMTextInputCell
-
-@property (nonatomic, strong, readonly) UISwitch *toggleSwitch;
-@property (nonatomic, weak) id<BLMToggleSwitchTextInputCellDelegate> delegate;
-
-@end
