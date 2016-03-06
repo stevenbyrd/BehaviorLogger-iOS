@@ -51,7 +51,7 @@
 static NSString *const HeaderKind = @"HeaderKind";
 static NSString *const ContentBackgroundKind = @"ContentBackgroundKind";
 static NSString *const ItemCellKind = @"ItemCellKind";
-static NSString *const SeparatorKind = @"SeparatorKind";
+static NSString *const FooterKind = @"FooterKind";
 
 static CGFloat const SectionHeaderHeight = 30.0;
 static CGFloat const SectionHeaderTitleFontSize = 18.0;
@@ -561,7 +561,7 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
     [self.sectionFrameList removeAllObjects];
 
     _previousAttributesByIndexPathByKind = self.attributesByIndexPathByKind;
-    _attributesByIndexPathByKind = @{ HeaderKind:[NSMutableDictionary dictionary], ContentBackgroundKind:[NSMutableDictionary dictionary], ItemCellKind:[NSMutableDictionary dictionary], SeparatorKind:[NSMutableDictionary dictionary] };
+    _attributesByIndexPathByKind = @{ HeaderKind:[NSMutableDictionary dictionary], ContentBackgroundKind:[NSMutableDictionary dictionary], ItemCellKind:[NSMutableDictionary dictionary], FooterKind:[NSMutableDictionary dictionary] };
 
     _collectionViewContentSize = (CGSize) {
         .width = CGRectGetWidth(self.collectionView.bounds),
@@ -678,11 +678,11 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
 
         if (CGRectGetHeight(footerFrame) > 0) {
             NSIndexPath *indexPath = [NSIndexPath indexPathForItem:0 inSection:section];
-            UICollectionViewLayoutAttributes *attributes = [UICollectionViewLayoutAttributes layoutAttributesForSupplementaryViewOfKind:SeparatorKind withIndexPath:indexPath];
+            UICollectionViewLayoutAttributes *attributes = [UICollectionViewLayoutAttributes layoutAttributesForSupplementaryViewOfKind:FooterKind withIndexPath:indexPath];
 
             attributes.frame = footerFrame;
 
-            self.attributesByIndexPathByKind[SeparatorKind][indexPath] = attributes;
+            self.attributesByIndexPathByKind[FooterKind][indexPath] = attributes;
         }
 
 #pragma mark Section Frame Layout
@@ -725,7 +725,7 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
             continue;
         }
 
-        for (NSString *kind in @[HeaderKind, ContentBackgroundKind, SeparatorKind]) {
+        for (NSString *kind in @[HeaderKind, ContentBackgroundKind, FooterKind]) {
             [self.attributesByIndexPathByKind[kind] enumerateKeysAndObjectsUsingBlock:^(NSIndexPath *key, UICollectionViewLayoutAttributes *attributes, BOOL *stop) {
                 if (CGRectIntersectsRect(attributes.frame, rect)) {
                     [attributesForRect addObject:attributes];
@@ -947,7 +947,7 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
     _collectionView = [[UICollectionView alloc] initWithFrame:CGRectZero collectionViewLayout:[[ProjectDetailCollectionViewLayout alloc] init]];
 
     [self.collectionView registerClass:[SectionHeaderView class] forSupplementaryViewOfKind:HeaderKind withReuseIdentifier:NSStringFromClass([SectionHeaderView class])];
-    [self.collectionView registerClass:[SectionSeparatorView class] forSupplementaryViewOfKind:SeparatorKind withReuseIdentifier:NSStringFromClass([SectionSeparatorView class])];
+    [self.collectionView registerClass:[SectionSeparatorView class] forSupplementaryViewOfKind:FooterKind withReuseIdentifier:NSStringFromClass([SectionSeparatorView class])];
     [self.collectionView registerClass:[SectionBackgroundView class] forSupplementaryViewOfKind:ContentBackgroundKind withReuseIdentifier:NSStringFromClass([SectionBackgroundView class])];
 
     [self.collectionView registerClass:[BehaviorCell class] forCellWithReuseIdentifier:NSStringFromClass([BehaviorCell class])];
@@ -1251,7 +1251,7 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
 - (UICollectionReusableView *)collectionView:(UICollectionView *)collectionView viewForSupplementaryElementOfKind:(NSString *)kind atIndexPath:(NSIndexPath *)indexPath {
     UICollectionReusableView *view = nil;
 
-    if ([kind isEqualToString:HeaderKind]) {
+    if ([BLMUtils isString:kind equalToString:HeaderKind]) {
         SectionHeaderView *headerView = [collectionView dequeueReusableSupplementaryViewOfKind:kind withReuseIdentifier:NSStringFromClass([SectionHeaderView class]) forIndexPath:indexPath];
 
         view = headerView;
@@ -1282,13 +1282,12 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
                 break;
             }
         }
-    } else if ([kind isEqualToString:SeparatorKind]) {
+    } else if ([BLMUtils isString:kind equalToString:FooterKind]) {
         view = [collectionView dequeueReusableSupplementaryViewOfKind:kind withReuseIdentifier:NSStringFromClass([SectionSeparatorView class]) forIndexPath:indexPath];
-    } else if ([kind isEqualToString:ContentBackgroundKind]) {
+    } else if ([BLMUtils isString:kind equalToString:ContentBackgroundKind]) {
         view = [collectionView dequeueReusableSupplementaryViewOfKind:kind withReuseIdentifier:NSStringFromClass([SectionBackgroundView class]) forIndexPath:indexPath];
     }
 
-    assert(view != nil);
     return view;
 }
 
