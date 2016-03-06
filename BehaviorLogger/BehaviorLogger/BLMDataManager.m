@@ -313,8 +313,8 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
     _restoringArchive = YES;
 
     [self.archiveQueue addOperationWithBlock:^{
-        NSDictionary<NSUUID *, BLMProject *> *projectByUUID = nil;
-        NSDictionary<NSUUID *, BLMBehavior *> *behaviorByUUID = nil;
+        NSMutableDictionary<NSUUID *, BLMProject *> *projectByUUID = nil;
+        NSMutableDictionary<NSUUID *, BLMBehavior *> *behaviorByUUID = nil;
         NSString *filePath = [ArchiveDirectory() stringByAppendingPathComponent:ArchiveFileName];
         NSData *archiveData = [NSData dataWithContentsOfFile:filePath];
 
@@ -329,8 +329,8 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
                     break;
 
                 case ArchiveVersionLatest:
-                    projectByUUID = [unarchiver decodeObjectForKey:@"projectByUUID"];
-                    behaviorByUUID = [unarchiver decodeObjectForKey:@"behaviorByUUID"];
+                    projectByUUID = [[unarchiver decodeObjectForKey:@"projectByUUID"] mutableCopy];
+                    behaviorByUUID = [[unarchiver decodeObjectForKey:@"behaviorByUUID"] mutableCopy];
                     break;
             }
 
@@ -338,26 +338,40 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
         }
 
         NSMutableSet<NSUUID *> *referenedBehaviorUUIDs = [NSMutableSet set];
+        NSMutableArray<BLMProject *> *sanitizedProjects = [NSMutableArray array];
 
         for (BLMProject *project in projectByUUID.objectEnumerator) {
-            [referenedBehaviorUUIDs addObjectsFromArray:project.defaultSessionConfiguration.behaviorUUIDs];
+            NSArray *sanitizedBehaviorUUIDs = [project.defaultSessionConfiguration.behaviorUUIDs filteredArrayUsingPredicate:[NSPredicate predicateWithBlock:^BOOL(NSUUID *UUID, NSDictionary *bindings) {
+                return (behaviorByUUID[UUID] != nil);
+            }]];
+
+            if (sanitizedBehaviorUUIDs.count != project.defaultSessionConfiguration.behaviorUUIDs.count) { // Remove references to behaviors that no longer exist from projects' default session configurations
+                BLMSessionConfiguration *updatedDefaultSessionConfiguration = [project.defaultSessionConfiguration copyWithUpdatedValuesByProperty:@{ @(BLMSessionConfigurationPropertyBehaviorUUIDs):sanitizedBehaviorUUIDs }];
+                BLMProject *updatedProject = [project copyWithUpdatedValuesByProperty:@{ @(BLMProjectPropertyDefaultSessionConfiguration):updatedDefaultSessionConfiguration }];
+
+                [sanitizedProjects addObject:updatedProject];
+            }
+
+            [referenedBehaviorUUIDs addObjectsFromArray:sanitizedBehaviorUUIDs];
 
             for (BLMSession *session in project.sessionByUUID.objectEnumerator) {
                 [referenedBehaviorUUIDs addObjectsFromArray:session.configuration.behaviorUUIDs];
             }
         }
 
-        if (referenedBehaviorUUIDs.count > behaviorByUUID.count) {
-            NSMutableDictionary<NSUUID *, BLMBehavior *> *sanitizedBehaviorByUUID = [behaviorByUUID mutableCopy];
-
-            for (NSUUID *UUID in behaviorByUUID.keyEnumerator) {
-                if (![referenedBehaviorUUIDs containsObject:UUID]) {
-                    [sanitizedBehaviorByUUID removeObjectForKey:UUID];
-                }
-            }
-
-            behaviorByUUID = sanitizedBehaviorByUUID;
+        for (BLMProject *project in sanitizedProjects) {
+            projectByUUID[project.UUID] = project;
         }
+
+        NSMutableArray *unreferencedBehaviorUUIDs = [NSMutableArray array];
+
+        for (NSUUID *UUID in behaviorByUUID.keyEnumerator) { // Remove behaviors from the data model when there is no longer anything referencing them
+            if (![referenedBehaviorUUIDs containsObject:UUID]) {
+                [unreferencedBehaviorUUIDs addObject:UUID];
+            }
+        }
+
+        [behaviorByUUID removeObjectsForKeys:unreferencedBehaviorUUIDs];
 
         [[NSOperationQueue mainQueue] addOperationWithBlock:^{
             assert(self.projectByUUID.count == 0);
