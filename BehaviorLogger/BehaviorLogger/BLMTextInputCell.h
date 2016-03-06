@@ -25,6 +25,8 @@
 @end
 
 
+#pragma mark 
+
 @protocol BLMTextInputCellLayoutDelegate <NSObject>
 
 - (void)configureLabelSubviewsPreferredMaxLayoutWidth;
@@ -34,10 +36,32 @@
 @end
 
 
-@interface BLMTextInputCell : BLMCollectionViewCell <BLMTextInputCellLayoutDelegate>
+#pragma mark 
+
+@protocol BLMTextInputCellTextFieldDelegate <BLMCollectionViewCellIndexing, UITextFieldDelegate>
+
+@end
+
+
+#pragma mark 
+
+@interface BLMTextInputCellTextField : UITextField
+
+@property (nonatomic, weak) id<BLMTextInputCellTextFieldDelegate> delegate;
+@property (nonatomic, assign, readonly) CGFloat horizontalPadding;
+@property (nonatomic, assign, readonly) CGFloat verticalPadding;
+
+- (instancetype)initWithHorizontalPadding:(CGFloat)horizontalPadding verticalPadding:(CGFloat)verticalPadding;
+
+@end
+
+
+#pragma mark 
+
+@interface BLMTextInputCell : BLMCollectionViewCell <BLMTextInputCellTextFieldDelegate, BLMTextInputCellLayoutDelegate>
 
 @property (nonatomic, strong, readonly) UILabel *label;
-@property (nonatomic, strong, readonly) UITextField *textField;
+@property (nonatomic, strong, readonly) BLMTextInputCellTextField *textField;
 @property (nonatomic, weak) id<BLMTextInputCellDelegate> delegate;
 
 - (void)updateTextAttributes;

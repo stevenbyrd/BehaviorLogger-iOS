@@ -7,15 +7,41 @@
 //
 
 #import "BLMTextInputCell.h"
-#import "BLMPaddedTextField.h"
 #import "BLMViewUtils.h"
 #import "BLMUtils.h"
 
 
-@interface BLMTextInputCell () <UITextFieldDelegate>
+@implementation BLMTextInputCellTextField
+
+@dynamic delegate;
+
+- (instancetype)initWithHorizontalPadding:(CGFloat)horizontalPadding verticalPadding:(CGFloat)verticalPadding {
+    self = [super initWithFrame:CGRectZero];
+
+    if (self == nil) {
+        return nil;
+    }
+
+    _horizontalPadding = horizontalPadding;
+    _verticalPadding = verticalPadding;
+
+    return self;
+}
+
+
+- (CGRect)textRectForBounds:(CGRect)bounds { // placeholder position
+    return CGRectInset(bounds, (self.horizontalPadding - 1.0), self.verticalPadding); // -1.0 pixel workaround for NSAttributedString size bug
+}
+
+
+- (CGRect)editingRectForBounds:(CGRect)bounds { // text position
+    return CGRectInset(bounds, (self.horizontalPadding - 1.0), self.verticalPadding); // -1.0 pixel workaround for NSAttributedString size bug
+}
 
 @end
 
+
+#pragma mark
 
 @implementation BLMTextInputCell
 
@@ -41,11 +67,12 @@
     [self.contentView addConstraints:[self uniqueHorizontalPositionConstraintsForSubview:self.label]];
     [self.contentView addConstraint:[BLMViewUtils constraintWithItem:self.label attribute:NSLayoutAttributeRight lessThanOrEqualToItem:self.contentView attribute:NSLayoutAttributeRight constant:-30.0]];
 
-    _textField = [[BLMPaddedTextField alloc] initWithHorizontalPadding:8.0 verticalPadding:6.0];
+    _textField = [[BLMTextInputCellTextField alloc] initWithHorizontalPadding:8.0 verticalPadding:6.0];
 
     self.textField.delegate = self;
     self.textField.minimumFontSize = 10.0;
     self.textField.adjustsFontSizeToFitWidth = YES;
+    self.textField.returnKeyType = UIReturnKeyDone;
     self.textField.borderStyle = UITextBorderStyleLine;
     self.textField.backgroundColor = [UIColor whiteColor];
     self.textField.clearButtonMode = UITextFieldViewModeWhileEditing;

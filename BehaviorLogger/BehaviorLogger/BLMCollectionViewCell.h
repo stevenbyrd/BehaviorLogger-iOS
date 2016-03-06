@@ -9,7 +9,14 @@
 #import <UIKit/UIKit.h>
 
 
-@interface BLMCollectionViewCell : UICollectionViewCell
+@protocol BLMCollectionViewCellIndexing
+
+- (NSIndexPath *)cellIndexPath;
+
+@end
+
+
+@interface BLMCollectionViewCell : UICollectionViewCell <BLMCollectionViewCellIndexing>
 
 @property (nonatomic, assign) NSInteger section;
 @property (nonatomic, assign) NSInteger item;

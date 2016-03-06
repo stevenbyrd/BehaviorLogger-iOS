@@ -43,4 +43,10 @@
     assert(self.item != NSNotFound);
 }
 
+#pragma mark BLMCollectionViewCellIndexing
+
+- (NSIndexPath *)cellIndexPath {
+    return [NSIndexPath indexPathForItem:self.item inSection:self.section];
+}
+
 @end

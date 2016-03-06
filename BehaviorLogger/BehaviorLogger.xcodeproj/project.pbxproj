@@ -9,7 +9,7 @@
 /* Begin PBXBuildFile section */
 		AA103CA11C5C5368006D2BC0 /* BLMUtils.m in Sources */ = {isa = PBXBuildFile; fileRef = AA103CA01C5C5368006D2BC0 /* BLMUtils.m */; };
 		AA103CA41C5CBF90006D2BC0 /* BLMBehavior.m in Sources */ = {isa = PBXBuildFile; fileRef = AA103CA31C5CBF90006D2BC0 /* BLMBehavior.m */; };
-		AA98B0D01C6055BE009B7698 /* BLMPaddedTextField.m in Sources */ = {isa = PBXBuildFile; fileRef = AA98B0CF1C6055BE009B7698 /* BLMPaddedTextField.m */; };
+		AA848FFE1C8C251E0037EF80 /* UIResponder+FirstResponder.m in Sources */ = {isa = PBXBuildFile; fileRef = AA848FFD1C8C251E0037EF80 /* UIResponder+FirstResponder.m */; };
 		AAB5616A1C5D775D00D454F8 /* BLMViewUtils.m in Sources */ = {isa = PBXBuildFile; fileRef = AAB561691C5D775D00D454F8 /* BLMViewUtils.m */; };
 		AABA33401C3D2FB10086A9A1 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = AABA333F1C3D2FB10086A9A1 /* main.m */; };
 		AABA33431C3D2FB10086A9A1 /* BLMAppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = AABA33421C3D2FB10086A9A1 /* BLMAppDelegate.m */; };
@@ -30,8 +30,8 @@
 		AA103CA01C5C5368006D2BC0 /* BLMUtils.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BLMUtils.m; sourceTree = "<group>"; };
 		AA103CA21C5CBF90006D2BC0 /* BLMBehavior.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BLMBehavior.h; sourceTree = "<group>"; };
 		AA103CA31C5CBF90006D2BC0 /* BLMBehavior.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BLMBehavior.m; sourceTree = "<group>"; };
-		AA98B0CE1C6055BE009B7698 /* BLMPaddedTextField.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BLMPaddedTextField.h; sourceTree = "<group>"; };
-		AA98B0CF1C6055BE009B7698 /* BLMPaddedTextField.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BLMPaddedTextField.m; sourceTree = "<group>"; };
+		AA848FFC1C8C251E0037EF80 /* UIResponder+FirstResponder.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "UIResponder+FirstResponder.h"; sourceTree = "<group>"; };
+		AA848FFD1C8C251E0037EF80 /* UIResponder+FirstResponder.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "UIResponder+FirstResponder.m"; sourceTree = "<group>"; };
 		AAB561681C5D775D00D454F8 /* BLMViewUtils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BLMViewUtils.h; sourceTree = "<group>"; };
 		AAB561691C5D775D00D454F8 /* BLMViewUtils.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BLMViewUtils.m; sourceTree = "<group>"; };
 		AABA333B1C3D2FB10086A9A1 /* BehaviorLogger.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BehaviorLogger.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -70,7 +70,16 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		AA81166C1C64CB06004A3320 /* Cells */ = {
+		AA848FFB1C8C24EB0037EF80 /* Categories */ = {
+			isa = PBXGroup;
+			children = (
+				AA848FFC1C8C251E0037EF80 /* UIResponder+FirstResponder.h */,
+				AA848FFD1C8C251E0037EF80 /* UIResponder+FirstResponder.m */,
+			);
+			name = Categories;
+			sourceTree = "<group>";
+		};
+		AA98B0D11C6056B4009B7698 /* Views */ = {
 			isa = PBXGroup;
 			children = (
 				AAE8CB601C61C160008FF024 /* BLMCollectionViewCell.h */,
@@ -79,16 +88,6 @@
 				AAE8CB641C61C1E5008FF024 /* BLMTextInputCell.m */,
 				AAE8CB671C61F178008FF024 /* BLMButtonCell.h */,
 				AAE8CB681C61F178008FF024 /* BLMButtonCell.m */,
-			);
-			name = Cells;
-			sourceTree = "<group>";
-		};
-		AA98B0D11C6056B4009B7698 /* Views */ = {
-			isa = PBXGroup;
-			children = (
-				AA98B0CE1C6055BE009B7698 /* BLMPaddedTextField.h */,
-				AA98B0CF1C6055BE009B7698 /* BLMPaddedTextField.m */,
-				AA81166C1C64CB06004A3320 /* Cells */,
 			);
 			name = Views;
 			sourceTree = "<group>";
@@ -128,6 +127,7 @@
 				AABA335B1C3D39090086A9A1 /* Models */,
 				AA98B0D11C6056B4009B7698 /* Views */,
 				AABA33571C3D32540086A9A1 /* Controllers */,
+				AA848FFB1C8C24EB0037EF80 /* Categories */,
 				AAB561671C5D772D00D454F8 /* Utilities */,
 				AABA333E1C3D2FB10086A9A1 /* Supporting Files */,
 			);
@@ -250,7 +250,7 @@
 				AABA336B1C3D3CCB0086A9A1 /* BLMDataManager.m in Sources */,
 				AAB5616A1C5D775D00D454F8 /* BLMViewUtils.m in Sources */,
 				AAE8CB651C61C1E5008FF024 /* BLMTextInputCell.m in Sources */,
-				AA98B0D01C6055BE009B7698 /* BLMPaddedTextField.m in Sources */,
+				AA848FFE1C8C251E0037EF80 /* UIResponder+FirstResponder.m in Sources */,
 				AABA33431C3D2FB10086A9A1 /* BLMAppDelegate.m in Sources */,
 				AABA33921C3DCF990086A9A1 /* BLMProjectMenuController.m in Sources */,
 				AABA33401C3D2FB10086A9A1 /* main.m in Sources */,
