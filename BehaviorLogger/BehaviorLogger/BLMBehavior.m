@@ -49,6 +49,13 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
     return self;
 }
 
+
+- (instancetype)copyWithUpdatedValuesByProperty:(NSDictionary<NSNumber *, id> *)valuesByProperty {
+    return [[BLMBehavior alloc] initWithUUID:self.UUID
+                                        name:[BLMUtils objectFromDictionary:valuesByProperty forKey:@(BLMBehaviorPropertyName) nullValue:nil defaultValue:self.name]
+                                  continuous:[BLMUtils boolFromDictionary:valuesByProperty forKey:@(BLMBehaviorPropertyContinuous) defaultValue:self.isContinuous]];
+}
+
 #pragma mark NSCoding
 
 - (nullable instancetype)initWithCoder:(NSCoder *)aDecoder {
@@ -68,15 +75,11 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
 #pragma mark Internal State
 
 - (NSUInteger)hash {
-    assert([NSThread isMainThread]);
-
     return self.UUID.hash;
 }
 
 
 - (BOOL)isEqual:(id)object {
-    assert([NSThread isMainThread]);
-
     if (![object isKindOfClass:[self class]]) {
         return NO;
     }

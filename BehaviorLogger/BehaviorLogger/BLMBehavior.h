@@ -32,5 +32,6 @@ typedef NS_ENUM(NSInteger, BLMBehaviorProperty) {
 @property (nonatomic, assign, readonly, getter=isContinuous) BOOL continuous;
 
 - (instancetype)initWithUUID:(NSUUID *)UUID name:(NSString *)name continuous:(BOOL)continuous;
+- (instancetype)copyWithUpdatedValuesByProperty:(NSDictionary<NSNumber *, id> *)valuesByProperty;
 
 @end

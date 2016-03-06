@@ -145,29 +145,9 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
     assert([NSThread isMainThread]);
 
     BLMProject *originalProject = self.projectByUUID[UUID];
-    assert(originalProject != nil);
-
-    BLMProject *updatedProject;
-
-    switch (property) {
-        case BLMProjectPropertyName: {
-            updatedProject = [[BLMProject alloc] initWithUUID:UUID name:value client:originalProject.client defaultSessionConfiguration:originalProject.defaultSessionConfiguration sessionByUUID:originalProject.sessionByUUID];
-            break;
-        }
-
-        case BLMProjectPropertyClient: {
-            updatedProject = [[BLMProject alloc] initWithUUID:UUID name:originalProject.name client:value defaultSessionConfiguration:originalProject.defaultSessionConfiguration sessionByUUID:originalProject.sessionByUUID];
-            break;
-        }
-
-        case BLMProjectPropertyDefaultSessionConfiguration: {
-            updatedProject = [[BLMProject alloc] initWithUUID:UUID name:originalProject.name client:originalProject.client defaultSessionConfiguration:value sessionByUUID:originalProject.sessionByUUID];
-            break;
-        }
-    }
+    BLMProject *updatedProject = [originalProject copyWithUpdatedValuesByProperty:@{ @(property):(value ?: [NSNull null]) }];
 
     if (![BLMUtils isObject:originalProject equalToObject:updatedProject]) {
-        assert(updatedProject != nil);
         self.projectByUUID[UUID] = updatedProject;
 
         [self archiveCurrentState];
@@ -237,24 +217,9 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
     assert([NSThread isMainThread]);
 
     BLMBehavior *originalBehavior = self.behaviorByUUID[UUID];
-    assert(originalBehavior != nil);
-
-    BLMBehavior *updatedBehavior;
-
-    switch (property) {
-        case BLMBehaviorPropertyName: {
-            updatedBehavior = [[BLMBehavior alloc] initWithUUID:UUID name:value continuous:originalBehavior.isContinuous];
-            break;
-        }
-
-        case BLMBehaviorPropertyContinuous: {
-            updatedBehavior = [[BLMBehavior alloc] initWithUUID:UUID name:originalBehavior.name continuous:[(NSNumber *)value boolValue]];
-            break;
-        }
-    }
+    BLMBehavior *updatedBehavior = [originalBehavior copyWithUpdatedValuesByProperty:@{ @(property):(value ?: [NSNull null]) }];
 
     if (![BLMUtils isObject:originalBehavior equalToObject:updatedBehavior]) {
-        assert(updatedBehavior != nil);
         self.behaviorByUUID[UUID] = updatedBehavior;
 
         [self archiveCurrentState];
