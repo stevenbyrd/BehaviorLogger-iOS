@@ -58,6 +58,7 @@
                 && [array1 isEqualToArray:array2]));
 }
 
+
 + (BOOL)isDictionary:(NSDictionary *)dictionary1 equalToDictionary:(NSDictionary *)dictionary2 {
     return ((dictionary1 == dictionary2)
             || ((dictionary1 != nil)
@@ -66,6 +67,54 @@
                 && [dictionary2 respondsToSelector:@selector(isEqualToDictionary:)]
                 && [dictionary1 isEqualToDictionary:dictionary2]));
 
+}
+
+
++ (id)objectFromDictionary:(NSDictionary *)dictionary forKey:(id<NSCopying>)key nullValue:(id)nullValue defaultValue:(id)defaultValue {
+    id value = dictionary[key];
+
+    if ([self isObject:value equalToObject:[NSNull null]]) {
+        return nullValue;
+    }
+
+    if (value == nil) {
+        return defaultValue;
+    }
+
+    return value;
+}
+
+
++ (NSInteger)integerFromDictionary:(NSDictionary *)dictionary forKey:(id<NSCopying>)key defaultValue:(NSInteger)defaultValue {
+    NSNumber *value = dictionary[key];
+
+    if ([self isObject:value equalToObject:[NSNull null]] || (value == nil)) {
+        return defaultValue;
+    }
+
+    return value.integerValue;
+}
+
+
++ (double)doubleFromDictionary:(NSDictionary *)dictionary forKey:(id<NSCopying>)key defaultValue:(double)defaultValue {
+    NSNumber *value = dictionary[key];
+
+    if ([self isObject:value equalToObject:[NSNull null]] || (value == nil)) {
+        return defaultValue;
+    }
+
+    return value.doubleValue;
+}
+
+
++ (BOOL)boolFromDictionary:(NSDictionary *)dictionary forKey:(id<NSCopying>)key defaultValue:(BOOL)defaultValue {
+    NSNumber *value = dictionary[key];
+
+    if ([self isObject:value equalToObject:[NSNull null]] || (value == nil)) {
+        return defaultValue;
+    }
+
+    return value.boolValue;
 }
 
 @end
