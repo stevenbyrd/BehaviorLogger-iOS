@@ -35,7 +35,7 @@ typedef NS_ENUM(NSUInteger, BLMColorHexCode) {
 + (UIImage *)plusSignImageWithColor:(UIColor *)color;
 + (UIImage *)acceptImageWithColor:(UIColor *)color;
 + (UIImage *)rejectImageWithColor:(UIColor *)color;
-+ (UIImage *)deleteItemImageWithBackgroundColor:(UIColor *)backgroundColor;
++ (UIImage *)deleteItemImageWithBackgroundColor:(UIColor *)backgroundColor diameter:(CGFloat)diameter;
 
 #pragma mark Layout Constraints
 

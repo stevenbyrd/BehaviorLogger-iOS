@@ -9,9 +9,6 @@
 #import "BLMViewUtils.h"
 
 
-static CGFloat const DeleteItemButtonImageDiameter = 24.0;
-
-
 #pragma mark
 
 @implementation BLMViewUtils
@@ -171,9 +168,9 @@ static CGFloat const DeleteItemButtonImageDiameter = 24.0;
 }
 
 
-+ (UIImage *)deleteItemImageWithBackgroundColor:(UIColor *)backgroundColor {
-    CGSize canvasSize = CGSizeMake((DeleteItemButtonImageDiameter + 2.0), (DeleteItemButtonImageDiameter + 2.0));
-    CGRect frame = CGRectMake(((canvasSize.width - DeleteItemButtonImageDiameter) / 2.0), ((canvasSize.height - DeleteItemButtonImageDiameter) / 2.0), DeleteItemButtonImageDiameter, DeleteItemButtonImageDiameter);
++ (UIImage *)deleteItemImageWithBackgroundColor:(UIColor *)backgroundColor diameter:(CGFloat)diameter {
+    CGSize canvasSize = CGSizeMake((diameter + 2.0), (diameter + 2.0));
+    CGRect frame = CGRectMake(((canvasSize.width - diameter) / 2.0), ((canvasSize.height - diameter) / 2.0), diameter, diameter);
 
     UIGraphicsBeginImageContextWithOptions(canvasSize, NO, [UIScreen mainScreen].scale);
 
@@ -182,7 +179,7 @@ static CGFloat const DeleteItemButtonImageDiameter = 24.0;
 
     UIBezierPath *path = [UIBezierPath bezierPath];
 
-    [path addArcWithCenter:CGPointMake(CGRectGetMidX(frame), CGRectGetMidY(frame)) radius:(DeleteItemButtonImageDiameter * 0.5) startAngle:0 endAngle:(2 * M_PI) clockwise:NO];
+    [path addArcWithCenter:CGPointMake(CGRectGetMidX(frame), CGRectGetMidY(frame)) radius:(diameter * 0.5) startAngle:0 endAngle:(2 * M_PI) clockwise:NO];
     [path closePath];
     [path fill];
 

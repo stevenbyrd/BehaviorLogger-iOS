@@ -46,6 +46,14 @@
  */
 
 
+#pragma mark General
+
+static CGFloat const ViewCornerRadius = 8.0;
+
+static CGFloat const BehaviorCellDeleteButtonImageRadius = 12.0;
+static CGFloat const BehaviorCellDeleteButtonOffset = ((2 * BehaviorCellDeleteButtonImageRadius) / 3.0);
+
+
 #pragma mark Supplementary View
 
 static NSString *const HeaderKind = @"HeaderKind";
@@ -59,8 +67,7 @@ static CGFloat const SectionHeaderTitleBaselineInset = 9.5;
 static CGFloat const SectionHeaderTitleLeftInset = 10.0;
 
 static CGFloat const SectionSeparatorHeight = 1.0;
-static CGFloat const SectionSeparatorLeftInset = 30.0;
-static CGFloat const SectionSeparatorRightInset = 30.0;
+static UIEdgeInsets const SectionSeparatorInsets = { .top = 0.0, .left = 20.0, .bottom = 0.0, .right = 20.0 };
 
 
 #pragma mark
@@ -144,9 +151,6 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
         return nil;
     }
 
-    self.layer.borderWidth = 1.0;
-    self.layer.borderColor = [BLMViewUtils colorWithHexValue:BLMColorHexCodeBlue alpha:0.3].CGColor;
-
     _label = [[UILabel alloc] initWithFrame:CGRectZero];
 
     [self.label setContentHuggingPriority:UILayoutPriorityRequired forAxis:UILayoutConstraintAxisVertical];
@@ -196,14 +200,14 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
 
     UIView *separatorView = [[UIView alloc] init];
 
-    separatorView.backgroundColor = [BLMViewUtils colorWithHexValue:BLMColorHexCodeBlue alpha:0.3];
+    separatorView.backgroundColor = [BLMViewUtils colorWithHexValue:BLMColorHexCodeDarkBorder alpha:0.3];
     separatorView.translatesAutoresizingMaskIntoConstraints = NO;
 
     [self addSubview:separatorView];
-    [self addConstraint:[BLMViewUtils constraintWithItem:separatorView attribute:NSLayoutAttributeLeft equalToItem:self constant:SectionSeparatorLeftInset]];
-    [self addConstraint:[BLMViewUtils constraintWithItem:separatorView attribute:NSLayoutAttributeRight equalToItem:self constant:-SectionSeparatorRightInset]];
-    [self addConstraint:[BLMViewUtils constraintWithItem:separatorView attribute:NSLayoutAttributeBottom equalToItem:self constant:0.0]];
-    [self addConstraint:[BLMViewUtils constraintWithItem:separatorView attribute:NSLayoutAttributeHeight equalToConstant:1.0]];
+    [self addConstraint:[BLMViewUtils constraintWithItem:separatorView attribute:NSLayoutAttributeLeft equalToItem:self constant:SectionSeparatorInsets.left]];
+    [self addConstraint:[BLMViewUtils constraintWithItem:separatorView attribute:NSLayoutAttributeRight equalToItem:self constant:-SectionSeparatorInsets.right]];
+    [self addConstraint:[BLMViewUtils constraintWithItem:separatorView attribute:NSLayoutAttributeBottom equalToItem:self constant:-SectionSeparatorInsets.bottom]];
+    [self addConstraint:[BLMViewUtils constraintWithItem:separatorView attribute:NSLayoutAttributeTop equalToItem:self constant:SectionSeparatorInsets.top]];
     
     return self;
 }
@@ -228,7 +232,7 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
     }
 
     self.layer.backgroundColor = [BLMViewUtils colorWithHexValue:BLMColorHexCodeDarkBackground alpha:1.0].CGColor;
-    self.layer.cornerRadius = 10.0;
+    self.layer.cornerRadius = ViewCornerRadius;
 
     return self;
 }
@@ -252,7 +256,7 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
         return nil;
     }
 
-    self.backgroundColor = [UIColor clearColor];//[BLMViewUtils colorWithHexValue:BLMColorHexCodeDarkBackground alpha:1.0];
+    self.backgroundColor = [UIColor clearColor];
 
     return self;
 }
@@ -261,62 +265,76 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
 - (void)drawRect:(CGRect)rect {
     [super drawRect:rect];
 
-    [[BLMViewUtils colorWithHexValue:BLMColorHexCodeDarkBorder alpha:0.75] setStroke];
-
-    CGFloat const CornerRadius = 5.0;
-    CGFloat const DeleteButtonOffset = 20.0;
-
     UIBezierPath *path = [UIBezierPath bezierPath];
 
     [path moveToPoint:(CGPoint) {
-        .x = CGRectGetMinX(rect) + 0.5 + DeleteButtonOffset,
+        .x = CGRectGetMinX(rect) + 0.5 + [BehaviorCellBackgroundView edgeLengthCoveredByDeleteButton],
         .y = CGRectGetMinY(rect) + 0.5
     }];
 
     [path addLineToPoint:(CGPoint) {
-        .x = CGRectGetMaxX(rect) - 0.5 - CornerRadius,
+        .x = CGRectGetMaxX(rect) - 0.5 - ViewCornerRadius,
         .y = CGRectGetMinY(rect) + 0.5
     }];
 
     CGPoint arcCenter = (CGPoint) {
-        .x = CGRectGetMaxX(rect) - 0.5 - CornerRadius,
-        .y = CGRectGetMinY(rect) + 0.5 + CornerRadius
+        .x = CGRectGetMaxX(rect) - 0.5 - ViewCornerRadius,
+        .y = CGRectGetMinY(rect) + 0.5 + ViewCornerRadius
     };
 
-    [path addArcWithCenter:arcCenter radius:CornerRadius startAngle:(3 * M_PI_2) endAngle:0 clockwise:YES];
+    [path addArcWithCenter:arcCenter radius:ViewCornerRadius startAngle:(3 * M_PI_2) endAngle:0 clockwise:YES];
 
     [path addLineToPoint:(CGPoint) {
         .x = CGRectGetMaxX(rect) - 0.5,
-        .y = CGRectGetMaxY(rect) - 0.5 - CornerRadius
+        .y = CGRectGetMaxY(rect) - 0.5 - ViewCornerRadius
     }];
 
     arcCenter = (CGPoint) {
-        .x = CGRectGetMaxX(rect) - 0.5 - CornerRadius,
-        .y = CGRectGetMaxY(rect) - 0.5 - CornerRadius
+        .x = CGRectGetMaxX(rect) - 0.5 - ViewCornerRadius,
+        .y = CGRectGetMaxY(rect) - 0.5 - ViewCornerRadius
     };
 
-    [path addArcWithCenter:arcCenter radius:CornerRadius startAngle:0 endAngle:M_PI_2 clockwise:YES];
+    [path addArcWithCenter:arcCenter radius:ViewCornerRadius startAngle:0 endAngle:M_PI_2 clockwise:YES];
 
     [path addLineToPoint:(CGPoint) {
-        .x = CGRectGetMinX(rect) + 0.5 + CornerRadius,
+        .x = CGRectGetMinX(rect) + 0.5 + ViewCornerRadius,
         .y = CGRectGetMaxY(rect) - 0.5
     }];
 
     arcCenter = (CGPoint) {
-        .x = CGRectGetMinX(rect) + 0.5 + CornerRadius,
-        .y = CGRectGetMaxY(rect) - 0.5 - CornerRadius
+        .x = CGRectGetMinX(rect) + 0.5 + ViewCornerRadius,
+        .y = CGRectGetMaxY(rect) - 0.5 - ViewCornerRadius
     };
 
-    [path addArcWithCenter:arcCenter radius:CornerRadius startAngle:M_PI_2 endAngle:M_PI clockwise:YES];
+    [path addArcWithCenter:arcCenter radius:ViewCornerRadius startAngle:M_PI_2 endAngle:M_PI clockwise:YES];
 
     [path addLineToPoint:(CGPoint) {
         .x = CGRectGetMinX(rect) + 0.5,
-        .y = CGRectGetMinY(rect) + 0.5 + DeleteButtonOffset
+        .y = CGRectGetMinY(rect) + 0.5 + [BehaviorCellBackgroundView edgeLengthCoveredByDeleteButton]
     }];
 
     path.lineWidth = 1.0;
 
+    [[BLMViewUtils colorWithHexValue:BLMColorHexCodeDarkBorder alpha:0.75] setStroke];
+
     [path stroke];
+}
+
+
++ (CGFloat)edgeLengthCoveredByDeleteButton {
+    static CGFloat coveredEdgeLength = 0;
+    static dispatch_once_t onceToken = 0;
+
+    dispatch_once(&onceToken, ^{
+        coveredEdgeLength = ceilf((BehaviorCellDeleteButtonImageRadius // The region in the top left corner that is covered by the delete button image circle...
+                                   - BehaviorCellDeleteButtonOffset) // ...found by computing the horizontal distance between the circle's center and rect's left edge...
+                                  + (BehaviorCellDeleteButtonImageRadius // ...added to horizontal the distance between the circle's center and the point of intersection with rect's top edge...
+                                     * cos(asin((BehaviorCellDeleteButtonImageRadius // ...as determined from the angle between the circle's center and the intersection point...
+                                                 - BehaviorCellDeleteButtonOffset) // ...given the vertical distance between the two...
+                                                / BehaviorCellDeleteButtonImageRadius)))); // ...as a ratio of the circle's radius
+    });
+
+    return coveredEdgeLength;
 }
 
 @end
@@ -368,8 +386,8 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
     static dispatch_once_t onceToken = 0;
 
     dispatch_once(&onceToken, ^{
-        deleteButtonDefaultImage = [BLMViewUtils deleteItemImageWithBackgroundColor:[BLMViewUtils colorWithHexValue:0x000000 alpha:0.6]];
-        deleteButtonSelectedImage = [BLMViewUtils deleteItemImageWithBackgroundColor:[BLMViewUtils colorWithHexValue:0xB83020 alpha:0.8]];
+        deleteButtonDefaultImage = [BLMViewUtils deleteItemImageWithBackgroundColor:[BLMViewUtils colorWithHexValue:0x000000 alpha:0.6] diameter:(BehaviorCellDeleteButtonImageRadius * 2.0)];
+        deleteButtonSelectedImage = [BLMViewUtils deleteItemImageWithBackgroundColor:[BLMViewUtils colorWithHexValue:0xB83020 alpha:0.8] diameter:(BehaviorCellDeleteButtonImageRadius * 2.0)];
     });
 
     _deleteButton = [UIButton buttonWithType:UIButtonTypeCustom];
@@ -384,8 +402,8 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
     self.deleteButton.translatesAutoresizingMaskIntoConstraints = NO;
 
     [self.contentView addSubview:self.deleteButton];
-    [self.contentView addConstraint:[BLMViewUtils constraintWithItem:self.deleteButton attribute:NSLayoutAttributeLeft equalToItem:self.contentView constant:-8.0]];
-    [self.contentView addConstraint:[BLMViewUtils constraintWithItem:self.deleteButton attribute:NSLayoutAttributeTop equalToItem:self.contentView constant:-8.0]];
+    [self.contentView addConstraint:[BLMViewUtils constraintWithItem:self.deleteButton attribute:NSLayoutAttributeLeft equalToItem:self.contentView constant:-BehaviorCellDeleteButtonOffset]];
+    [self.contentView addConstraint:[BLMViewUtils constraintWithItem:self.deleteButton attribute:NSLayoutAttributeTop equalToItem:self.contentView constant:-BehaviorCellDeleteButtonOffset]];
     [self.contentView addConstraint:[BLMViewUtils constraintWithItem:self.deleteButton attribute:NSLayoutAttributeWidth equalToConstant:34.0]];
     [self.contentView addConstraint:[BLMViewUtils constraintWithItem:self.deleteButton attribute:NSLayoutAttributeHeight equalToConstant:34.0]];
 
