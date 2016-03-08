@@ -47,6 +47,7 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
 
 @property (nonatomic, copy, readonly) NSMutableDictionary<NSUUID*, BLMProject *> *projectByUUID;
 @property (nonatomic, copy, readonly) NSMutableDictionary<NSUUID*, BLMBehavior *> *behaviorByUUID;
+@property (nonatomic, copy, readonly) NSMutableDictionary<NSUUID*, BLMSessionConfiguration *> *sessionConfigurationByUUID;
 @property (nonatomic, strong, readonly) NSOperationQueue *archiveQueue;
 
 @end
@@ -86,6 +87,7 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
 
     _projectByUUID = [NSMutableDictionary dictionary];
     _behaviorByUUID = [NSMutableDictionary dictionary];
+    _sessionConfigurationByUUID = [NSMutableDictionary dictionary];
 
     _archiveQueue = [[NSOperationQueue alloc] init];
     _archiveQueue.name = [NSString stringWithFormat:@"%@ - Archive Queue", NSStringFromClass([self class])];
@@ -114,9 +116,6 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
 
 - (void)createProjectWithName:(NSString *)name client:(NSString *)client completion:(void(^)(BLMProject *project, NSError *error))completion {
     assert([NSThread isMainThread]);
-    assert(name.length >= BLMProjectNameMinimumLength);
-    assert(client.length >= BLMProjectClientMinimumLength);
-    assert(completion != nil);
 
     NSString *lowercaseName = [name.lowercaseString stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
 
@@ -127,17 +126,19 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
         }
     }
 
-    NSUUID *UUID = [NSUUID UUID];
-    BLMProject *project = [[BLMProject alloc] initWithUUID:UUID name:name client:client defaultSessionConfiguration:nil sessionByUUID:nil];
+    [self createSessionConfigurationWithCondition:nil location:nil therapist:nil observer:nil timeLimit:0 timeLimitOptions:0 behaviorUUIDs:@[] completion:^(BLMSessionConfiguration *sessionConfiguration, NSError *error) {
+        BLMProject *project = [[BLMProject alloc] initWithUUID:[NSUUID UUID] name:name client:client sessionConfigurationUUID:sessionConfiguration.UUID sessionByUUID:nil];
+        self.projectByUUID[project.UUID] = project;
 
-    self.projectByUUID[UUID] = project;
+        [self archiveCurrentState];
 
-    [self archiveCurrentState];
+        NSDictionary *userInfo = @{ BLMProjectNewProjectUserInfoKey:project };
+        [[NSNotificationCenter defaultCenter] postNotificationName:BLMProjectCreatedNotification object:project userInfo:userInfo];
 
-    NSDictionary *userInfo = @{ BLMProjectNewProjectUserInfoKey:project };
-    [[NSNotificationCenter defaultCenter] postNotificationName:BLMProjectCreatedNotification object:project userInfo:userInfo];
-
-    completion(project, nil);
+        if (completion != nil) {
+            completion(project, nil);
+        }
+    }];
 }
 
 
@@ -183,7 +184,6 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
     assert([NSThread isMainThread]);
 
     return self.behaviorByUUID.keyEnumerator;
-
 }
 
 
@@ -197,7 +197,6 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
 
 - (void)createBehaviorWithName:(NSString *)name continuous:(BOOL)continuous completion:(void(^)(BLMBehavior *behavior, NSError *error))completion {
     assert([NSThread isMainThread]);
-    assert(completion != nil);
 
     NSUUID *UUID = [NSUUID UUID];
     BLMBehavior *behavior = [[BLMBehavior alloc] initWithUUID:UUID name:name continuous:continuous];
@@ -209,23 +208,25 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
     NSDictionary *userInfo = @{ BLMBehaviorNewBehaviorUserInfoKey:behavior };
     [[NSNotificationCenter defaultCenter] postNotificationName:BLMBehaviorCreatedNotification object:behavior userInfo:userInfo];
 
-    completion(behavior, nil);
+    if (completion != nil) {
+        completion(behavior, nil);
+    }
 }
 
 
 - (void)updateBehaviorForUUID:(NSUUID *)UUID property:(BLMBehaviorProperty)property value:(id)value completion:(void(^)(BLMBehavior *updatedBehavior, NSError *error))completion {
     assert([NSThread isMainThread]);
 
-    BLMBehavior *originalBehavior = self.behaviorByUUID[UUID];
-    BLMBehavior *updatedBehavior = [originalBehavior copyWithUpdatedValuesByProperty:@{ @(property):(value ?: [NSNull null]) }];
+    BLMBehavior *original = self.behaviorByUUID[UUID];
+    BLMBehavior *updated = [original copyWithUpdatedValuesByProperty:@{ @(property):(value ?: [NSNull null]) }];
 
-    if (![BLMUtils isObject:originalBehavior equalToObject:updatedBehavior]) {
-        self.behaviorByUUID[UUID] = updatedBehavior;
+    if (![BLMUtils isObject:original equalToObject:updated]) {
+        self.behaviorByUUID[UUID] = updated;
 
         [self archiveCurrentState];
 
-        NSDictionary *userInfo = @{ BLMBehaviorOldBehaviorUserInfoKey:originalBehavior, BLMBehaviorNewBehaviorUserInfoKey:updatedBehavior };
-        [[NSNotificationCenter defaultCenter] postNotificationName:BLMBehaviorUpdatedNotification object:originalBehavior userInfo:userInfo];
+        NSDictionary *userInfo = @{ BLMBehaviorOldBehaviorUserInfoKey:original, BLMBehaviorNewBehaviorUserInfoKey:updated };
+        [[NSNotificationCenter defaultCenter] postNotificationName:BLMBehaviorUpdatedNotification object:original userInfo:userInfo];
     }
 
     if (completion != nil) {
@@ -251,6 +252,76 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
     }
 }
 
+#pragma mark Session Configuration State
+
+- (NSEnumerator<NSUUID *> *)sessionConfigurationUUIDEnumerator {
+    return self.sessionConfigurationByUUID.keyEnumerator;
+}
+
+
+- (BLMSessionConfiguration *)sessionConfigurationForUUID:(NSUUID *)UUID {
+    assert([NSThread isMainThread]);
+    return self.sessionConfigurationByUUID[UUID];
+}
+
+
+- (void)createSessionConfigurationWithCondition:(NSString *)condition location:(NSString *)location therapist:(NSString *)therapist observer:(NSString *)observer timeLimit:(BLMTimeInterval)timeLimit timeLimitOptions:(BLMTimeLimitOptions)timeLimitOptions behaviorUUIDs:(NSArray<NSUUID *> *)behaviorUUIDs completion:(void(^)(BLMSessionConfiguration *sessionConfiguration, NSError *error))completion {
+    assert([NSThread isMainThread]);
+
+    NSUUID *UUID = [NSUUID UUID];
+    BLMSessionConfiguration *sessionConfiguration = [[BLMSessionConfiguration alloc] initWithUUID:UUID condition:condition location:location therapist:therapist observer:observer timeLimit:timeLimit timeLimitOptions:timeLimitOptions behaviorUUIDs:behaviorUUIDs];
+
+    self.sessionConfigurationByUUID[UUID] = sessionConfiguration;
+
+    [self archiveCurrentState];
+
+    NSDictionary *userInfo = @{ BLMBehaviorNewBehaviorUserInfoKey:sessionConfiguration };
+    [[NSNotificationCenter defaultCenter] postNotificationName:BLMSessionConfigurationCreatedNotification object:sessionConfiguration userInfo:userInfo];
+
+    if (completion != nil) {
+        completion(sessionConfiguration, nil);
+    }
+}
+
+
+- (void)updateSessionConfigurationForUUID:(NSUUID *)UUID property:(BLMSessionConfigurationProperty)property value:(id)value completion:(void(^)(BLMSessionConfiguration *updatedSessionConfiguration, NSError *error))completion {
+    assert([NSThread isMainThread]);
+
+    BLMSessionConfiguration *original = self.sessionConfigurationByUUID[UUID];
+    BLMSessionConfiguration *updated = [original copyWithUpdatedValuesByProperty:@{ @(property):(value ?: [NSNull null]) }];
+
+    if (![BLMUtils isObject:original equalToObject:updated]) {
+        self.sessionConfigurationByUUID[UUID] = updated;
+
+        [self archiveCurrentState];
+
+        NSDictionary *userInfo = @{ BLMSessionConfigurationOldSessionConfigurationUserInfoKey:original, BLMSessionConfigurationNewSessionConfigurationUserInfoKey:updated };
+        [[NSNotificationCenter defaultCenter] postNotificationName:BLMSessionConfigurationUpdatedNotification object:original userInfo:userInfo];
+    }
+
+    if (completion != nil) {
+        completion(self.sessionConfigurationByUUID[UUID], nil);
+    }
+}
+
+
+- (void)deleteSessionConfigurationForUUID:(NSUUID *)UUID completion:(void(^)(NSError *error))completion {
+    assert([NSThread isMainThread]);
+
+    BLMSessionConfiguration *sessionConfiguration = self.sessionConfigurationByUUID[UUID];
+    assert(sessionConfiguration != nil);
+
+    [self.sessionConfigurationByUUID removeObjectForKey:UUID];
+
+    [self archiveCurrentState];
+
+    [[NSNotificationCenter defaultCenter] postNotificationName:BLMSessionConfigurationDeletedNotification object:sessionConfiguration userInfo:nil];
+
+    if (completion != nil) {
+        completion(nil);
+    }
+}
+
 #pragma mark Archiving
 
 - (void)archiveCurrentState {
@@ -263,6 +334,7 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
 
     NSDictionary *projectByUUID = [self.projectByUUID copy];
     NSDictionary *behaviorByUUID = [self.behaviorByUUID copy];
+    NSDictionary *sessionConfigurationByUUID = [self.sessionConfigurationByUUID copy];
 
     [self.archiveQueue addOperationWithBlock:^{
         BOOL isDirectory = NO;
@@ -295,6 +367,7 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
         [archiver encodeInteger:ArchiveVersionLatest forKey:ArchiveVersionKey];
         [archiver encodeObject:projectByUUID forKey:@"projectByUUID"];
         [archiver encodeObject:behaviorByUUID forKey:@"behaviorByUUID"];
+        [archiver encodeObject:sessionConfigurationByUUID forKey:@"sessionConfigurationByUUID"];
         [archiver finishEncoding];
 
         NSFileHandle *archiveFile = [NSFileHandle fileHandleForWritingAtPath:filePath];
@@ -315,6 +388,7 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
     [self.archiveQueue addOperationWithBlock:^{
         NSMutableDictionary<NSUUID *, BLMProject *> *projectByUUID = nil;
         NSMutableDictionary<NSUUID *, BLMBehavior *> *behaviorByUUID = nil;
+        NSMutableDictionary<NSUUID *, BLMSessionConfiguration *> *sessionConfigurationByUUID = nil;
         NSString *filePath = [ArchiveDirectory() stringByAppendingPathComponent:ArchiveFileName];
         NSData *archiveData = [NSData dataWithContentsOfFile:filePath];
 
@@ -331,6 +405,7 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
                 case ArchiveVersionLatest:
                     projectByUUID = [[unarchiver decodeObjectForKey:@"projectByUUID"] mutableCopy];
                     behaviorByUUID = [[unarchiver decodeObjectForKey:@"behaviorByUUID"] mutableCopy];
+                    sessionConfigurationByUUID = [[unarchiver decodeObjectForKey:@"sessionConfigurationByUUID"] mutableCopy];
                     break;
             }
 
@@ -338,18 +413,16 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
         }
 
         NSMutableSet<NSUUID *> *referenedBehaviorUUIDs = [NSMutableSet set];
-        NSMutableArray<BLMProject *> *sanitizedProjects = [NSMutableArray array];
 
         for (BLMProject *project in projectByUUID.objectEnumerator) {
-            NSArray *sanitizedBehaviorUUIDs = [project.defaultSessionConfiguration.behaviorUUIDs filteredArrayUsingPredicate:[NSPredicate predicateWithBlock:^BOOL(NSUUID *UUID, NSDictionary *bindings) {
+            BLMSessionConfiguration *sessionConfiguration = sessionConfigurationByUUID[project.sessionConfigurationUUID];
+
+            NSArray *sanitizedBehaviorUUIDs = [sessionConfiguration.behaviorUUIDs filteredArrayUsingPredicate:[NSPredicate predicateWithBlock:^BOOL(NSUUID *UUID, NSDictionary *bindings) {
                 return (behaviorByUUID[UUID] != nil);
             }]];
 
-            if (sanitizedBehaviorUUIDs.count != project.defaultSessionConfiguration.behaviorUUIDs.count) { // Remove references to behaviors that no longer exist from projects' default session configurations
-                BLMSessionConfiguration *updatedDefaultSessionConfiguration = [project.defaultSessionConfiguration copyWithUpdatedValuesByProperty:@{ @(BLMSessionConfigurationPropertyBehaviorUUIDs):sanitizedBehaviorUUIDs }];
-                BLMProject *updatedProject = [project copyWithUpdatedValuesByProperty:@{ @(BLMProjectPropertyDefaultSessionConfiguration):updatedDefaultSessionConfiguration }];
-
-                [sanitizedProjects addObject:updatedProject];
+            if (sanitizedBehaviorUUIDs.count != sessionConfiguration.behaviorUUIDs.count) { // Remove references to behaviors that no longer exist from projects' default session configurations
+                sessionConfigurationByUUID[project.sessionConfigurationUUID] = [sessionConfiguration copyWithUpdatedValuesByProperty:@{ @(BLMSessionConfigurationPropertyBehaviorUUIDs):sanitizedBehaviorUUIDs }];
             }
 
             [referenedBehaviorUUIDs addObjectsFromArray:sanitizedBehaviorUUIDs];
@@ -357,10 +430,6 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
             for (BLMSession *session in project.sessionByUUID.objectEnumerator) {
                 [referenedBehaviorUUIDs addObjectsFromArray:session.configuration.behaviorUUIDs];
             }
-        }
-
-        for (BLMProject *project in sanitizedProjects) {
-            projectByUUID[project.UUID] = project;
         }
 
         NSMutableArray *unreferencedBehaviorUUIDs = [NSMutableArray array];
@@ -379,6 +448,9 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
 
             assert(self.behaviorByUUID.count == 0);
             [self.behaviorByUUID addEntriesFromDictionary:behaviorByUUID];
+
+            assert(self.sessionConfigurationByUUID.count == 0);
+            [self.sessionConfigurationByUUID addEntriesFromDictionary:sessionConfigurationByUUID];
 
             assert(self.isRestoringArchive);
             _restoringArchive = NO;

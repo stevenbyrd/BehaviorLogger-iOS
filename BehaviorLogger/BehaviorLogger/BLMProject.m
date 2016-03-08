@@ -6,6 +6,7 @@
 //  Copyright © 2016 3Bird. All rights reserved.
 //
 
+#import "BLMDataManager.h"
 #import "BLMProject.h"
 #import "BLMSession.h"
 #import "BLMUtils.h"
@@ -35,10 +36,11 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
 
 @implementation BLMProject
 
-- (instancetype)initWithUUID:(NSUUID *)UUID name:(NSString *)name client:(NSString *)client defaultSessionConfiguration:(BLMSessionConfiguration *)defaultSessionConfiguration sessionByUUID:(NSDictionary<NSUUID *, BLMSession *> *)sessionByUUID {
+- (instancetype)initWithUUID:(NSUUID *)UUID name:(NSString *)name client:(NSString *)client sessionConfigurationUUID:(NSUUID *)sessionConfigurationUUID sessionByUUID:(NSDictionary<NSUUID *, BLMSession *> *)sessionByUUID {
     assert(UUID != nil);
     assert(name.length > BLMProjectNameMinimumLength);
     assert(client.length > BLMProjectClientMinimumLength);
+    assert(sessionConfigurationUUID != nil);
 
     self = [super init];
 
@@ -49,39 +51,30 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
     _UUID = UUID;
     _name = [name copy];
     _client = [client copy];
-    _defaultSessionConfiguration = (defaultSessionConfiguration ?: [[BLMSessionConfiguration alloc] initWitCondition:nil location:nil therapist:nil observer:nil timeLimit:-1 timeLimitOptions:0 behaviorUUIDs:@[]]);
+    _sessionConfigurationUUID = sessionConfigurationUUID;
     _sessionByUUID = [sessionByUUID copy];
 
     return self;
 }
 
-
-- (instancetype)copyWithUpdatedValuesByProperty:(NSDictionary<NSNumber *, id> *)valuesByProperty {
-    return [[BLMProject alloc] initWithUUID:self.UUID
-                                       name:[BLMUtils objectFromDictionary:valuesByProperty forKey:@(BLMProjectPropertyName) nullValue:nil defaultValue:self.name]
-                                     client:[BLMUtils objectFromDictionary:valuesByProperty forKey:@(BLMProjectPropertyClient) nullValue:nil defaultValue:self.client]
-                defaultSessionConfiguration:[BLMUtils objectFromDictionary:valuesByProperty forKey:@(BLMProjectPropertyDefaultSessionConfiguration) nullValue:nil defaultValue:self.defaultSessionConfiguration]
-                              sessionByUUID:[BLMUtils objectFromDictionary:valuesByProperty forKey:@(BLMProjectPropertySessionByUUID) nullValue:nil defaultValue:self.sessionByUUID]];
-}
-
 #pragma mark NSCoding
 
-- (nullable instancetype)initWithCoder:(NSCoder *)aDecoder {
-    return [self initWithUUID:[aDecoder decodeObjectForKey:@"UUID"]
-                         name:[aDecoder decodeObjectForKey:@"name"]
-                       client:[aDecoder decodeObjectForKey:@"client"]
-  defaultSessionConfiguration:[aDecoder decodeObjectForKey:@"defaultSessionConfiguration"]
-                sessionByUUID:[aDecoder decodeObjectForKey:@"sessionByUUID"]];
+- (nullable instancetype)initWithCoder:(NSCoder *)decoder {
+    return [self initWithUUID:[decoder decodeObjectForKey:@"UUID"]
+                         name:[decoder decodeObjectForKey:@"name"]
+                       client:[decoder decodeObjectForKey:@"client"]
+     sessionConfigurationUUID:[decoder decodeObjectForKey:@"sessionConfigurationUUID"]
+                sessionByUUID:[decoder decodeObjectForKey:@"sessionByUUID"]];
 }
 
 
-- (void)encodeWithCoder:(NSCoder *)aCoder {
-    [aCoder encodeObject:self.UUID forKey:@"UUID"];
-    [aCoder encodeObject:self.name forKey:@"name"];
-    [aCoder encodeObject:self.client forKey:@"client"];
-    [aCoder encodeObject:self.defaultSessionConfiguration forKey:@"defaultSessionConfiguration"];
-    [aCoder encodeObject:self.sessionByUUID forKey:@"sessionByUUID"];
-    [aCoder encodeInteger:ArchiveVersionLatest forKey:ArchiveVersionKey];
+- (void)encodeWithCoder:(NSCoder *)coder {
+    [coder encodeObject:self.UUID forKey:@"UUID"];
+    [coder encodeObject:self.name forKey:@"name"];
+    [coder encodeObject:self.client forKey:@"client"];
+    [coder encodeObject:self.sessionConfigurationUUID forKey:@"sessionConfigurationUUID"];
+    [coder encodeObject:self.sessionByUUID forKey:@"sessionByUUID"];
+    [coder encodeInteger:ArchiveVersionLatest forKey:ArchiveVersionKey];
 }
 
 #pragma mark Internal State
@@ -101,8 +94,17 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
     return ([BLMUtils isObject:self.UUID equalToObject:other.UUID]
             && [BLMUtils isString:self.name equalToString:other.name]
             && [BLMUtils isString:self.client equalToString:other.client]
-            && [BLMUtils isObject:self.defaultSessionConfiguration equalToObject:other.defaultSessionConfiguration]
+            && [BLMUtils isObject:self.sessionConfigurationUUID equalToObject:other.sessionConfigurationUUID]
             && [self.sessionByUUID isEqualToDictionary:other.sessionByUUID]);
+}
+
+
+- (instancetype)copyWithUpdatedValuesByProperty:(NSDictionary<NSNumber *, id> *)valuesByProperty {
+    return [[BLMProject alloc] initWithUUID:self.UUID
+                                       name:[BLMUtils objectFromDictionary:valuesByProperty forKey:@(BLMProjectPropertyName) nullValue:nil defaultValue:self.name]
+                                     client:[BLMUtils objectFromDictionary:valuesByProperty forKey:@(BLMProjectPropertyClient) nullValue:nil defaultValue:self.client]
+                   sessionConfigurationUUID:[BLMUtils objectFromDictionary:valuesByProperty forKey:@(BLMProjectPropertySessionConfigurationUUID) nullValue:nil defaultValue:self.sessionConfigurationUUID]
+                              sessionByUUID:[BLMUtils objectFromDictionary:valuesByProperty forKey:@(BLMProjectPropertySessionByUUID) nullValue:nil defaultValue:self.sessionByUUID]];
 }
 
 @end

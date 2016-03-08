@@ -11,7 +11,7 @@
 #import "BLMUtils.h"
 
 
-@implementation BLMTextInputCellTextField
+@implementation BLMCollectionViewCellTextField
 
 @dynamic delegate;
 
@@ -51,23 +51,8 @@
     if (self == nil) {
         return nil;
     }
-
-    _label = [[UILabel alloc] initWithFrame:CGRectZero];
-
-    [self.label setContentHuggingPriority:UILayoutPriorityRequired forAxis:UILayoutConstraintAxisVertical];
-    [self.label setContentHuggingPriority:UILayoutPriorityRequired forAxis:UILayoutConstraintAxisHorizontal];
-
-    [self.label setContentCompressionResistancePriority:UILayoutPriorityRequired forAxis:UILayoutConstraintAxisVertical];
-    [self.label setContentCompressionResistancePriority:UILayoutPriorityRequired forAxis:UILayoutConstraintAxisHorizontal];
-
-    self.label.translatesAutoresizingMaskIntoConstraints = NO;
-
-    [self.contentView addSubview:self.label];
-    [self.contentView addConstraints:[self uniqueVerticalPositionConstraintsForSubview:self.label]];
-    [self.contentView addConstraints:[self uniqueHorizontalPositionConstraintsForSubview:self.label]];
-    [self.contentView addConstraint:[BLMViewUtils constraintWithItem:self.label attribute:NSLayoutAttributeRight lessThanOrEqualToItem:self.contentView attribute:NSLayoutAttributeRight constant:-30.0]];
-
-    _textField = [[BLMTextInputCellTextField alloc] initWithHorizontalPadding:8.0 verticalPadding:6.0];
+    
+    _textField = [[BLMCollectionViewCellTextField alloc] initWithHorizontalPadding:8.0 verticalPadding:6.0];
 
     self.textField.delegate = self;
     self.textField.minimumFontSize = 10.0;
@@ -88,15 +73,6 @@
     [self.contentView addConstraint:[BLMViewUtils constraintWithItem:self.textField attribute:NSLayoutAttributeHeight greaterThanOrEqualToItem:self.label attribute:NSLayoutAttributeHeight constant:0.0]];
 
     return self;
-}
-
-
-- (void)layoutSubviews {
-    [super layoutSubviews];
-
-    [self configureLabelSubviewsPreferredMaxLayoutWidth];
-
-    [super layoutSubviews];
 }
 
 
@@ -138,7 +114,11 @@
     return errorAttributes;
 }
 
-#pragma mark UITextFieldDelegate
+#pragma mark BLMCollectionViewCellTextFieldDelegate / UITextFieldDelegate
+
+- (NSIndexPath *)indexPathForCollectionViewCellTextField:(BLMCollectionViewCellTextField *)textField {
+    return self.indexPath;
+}
 
 - (BOOL)textFieldShouldReturn:(UITextField *)textField {
     [textField resignFirstResponder];
@@ -155,37 +135,24 @@
     }
 }
 
-#pragma mark BLMTextInputCellLayoutDelegate
-
-- (void)configureLabelSubviewsPreferredMaxLayoutWidth {
-    self.label.preferredMaxLayoutWidth = CGRectGetWidth([self.label alignmentRectForFrame:self.label.frame]);
-}
-
+#pragma mark BLMCollectionViewCellLayoutDelegate
 
 - (NSArray<NSLayoutConstraint *> *)uniqueVerticalPositionConstraintsForSubview:(UIView *)subview {
-    NSMutableArray *constraints = [NSMutableArray array];
-
-    if ([BLMUtils isObject:subview equalToObject:self.label]) {
-        [constraints addObject:[BLMViewUtils constraintWithItem:subview attribute:NSLayoutAttributeCenterY equalToItem:self.contentView constant:0.0]];
-    } else if ([BLMUtils isObject:subview equalToObject:self.textField]) {
-        [constraints addObject:[BLMViewUtils constraintWithItem:subview attribute:NSLayoutAttributeCenterY equalToItem:self.contentView constant:0.0]];
+    if (![BLMUtils isObject:subview equalToObject:self.textField]) {
+        return [super uniqueVerticalPositionConstraintsForSubview:subview];
     }
 
-    return constraints;
+    return @[[BLMViewUtils constraintWithItem:subview attribute:NSLayoutAttributeCenterY equalToItem:self.contentView constant:0.0]];
 }
 
 
 - (NSArray<NSLayoutConstraint *> *)uniqueHorizontalPositionConstraintsForSubview:(UIView *)subview {
-    NSMutableArray *constraints = [NSMutableArray array];
-
-    if ([BLMUtils isObject:subview equalToObject:self.label]) {
-        [constraints addObject:[BLMViewUtils constraintWithItem:subview attribute:NSLayoutAttributeLeft equalToItem:self.contentView constant:0.0]];
-    } else if ([BLMUtils isObject:subview equalToObject:self.textField]) {
-        [constraints addObject:[BLMViewUtils constraintWithItem:subview attribute:NSLayoutAttributeRight equalToItem:self.contentView constant:0.0]];
-        [constraints addObject:[BLMViewUtils constraintWithItem:subview attribute:NSLayoutAttributeLeft equalToItem:self.label attribute:NSLayoutAttributeRight constant:5.0]];
+    if (![BLMUtils isObject:subview equalToObject:self.textField]) {
+        return [super uniqueHorizontalPositionConstraintsForSubview:subview];
     }
 
-    return constraints;
+    return @[[BLMViewUtils constraintWithItem:subview attribute:NSLayoutAttributeRight equalToItem:self.contentView constant:0.0],
+             [BLMViewUtils constraintWithItem:subview attribute:NSLayoutAttributeLeft equalToItem:self.label attribute:NSLayoutAttributeRight constant:5.0]];
 }
 
 @end

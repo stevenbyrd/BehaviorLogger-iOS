@@ -6,8 +6,33 @@
 //  Copyright © 2016 3Bird. All rights reserved.
 //
 
-#import "BLMCollectionViewCell.h"
+#import "BLMCollectionView.h"
 
+
+@class BLMCollectionViewCellTextField;
+
+
+@protocol BLMCollectionViewCellTextFieldDelegate <UITextFieldDelegate>
+
+- (NSIndexPath *)indexPathForCollectionViewCellTextField:(BLMCollectionViewCellTextField *)textField;
+
+@end
+
+
+#pragma mark 
+
+@interface BLMCollectionViewCellTextField : UITextField
+
+@property (nonatomic, weak) id<BLMCollectionViewCellTextFieldDelegate> delegate;
+@property (nonatomic, assign, readonly) CGFloat horizontalPadding;
+@property (nonatomic, assign, readonly) CGFloat verticalPadding;
+
+- (instancetype)initWithHorizontalPadding:(CGFloat)horizontalPadding verticalPadding:(CGFloat)verticalPadding;
+
+@end
+
+
+#pragma mark 
 
 @class BLMTextInputCell;
 
@@ -27,41 +52,9 @@
 
 #pragma mark 
 
-@protocol BLMTextInputCellLayoutDelegate <NSObject>
+@interface BLMTextInputCell : BLMCollectionViewCell <BLMCollectionViewCellTextFieldDelegate>
 
-- (void)configureLabelSubviewsPreferredMaxLayoutWidth;
-- (NSArray<NSLayoutConstraint *> *)uniqueVerticalPositionConstraintsForSubview:(UIView *)subview;
-- (NSArray<NSLayoutConstraint *> *)uniqueHorizontalPositionConstraintsForSubview:(UIView *)subview;
-
-@end
-
-
-#pragma mark 
-
-@protocol BLMTextInputCellTextFieldDelegate <BLMCollectionViewCellIndexing, UITextFieldDelegate>
-
-@end
-
-
-#pragma mark 
-
-@interface BLMTextInputCellTextField : UITextField
-
-@property (nonatomic, weak) id<BLMTextInputCellTextFieldDelegate> delegate;
-@property (nonatomic, assign, readonly) CGFloat horizontalPadding;
-@property (nonatomic, assign, readonly) CGFloat verticalPadding;
-
-- (instancetype)initWithHorizontalPadding:(CGFloat)horizontalPadding verticalPadding:(CGFloat)verticalPadding;
-
-@end
-
-
-#pragma mark 
-
-@interface BLMTextInputCell : BLMCollectionViewCell <BLMTextInputCellTextFieldDelegate, BLMTextInputCellLayoutDelegate>
-
-@property (nonatomic, strong, readonly) UILabel *label;
-@property (nonatomic, strong, readonly) BLMTextInputCellTextField *textField;
+@property (nonatomic, strong, readonly) BLMCollectionViewCellTextField *textField;
 @property (nonatomic, weak) id<BLMTextInputCellDelegate> delegate;
 
 - (void)updateTextAttributes;

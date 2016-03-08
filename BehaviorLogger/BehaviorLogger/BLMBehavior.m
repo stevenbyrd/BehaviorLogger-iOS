@@ -49,27 +49,20 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
     return self;
 }
 
-
-- (instancetype)copyWithUpdatedValuesByProperty:(NSDictionary<NSNumber *, id> *)valuesByProperty {
-    return [[BLMBehavior alloc] initWithUUID:self.UUID
-                                        name:[BLMUtils objectFromDictionary:valuesByProperty forKey:@(BLMBehaviorPropertyName) nullValue:nil defaultValue:self.name]
-                                  continuous:[BLMUtils boolFromDictionary:valuesByProperty forKey:@(BLMBehaviorPropertyContinuous) defaultValue:self.isContinuous]];
-}
-
 #pragma mark NSCoding
 
-- (nullable instancetype)initWithCoder:(NSCoder *)aDecoder {
-    return [self initWithUUID:[aDecoder decodeObjectForKey:@"UUID"]
-                         name:[aDecoder decodeObjectForKey:@"name"]
-                   continuous:[aDecoder decodeBoolForKey:@"continuous"]];
+- (nullable instancetype)initWithCoder:(NSCoder *)decoder {
+    return [self initWithUUID:[decoder decodeObjectForKey:@"UUID"]
+                         name:[decoder decodeObjectForKey:@"name"]
+                   continuous:[decoder decodeBoolForKey:@"continuous"]];
 }
 
 
-- (void)encodeWithCoder:(NSCoder *)aCoder {
-    [aCoder encodeObject:self.UUID forKey:@"UUID"];
-    [aCoder encodeObject:self.name forKey:@"name"];
-    [aCoder encodeBool:self.isContinuous forKey:@"continuous"];
-    [aCoder encodeInteger:ArchiveVersionLatest forKey:ArchiveVersionKey];
+- (void)encodeWithCoder:(NSCoder *)coder {
+    [coder encodeObject:self.UUID forKey:@"UUID"];
+    [coder encodeObject:self.name forKey:@"name"];
+    [coder encodeBool:self.isContinuous forKey:@"continuous"];
+    [coder encodeInteger:ArchiveVersionLatest forKey:ArchiveVersionKey];
 }
 
 #pragma mark Internal State
@@ -89,6 +82,13 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
     return ([BLMUtils isObject:self.UUID equalToObject:other.UUID]
             && [BLMUtils isString:self.name equalToString:other.name]
             && (self.isContinuous == other.isContinuous));
+}
+
+
+- (instancetype)copyWithUpdatedValuesByProperty:(NSDictionary<NSNumber *, id> *)valuesByProperty {
+    return [[BLMBehavior alloc] initWithUUID:self.UUID
+                                        name:[BLMUtils objectFromDictionary:valuesByProperty forKey:@(BLMBehaviorPropertyName) nullValue:nil defaultValue:self.name]
+                                  continuous:[BLMUtils boolFromDictionary:valuesByProperty forKey:@(BLMBehaviorPropertyContinuous) defaultValue:self.isContinuous]];
 }
 
 @end

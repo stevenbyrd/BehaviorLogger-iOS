@@ -23,7 +23,7 @@ extern NSString *const BLMProjectNewProjectUserInfoKey;
 typedef NS_ENUM(NSUInteger, BLMProjectProperty) {
     BLMProjectPropertyName,
     BLMProjectPropertyClient,
-    BLMProjectPropertyDefaultSessionConfiguration,
+    BLMProjectPropertySessionConfigurationUUID,
     BLMProjectPropertySessionByUUID
 };
 
@@ -37,10 +37,10 @@ typedef NS_ENUM(NSUInteger, BLMProjectProperty) {
 @property (nonatomic, strong, readonly) NSUUID *UUID;
 @property (nonatomic, copy, readonly) NSString *name;
 @property (nonatomic, copy, readonly) NSString *client;
-@property (nonatomic, strong, readonly) BLMSessionConfiguration *defaultSessionConfiguration;
+@property (nonatomic, strong, readonly) NSUUID *sessionConfigurationUUID;
 @property (nonatomic, copy, readonly) NSDictionary<NSUUID *, BLMSession *> *sessionByUUID;
 
-- (instancetype)initWithUUID:(NSUUID *)UUID name:(NSString *)name client:(NSString *)client defaultSessionConfiguration:(BLMSessionConfiguration *)defaultSessionConfiguration sessionByUUID:(NSDictionary<NSUUID *, BLMSession *> *)sessionByUUID;
+- (instancetype)initWithUUID:(NSUUID *)UUID name:(NSString *)name client:(NSString *)client sessionConfigurationUUID:(NSUUID *)sessionConfigurationUUID sessionByUUID:(NSDictionary<NSUUID *, BLMSession *> *)sessionByUUID;
 - (instancetype)copyWithUpdatedValuesByProperty:(NSDictionary<NSNumber *, id> *)valuesByProperty;
 
 @end

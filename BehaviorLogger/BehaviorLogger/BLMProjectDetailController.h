@@ -6,8 +6,16 @@
 //  Copyright © 2016 3Bird. All rights reserved.
 //
 
-#import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
+
+
+typedef NS_ENUM(NSUInteger, BLMProjectDetailSection) {
+    BLMProjectDetailSectionBasicInfo,
+    BLMProjectDetailSectionSessionProperties,
+    BLMProjectDetailSectionBehaviors,
+    BLMProjectDetailSectionActionButtons,
+    BLMProjectDetailSectionCount
+};
 
 
 @class BLMProject;

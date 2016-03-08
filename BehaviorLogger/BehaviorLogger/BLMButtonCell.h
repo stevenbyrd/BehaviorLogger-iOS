@@ -6,9 +6,11 @@
 //  Copyright © 2016 3Bird. All rights reserved.
 //
 
-#import "BLMCollectionViewCell.h"
+#import "BLMCollectionView.h"
+
 
 @class BLMButtonCell;
+
 
 @protocol BLMButtonCellDelegate <NSObject>
 

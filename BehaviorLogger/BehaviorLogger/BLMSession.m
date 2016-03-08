@@ -7,7 +7,9 @@
 //
 
 #import "BLMBehavior.h"
+#import "BLMDataManager.h"
 #import "BLMSession.h"
+#import "BLMSessionConfiguration.h"
 #import "BLMUtils.h"
 
 
@@ -18,97 +20,6 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
     ArchiveVersionUnknown,
     ArchiveVersionLatest
 };
-
-
-#pragma mark
-
-@implementation BLMSessionConfiguration
-
-- (instancetype)initWitCondition:(NSString *)condition location:(NSString *)location therapist:(NSString *)therapist observer:(NSString *)observer timeLimit:(BLMTimeInterval)timeLimit timeLimitOptions:(BLMTimeLimitOptions)timeLimitOptions behaviorUUIDs:(NSArray<NSUUID *> *)behaviorUUIDs {
-    assert(behaviorUUIDs != nil);
-
-    self = [super init];
-
-    if (self == nil) {
-        return nil;
-    }
-
-    _condition = [condition copy];
-    _location = [location copy];
-    _therapist = [therapist copy];
-    _observer = [observer copy];
-    _timeLimit = timeLimit;
-    _timeLimitOptions = timeLimitOptions;
-    _behaviorUUIDs = [behaviorUUIDs copy];
-
-    return self;
-}
-
-
-- (instancetype)copyWithUpdatedValuesByProperty:(NSDictionary<NSNumber *, id> *)valuesByProperty {
-    return [[BLMSessionConfiguration alloc] initWitCondition:[BLMUtils objectFromDictionary:valuesByProperty forKey:@(BLMSessionConfigurationPropertyCondition) nullValue:nil defaultValue:self.condition]
-                                                    location:[BLMUtils objectFromDictionary:valuesByProperty forKey:@(BLMSessionConfigurationPropertyLocation) nullValue:nil defaultValue:self.location]
-                                                   therapist:[BLMUtils objectFromDictionary:valuesByProperty forKey:@(BLMSessionConfigurationPropertyTherapist) nullValue:nil defaultValue:self.therapist]
-                                                    observer:[BLMUtils objectFromDictionary:valuesByProperty forKey:@(BLMSessionConfigurationPropertyObserver) nullValue:nil defaultValue:self.observer]
-                                                   timeLimit:[BLMUtils integerFromDictionary:valuesByProperty forKey:@(BLMSessionConfigurationPropertyTimeLimit) defaultValue:self.timeLimit]
-                                            timeLimitOptions:[BLMUtils integerFromDictionary:valuesByProperty forKey:@(BLMSessionConfigurationPropertyTimeLimitOptions) defaultValue:self.timeLimitOptions]
-                                               behaviorUUIDs:[BLMUtils objectFromDictionary:valuesByProperty forKey:@(BLMSessionConfigurationPropertyBehaviorUUIDs) nullValue:nil defaultValue:self.behaviorUUIDs]];
-}
-
-#pragma mark NSCoding
-
-- (nullable instancetype)initWithCoder:(NSCoder *)aDecoder {
-    return [self initWitCondition:[aDecoder decodeObjectForKey:@"condition"]
-                         location:[aDecoder decodeObjectForKey:@"location"]
-                        therapist:[aDecoder decodeObjectForKey:@"therapist"]
-                         observer:[aDecoder decodeObjectForKey:@"observer"]
-                        timeLimit:[aDecoder decodeIntegerForKey:@"timeLimit"]
-                 timeLimitOptions:[aDecoder decodeIntegerForKey:@"timeLimitOptions"]
-                    behaviorUUIDs:[aDecoder decodeObjectForKey:@"behaviorUUIDs"]];
-}
-
-
-- (void)encodeWithCoder:(NSCoder *)aCoder {
-    [aCoder encodeObject:self.condition forKey:@"condition"];
-    [aCoder encodeObject:self.location forKey:@"location"];
-    [aCoder encodeObject:self.therapist forKey:@"therapist"];
-    [aCoder encodeObject:self.observer forKey:@"observer"];
-    [aCoder encodeInteger:self.timeLimit forKey:@"timeLimit"];
-    [aCoder encodeInteger:self.timeLimitOptions forKey:@"timeLimitOptions"];
-    [aCoder encodeObject:self.behaviorUUIDs forKey:@"behaviorUUIDs"];
-    [aCoder encodeInteger:ArchiveVersionLatest forKey:ArchiveVersionKey];
-}
-
-#pragma mark Internal State
-
-- (NSUInteger)hash {    
-    return (self.condition.hash
-            ^ self.location.hash
-            ^ self.therapist.hash
-            ^ self.observer.hash
-            ^ self.timeLimit
-            ^ self.timeLimitOptions
-            ^ self.behaviorUUIDs.hash);
-}
-
-
-- (BOOL)isEqual:(id)object {
-    if (![object isKindOfClass:[self class]]) {
-        return NO;
-    }
-
-    BLMSessionConfiguration *other = (BLMSessionConfiguration *)object;
-
-    return ([BLMUtils isString:self.condition equalToString:other.condition]
-            && [BLMUtils isString:self.location equalToString:other.location]
-            && [BLMUtils isString:self.therapist equalToString:other.therapist]
-            && [BLMUtils isString:self.observer equalToString:other.observer]
-            && [BLMUtils isArray:self.behaviorUUIDs equalToArray:other.behaviorUUIDs]
-            && (self.timeLimit == other.timeLimit)
-            && (self.timeLimitOptions == other.timeLimitOptions));
-}
-
-@end
 
 
 #pragma mark
@@ -135,18 +46,18 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
 
 #pragma mark NSCoding
 
-- (nullable instancetype)initWithCoder:(NSCoder *)aDecoder {
-    return [self initWithUUID:[aDecoder decodeObjectForKey:@"UUID"]
-                        name:[aDecoder decodeObjectForKey:@"name"]
-               configuration:[aDecoder decodeObjectForKey:@"configuration"]];
+- (nullable instancetype)initWithCoder:(NSCoder *)decoder {
+    return [self initWithUUID:[decoder decodeObjectForKey:@"UUID"]
+                         name:[decoder decodeObjectForKey:@"name"]
+                configuration:[decoder decodeObjectForKey:@"configuration"]];
 }
 
 
-- (void)encodeWithCoder:(NSCoder *)aCoder {
-    [aCoder encodeObject:self.UUID forKey:@"UUID"];
-    [aCoder encodeObject:self.name forKey:@"name"];
-    [aCoder encodeObject:self.configuration forKey:@"configuration"];
-    [aCoder encodeInteger:ArchiveVersionLatest forKey:ArchiveVersionKey];
+- (void)encodeWithCoder:(NSCoder *)coder {
+    [coder encodeObject:self.UUID forKey:@"UUID"];
+    [coder encodeObject:self.name forKey:@"name"];
+    [coder encodeObject:self.configuration forKey:@"configuration"];
+    [coder encodeInteger:ArchiveVersionLatest forKey:ArchiveVersionKey];
 }
 
 #pragma mark Internal State
