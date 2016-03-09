@@ -124,6 +124,8 @@ extern CGFloat const BLMCollectionViewRoundedCornerRadius;
 - (void)updateContent;
 - (void)configureLabelSubviewsPreferredMaxLayoutWidth;
 
++ (UIColor *)errorColor;
+
 @end
 
 

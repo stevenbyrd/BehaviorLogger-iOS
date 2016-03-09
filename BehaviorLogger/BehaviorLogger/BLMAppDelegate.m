@@ -35,7 +35,7 @@
     
     self.splitViewController.viewControllers = @[primaryController, detailController];
     self.splitViewController.preferredDisplayMode = UISplitViewControllerDisplayModeAllVisible;
-    self.splitViewController.preferredPrimaryColumnWidthFraction = 0.25;
+    self.splitViewController.preferredPrimaryColumnWidthFraction = 0.18;
     self.splitViewController.presentsWithGesture = NO;
     self.splitViewController.delegate = self;
     

@@ -57,7 +57,7 @@
 @property (nonatomic, strong, readonly) BLMCollectionViewCellTextField *textField;
 @property (nonatomic, weak) id<BLMTextInputCellDelegate> delegate;
 
-- (void)updateTextAttributes;
+- (void)updateTextFieldColor;
 
 + (NSDictionary *)errorAttributes;
 

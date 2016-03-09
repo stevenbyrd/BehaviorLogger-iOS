@@ -15,9 +15,8 @@
 @protocol BLMButtonCellDelegate <NSObject>
 
 - (BOOL)isButtonEnabledForButtonCell:(BLMButtonCell *)cell;
-- (UIImage *)normalImageForButtonCell:(BLMButtonCell *)cell;
-- (UIImage *)highlightedImageForButtonCell:(BLMButtonCell *)cell;
-- (NSString *)titleForButtonCell:(BLMButtonCell *)cell;
+- (UIImage *)imageForButtonCell:(BLMButtonCell *)cell forState:(UIControlState)state;
+- (NSAttributedString *)attributedTitleForButtonCell:(BLMButtonCell *)cell forState:(UIControlState)state;
 - (void)didFireActionForButtonCell:(BLMButtonCell *)cell;
 
 @end

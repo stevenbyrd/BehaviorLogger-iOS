@@ -167,12 +167,17 @@ static CGFloat const HeaderFontSize = 18.0;
     assert(self.item != NSNotFound);
 }
 
-#pragma mark BLMCollectionViewCellLayoutDelegate
 
 - (void)configureLabelSubviewsPreferredMaxLayoutWidth {
     self.label.preferredMaxLayoutWidth = CGRectGetWidth([self.label alignmentRectForFrame:self.label.frame]);
 }
 
+
++ (UIColor *)errorColor {
+    return [BLMViewUtils colorWithHexValue:BLMColorHexCodeRed alpha:1.0];
+}
+
+#pragma mark BLMCollectionViewCellLayoutDelegate
 
 - (NSArray<NSLayoutConstraint *> *)uniqueVerticalPositionConstraintsForSubview:(UIView *)subview {
     assert([BLMUtils isObject:subview equalToObject:self.label]);

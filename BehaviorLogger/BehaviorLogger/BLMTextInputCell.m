@@ -52,7 +52,7 @@
         return nil;
     }
     
-    _textField = [[BLMCollectionViewCellTextField alloc] initWithHorizontalPadding:8.0 verticalPadding:6.0];
+    _textField = [[BLMCollectionViewCellTextField alloc] initWithHorizontalPadding:5.0 verticalPadding:5.0];
 
     self.textField.delegate = self;
     self.textField.minimumFontSize = 10.0;
@@ -79,12 +79,22 @@
 - (void)handleEditingChangedForTextField:(UITextField *)textField {
     assert([BLMUtils isObject:textField equalToObject:self.textField]);
     [self.delegate didChangeInputForTextInputCell:self];
-    [self updateTextAttributes];
+    [self updateTextFieldColor];
 }
 
 
-- (void)updateTextAttributes {
-    NSDictionary *attributes = ([self.delegate shouldAcceptInputForTextInputCell:self] ? nil : [BLMTextInputCell errorAttributes]);
+- (void)updateTextFieldColor {
+    NSDictionary *attributes = nil;
+
+    if ([self.delegate shouldAcceptInputForTextInputCell:self]) {
+        self.textField.layer.borderWidth = 0.0;
+        self.textField.layer.borderColor = [BLMViewUtils colorWithHexValue:BLMColorHexCodeBlack alpha:1.0].CGColor;
+    } else {
+        attributes = [BLMTextInputCell errorAttributes];
+
+        self.textField.layer.borderWidth = 1.0;
+        self.textField.layer.borderColor = [BLMCollectionViewCell errorColor].CGColor;
+    }
 
     if (![BLMUtils isDictionary:attributes equalToDictionary:self.textField.defaultTextAttributes]) {
         self.textField.defaultTextAttributes = attributes;
@@ -99,7 +109,7 @@
     self.textField.text = [self.delegate defaultInputForTextInputCell:self];
     self.textField.attributedPlaceholder = [self.delegate attributedPlaceholderForTextInputCell:self];
 
-    [self updateTextAttributes];
+    [self updateTextFieldColor];
 }
 
 
@@ -108,7 +118,7 @@
     static dispatch_once_t onceToken;
 
     dispatch_once(&onceToken, ^{
-        errorAttributes = @{ NSForegroundColorAttributeName:[BLMViewUtils colorWithHexValue:BLMColorHexCodeRed alpha:1.0] };
+        errorAttributes = @{ NSForegroundColorAttributeName:[self errorColor] };
     });
 
     return errorAttributes;

@@ -66,6 +66,8 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
 
 @interface BehaviorCellBackgroundView : UIView
 
+@property (nonatomic, strong) UIColor *borderColor;
+
 @end
 
 
@@ -80,7 +82,20 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
 
     self.backgroundColor = [UIColor clearColor];
 
+    _borderColor = [BLMViewUtils colorWithHexValue:BLMColorHexCodeBlue alpha:1.0];
+
     return self;
+}
+
+
+- (void)setBorderColor:(UIColor *)borderColor {
+    if ([BLMUtils isObject:self.borderColor equalToObject:borderColor]) {
+        return;
+    }
+
+    _borderColor = borderColor;
+
+    [self setNeedsDisplay];
 }
 
 
@@ -137,7 +152,7 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
 
     path.lineWidth = 1.0;
 
-    [[BLMViewUtils colorWithHexValue:BLMColorHexCodeDarkBorder alpha:0.75] setStroke];
+    [self.borderColor setStroke];
 
     [path stroke];
 }
@@ -262,10 +277,38 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
 }
 
 
+- (void)dealloc {
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+}
+
+
+- (void)setBehavior:(BLMBehavior *)behavior {
+    assert([NSThread isMainThread]);
+
+    if (self.behavior != nil) {
+        [[NSNotificationCenter defaultCenter] removeObserver:self name:BLMBehaviorUpdatedNotification object:self.behavior];
+    }
+
+    _behavior = behavior;
+
+    if (behavior != nil) {
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleBehaviorUpdated:) name:BLMBehaviorUpdatedNotification object:behavior];
+    }
+}
+
+
 - (void)updateContent {
     [super updateContent];
 
+    [self updateBorderColor];
+
     self.toggleSwitch.on = self.behavior.isContinuous;
+}
+
+
+- (void)updateBorderColor {
+    BehaviorCellBackgroundView *backgroundView = (BehaviorCellBackgroundView *)self.backgroundView;
+    backgroundView.borderColor = ([self.delegate shouldAcceptInputForTextInputCell:self] ? [BLMViewUtils colorWithHexValue:BLMColorHexCodeBlue alpha:1.0] : [BLMCollectionViewCell errorColor]);
 }
 
 
@@ -285,26 +328,6 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
 }
 
 
-- (void)dealloc {
-    [[NSNotificationCenter defaultCenter] removeObserver:self];
-}
-
-
-- (void)setBehavior:(BLMBehavior *)behavior {
-    assert([NSThread isMainThread]);
-    
-    if (self.behavior != nil) {
-        [[NSNotificationCenter defaultCenter] removeObserver:self name:BLMBehaviorUpdatedNotification object:self.behavior];
-    }
-
-    _behavior = behavior;
-
-    if (behavior != nil) {
-        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleBehaviorUpdated:) name:BLMBehaviorUpdatedNotification object:behavior];
-    }
-}
-
-
 - (void)handleBehaviorUpdated:(NSNotification *)notification {
     BLMBehavior *updatedBehavior = notification.userInfo[BLMBehaviorNewBehaviorUserInfoKey];
     assert([BLMUtils isObject:updatedBehavior equalToObject:[[BLMDataManager sharedManager] behaviorForUUID:self.behavior.UUID]]);
@@ -314,14 +337,14 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
     [self updateContent];
 }
 
-#pragma mark BLMCollectionViewCellLayoutDelegate
 
 - (void)configureLabelSubviewsPreferredMaxLayoutWidth {
     [super configureLabelSubviewsPreferredMaxLayoutWidth];
-    
+
     self.toggleSwitchLabel.preferredMaxLayoutWidth = CGRectGetWidth([self.toggleSwitchLabel alignmentRectForFrame:self.toggleSwitchLabel.frame]);
 }
 
+#pragma mark BLMCollectionViewCellLayoutDelegate
 
 - (NSArray<NSLayoutConstraint *> *)uniqueVerticalPositionConstraintsForSubview:(UIView *)subview {
     NSMutableArray *constraints = [NSMutableArray array];
@@ -874,7 +897,7 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
                     .Insets = ItemAreaStandardInsets,
                     .Grid = {
                         .ColumnCount = 4,
-                        .ColumnSpacing = 15.0,
+                        .ColumnSpacing = 12.0,
                         .RowSpacing = 10.0,
                         .RowHeight = 105.0,
                         .Insets = {
@@ -1047,7 +1070,7 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
             break;
 
         case BLMProjectDetailSectionBehaviors:
-            placeholder = [NSString stringWithFormat:@"Name (%lu+ characters)", (unsigned long)[self minimumInputLengthForTextInputCell:cell]];
+            placeholder = [NSString stringWithFormat:@"%lu+ characters", (unsigned long)[self minimumInputLengthForTextInputCell:cell]];
             attributes = [BLMTextInputCell errorAttributes];
             break;
 
@@ -1123,6 +1146,8 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
             if ([BLMUtils isObject:UUID equalToObject:self.addedBehaviorUUID]) { // Update the added behavior on every cell text change, but ignore established behaviors' cells until they call didAcceptInputForTextInputCell:
                 [[BLMDataManager sharedManager] updateBehaviorForUUID:UUID property:BLMBehaviorPropertyName value:cell.textField.text completion:nil];
             }
+
+            [behaviorCell updateBorderColor];
             break;
         }
 
@@ -1255,8 +1280,6 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
 
 
 - (void)didChangeToggleSwitchStateForBehaviorCell:(BehaviorCell *)cell {
-    assert(cell.toggleSwitch.isOn != cell.behavior.isContinuous);
-    
     [[BLMDataManager sharedManager] updateBehaviorForUUID:cell.behavior.UUID property:BLMBehaviorPropertyContinuous value:@(cell.toggleSwitch.isOn) completion:nil];
 }
 
@@ -1281,49 +1304,21 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
 }
 
 
-- (UIImage *)normalImageForButtonCell:(BLMButtonCell *)cell {
+- (UIImage *)imageForButtonCell:(BLMButtonCell *)cell forState:(UIControlState)state {
     switch ((BLMProjectDetailSection)cell.section) {
         case BLMProjectDetailSectionBehaviors: {
-            assert(cell.item == ([self.collectionView numberOfItemsInSection:BLMProjectDetailSectionBehaviors] - 1));
+            assert(cell.item == self.indexPathForAddBehaviorButtonCell.item);
 
-            static UIImage *normalPlusSignImage;
-            static dispatch_once_t onceToken;
-
-            dispatch_once(&onceToken, ^{
-                normalPlusSignImage = [BLMViewUtils plusSignImageWithColor:[BLMViewUtils colorWithHexValue:BLMColorHexCodeGreen alpha:1.0]];
-            });
-
-            return normalPlusSignImage;
-        }
-
-        case BLMProjectDetailSectionActionButtons:
-            break;
-
-        case BLMProjectDetailSectionBasicInfo:
-        case BLMProjectDetailSectionSessionProperties:
-        case BLMProjectDetailSectionCount: {
-            assert(NO);
-            break;
-        }
-    }
-
-    return nil;
-}
-
-
-- (UIImage *)highlightedImageForButtonCell:(BLMButtonCell *)cell {
-    switch ((BLMProjectDetailSection)cell.section) {
-        case BLMProjectDetailSectionBehaviors: {
-            assert(cell.item == ([self.collectionView numberOfItemsInSection:BLMProjectDetailSectionBehaviors] - 1));
-
-            static UIImage *highlightedPlusSignImage;
-            static dispatch_once_t onceToken;
+            static UIImage *highlightedPlusSignImage = nil;
+            static UIImage *normalPlusSignImage = nil;
+            static dispatch_once_t onceToken = 0;
 
             dispatch_once(&onceToken, ^{
                 highlightedPlusSignImage = [BLMViewUtils plusSignImageWithColor:[BLMViewUtils colorWithHexValue:BLMColorHexCodePurple alpha:1.0]];
+                normalPlusSignImage = [BLMViewUtils plusSignImageWithColor:[BLMViewUtils colorWithHexValue:BLMColorHexCodeGreen alpha:1.0]];
             });
 
-            return highlightedPlusSignImage;
+            return ((state == UIControlStateNormal) ? normalPlusSignImage : highlightedPlusSignImage);
         }
 
         case BLMProjectDetailSectionActionButtons:
@@ -1341,63 +1336,30 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
 }
 
 
-- (UIEdgeInsets)imageInsetsForButtonCell:(BLMButtonCell *)cell {
+- (NSAttributedString *)attributedTitleForButtonCell:(BLMButtonCell *)cell forState:(UIControlState)state {
     switch ((BLMProjectDetailSection)cell.section) {
-        case BLMProjectDetailSectionBehaviors:
-            // TODO: Adjust to move add behavior button cell title down below its image
-            break;
+        case BLMProjectDetailSectionBehaviors: {
+            assert(cell.item == self.indexPathForAddBehaviorButtonCell.item);
 
-        case BLMProjectDetailSectionActionButtons:
-            break;
+            BLMColorHexCode colorHexValue = ((state == UIControlStateNormal) ? BLMColorHexCodeGreen : BLMColorHexCodePurple);
+            NSDictionary *attributes = @{ NSForegroundColorAttributeName:[BLMViewUtils colorWithHexValue:colorHexValue alpha:1.0], NSFontAttributeName:[UIFont boldSystemFontOfSize:20.0] };
 
-        case BLMProjectDetailSectionBasicInfo:
-        case BLMProjectDetailSectionSessionProperties:
-        case BLMProjectDetailSectionCount: {
-            assert(NO);
-            break;
+            return [[NSAttributedString alloc] initWithString:@"Add Behavior" attributes:attributes];
         }
-    }
-
-    return UIEdgeInsetsZero;
-}
-
-
-- (UIEdgeInsets)titleInsetsForButtonCell:(BLMButtonCell *)cell {
-    switch ((BLMProjectDetailSection)cell.section) {
-        case BLMProjectDetailSectionBehaviors:
-            // TODO: Adjust to move add behavior button cell title down below its image
-            break;
-
-        case BLMProjectDetailSectionActionButtons:
-            break;
-
-        case BLMProjectDetailSectionBasicInfo:
-        case BLMProjectDetailSectionSessionProperties:
-        case BLMProjectDetailSectionCount: {
-            assert(NO);
-            break;
-        }
-    }
-
-    return UIEdgeInsetsZero;
-}
-
-
-- (NSString *)titleForButtonCell:(BLMButtonCell *)cell {
-    switch ((BLMProjectDetailSection)cell.section) {
-        case BLMProjectDetailSectionBehaviors:
-            return @"New";
 
         case BLMProjectDetailSectionActionButtons: {
+            BLMColorHexCode colorHexValue = ((state == UIControlStateNormal) ? BLMColorHexCodeBlue : BLMColorHexCodePurple);
+            NSDictionary *attributes = @{ NSForegroundColorAttributeName:[BLMViewUtils colorWithHexValue:colorHexValue alpha:1.0] };
+
             switch ((ActionButtonsSectionItem)cell.item) {
                 case ActionButtonsSectionItemCreateSession:
-                    return @"Create Session";
+                    return [[NSAttributedString alloc] initWithString:@"Create Session" attributes:attributes];
 
                 case ActionButtonsSectionItemViewSessionHistory:
-                    return @"View Session History";
+                    return [[NSAttributedString alloc] initWithString:@"View Session History" attributes:attributes];
 
                 case ActionButtonsSectionItemDeleteProject:
-                    return @"Delete Project";
+                    return [[NSAttributedString alloc] initWithString:@"Delete Project" attributes:attributes];
 
                 case ActionButtonsSectionItemCount: {
                     assert(NO);
@@ -1470,10 +1432,13 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
             switch ((ActionButtonsSectionItem)cell.item) {
                 case ActionButtonsSectionItemCreateSession:
                     break;
+
                 case ActionButtonsSectionItemViewSessionHistory:
                     break;
+
                 case ActionButtonsSectionItemDeleteProject:
                     break;
+
                 case ActionButtonsSectionItemCount: {
                     assert(NO);
                     break;

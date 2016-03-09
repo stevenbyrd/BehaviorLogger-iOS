@@ -18,7 +18,8 @@ typedef NS_ENUM(NSUInteger, BLMColorHexCode) {
     BLMColorHexCodeBrown = 0x643820,
     BLMColorHexCodeGreen = 0x007400,
     BLMColorHexCodeRed = 0xc41a16,
-    BLMColorHexCodePurple = 0x9529f7
+    BLMColorHexCodePurple = 0x9529f7,
+    BLMColorHexCodeBlack = 0x000000
 };
 
 
