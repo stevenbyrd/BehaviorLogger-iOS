@@ -129,6 +129,20 @@ extern CGFloat const BLMCollectionViewRoundedCornerRadius;
 
 #pragma mark
 
+@class BLMCollectionView;
+
+
+@protocol BLMCollectionViewLayoutDelegate <UICollectionViewDelegate>
+
+- (BLMCollectionViewSectionLayout)collectionView:(BLMCollectionView *)collectionView layoutForSection:(NSUInteger)section;
+
+@end
+
+
+#pragma mark
+
 @interface BLMCollectionView : UICollectionView
+
+@property (nonatomic, weak) id<BLMCollectionViewLayoutDelegate> delegate;
 
 @end

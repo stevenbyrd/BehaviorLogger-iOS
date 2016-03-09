@@ -200,4 +200,6 @@ static CGFloat const HeaderFontSize = 18.0;
 
 @implementation BLMCollectionView
 
+@dynamic delegate;
+
 @end

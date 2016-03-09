@@ -7,13 +7,13 @@
 //
 
 #import "BLMCollectionView.h"
+#import "BLMProjectDetailController.h"
 #import "BLMProjectDetailCollectionViewLayout.h"
 #import "BLMUtils.h"
 
 
 @interface BLMProjectDetailCollectionViewLayout ()
 
-@property (nonatomic, weak) id<BLMProjectDetailCollectionViewLayoutDelegate> layoutDelegate;
 @property (nonatomic, assign) CGSize collectionViewContentSize;
 @property (nonatomic, copy) NSMutableArray<NSValue *> *sectionFrameList;
 @property (nonatomic, copy) NSMutableDictionary<NSString *, NSMutableDictionary<NSIndexPath *, UICollectionViewLayoutAttributes *> *> *attributesByIndexPathByKind;
@@ -27,8 +27,11 @@
 
 @implementation BLMProjectDetailCollectionViewLayout
 
+@dynamic collectionView;
+
 - (instancetype)init {
     self = [super init];
+
     if (self == nil)
         return nil;
 
@@ -76,7 +79,7 @@
             }
         };
 
-        BLMCollectionViewSectionLayout const Layout = [self.layoutDelegate projectDetailCollectionViewLayout:self layoutForSection:section];
+        BLMCollectionViewSectionLayout const Layout = [self.collectionView.delegate collectionView:self.collectionView layoutForSection:section];
 
         if (Layout.Header.Height > 0) {
             NSIndexPath *indexPath = [NSIndexPath indexPathForItem:0 inSection:section];
@@ -145,13 +148,15 @@
             };
 
             for (NSInteger item = 0; item < itemCount; item += 1) {
+                NSUInteger itemRow = (item / Layout.ItemArea.Grid.ColumnCount);
+                NSUInteger itemColumn = (item % Layout.ItemArea.Grid.ColumnCount);
                 NSIndexPath *indexPath = [NSIndexPath indexPathForItem:item inSection:section];
                 UICollectionViewLayoutAttributes *attributes = [UICollectionViewLayoutAttributes layoutAttributesForCellWithIndexPath:indexPath];
 
                 attributes.frame = (CGRect) {
                     .origin = {
-                        .x = (CGRectGetMinX(itemGridFrame) + ((itemSize.width + Layout.ItemArea.Grid.ColumnSpacing) * [self columnForItem:item section:section])), // Move from left edge to appropriate column
-                        .y = (CGRectGetMinY(itemGridFrame) + ((Layout.ItemArea.Grid.RowHeight + Layout.ItemArea.Grid.RowSpacing) * [self rowForItem:item section:section])) // Move from top edge to appropriate row
+                        .x = (CGRectGetMinX(itemGridFrame) + ((itemSize.width + Layout.ItemArea.Grid.ColumnSpacing) * itemColumn)), // Move from left edge to appropriate column
+                        .y = (CGRectGetMinY(itemGridFrame) + ((Layout.ItemArea.Grid.RowHeight + Layout.ItemArea.Grid.RowSpacing) * itemRow)) // Move from top edge to appropriate row
                     },
                     .size = itemSize
                 };
@@ -267,7 +272,7 @@
 
             for (NSIndexPath *originalIndexPath in self.reloadedIndexPathByOriginalIndexPath) {
                 if ([BLMUtils isObject:self.reloadedIndexPathByOriginalIndexPath[originalIndexPath] equalToObject:indexPath]) {
-                    initialAttributes = [self.previousAttributesByIndexPathByKind[BLMCollectionViewKindItemCell][originalIndexPath] copy];
+                    initialAttributes = self.previousAttributesByIndexPathByKind[BLMCollectionViewKindItemCell][originalIndexPath];
                     break;
                 }
             }
@@ -359,28 +364,6 @@
 
 - (BOOL)shouldInvalidateLayoutForBoundsChange:(CGRect)newBounds {
     return (CGRectGetWidth(newBounds) != CGRectGetWidth(self.collectionView.bounds));
-}
-
-
-- (id<BLMProjectDetailCollectionViewLayoutDelegate>)layoutDelegate {
-    return (id<BLMProjectDetailCollectionViewLayoutDelegate>)self.collectionView.delegate;
-}
-
-#pragma mark Layout Utilities
-
-- (NSUInteger)columnForItem:(NSUInteger)item section:(BLMProjectDetailSection)section {
-    BLMCollectionViewSectionLayout layout = [self.layoutDelegate projectDetailCollectionViewLayout:self layoutForSection:section];
-    NSUInteger columnCount = layout.ItemArea.Grid.ColumnCount;
-    
-    return (item % columnCount);
-}
-
-
-- (NSUInteger)rowForItem:(NSUInteger)item section:(BLMProjectDetailSection)section {
-    BLMCollectionViewSectionLayout layout = [self.layoutDelegate projectDetailCollectionViewLayout:self layoutForSection:section];
-    NSUInteger columnCount = layout.ItemArea.Grid.ColumnCount;
-    
-    return (item / columnCount);
 }
 
 @end

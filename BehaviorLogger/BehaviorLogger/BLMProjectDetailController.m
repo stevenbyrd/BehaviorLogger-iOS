@@ -354,7 +354,7 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
 
 #pragma mark
 
-@interface BLMProjectDetailController () <UICollectionViewDataSource, BLMProjectDetailCollectionViewLayoutDelegate, BehaviorCellDelegate, BLMButtonCellDelegate>
+@interface BLMProjectDetailController () <UICollectionViewDataSource, BLMCollectionViewLayoutDelegate, BehaviorCellDelegate, BLMButtonCellDelegate>
 
 @property (nonatomic, strong, readonly) BLMCollectionView *collectionView;
 @property (nonatomic, strong) NSUUID *addedBehaviorUUID;
@@ -806,10 +806,10 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
     return view;
 }
 
-#pragma mark ProjectDetailCollectionViewLayoutDelegate
+#pragma mark UICollectionViewDelegate / BLMCollectionViewLayoutDelegate
 
-- (BLMCollectionViewSectionLayout)projectDetailCollectionViewLayout:(BLMProjectDetailCollectionViewLayout *)layout layoutForSection:(BLMProjectDetailSection)section {
-    switch (section) {
+- (BLMCollectionViewSectionLayout)collectionView:(BLMCollectionView *)collectionView layoutForSection:(NSUInteger)section {
+    switch ((BLMProjectDetailSection)section) {
         case BLMProjectDetailSectionBasicInfo: {
             return (BLMCollectionViewSectionLayout) {
                 .Header = {

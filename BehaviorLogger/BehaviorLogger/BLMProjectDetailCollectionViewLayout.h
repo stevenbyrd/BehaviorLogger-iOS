@@ -6,21 +6,14 @@
 //  Copyright © 2016 3Bird. All rights reserved.
 //
 
-#import "BLMProjectDetailController.h"
+#import <UIKit/UIKit.h>
 
 
-@class BLMProjectDetailCollectionViewLayout;
+@class BLMCollectionView;
 
-
-@protocol BLMProjectDetailCollectionViewLayoutDelegate <UICollectionViewDelegate>
-
-- (BLMCollectionViewSectionLayout)projectDetailCollectionViewLayout:(BLMProjectDetailCollectionViewLayout *)layout layoutForSection:(BLMProjectDetailSection)section;
-
-@end
-
-
-#pragma mark
 
 @interface BLMProjectDetailCollectionViewLayout : UICollectionViewLayout
+
+@property (nullable, nonatomic, readonly) BLMCollectionView *collectionView;
 
 @end
