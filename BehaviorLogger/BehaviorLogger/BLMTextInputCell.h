@@ -9,31 +9,6 @@
 #import "BLMCollectionView.h"
 
 
-@class BLMCollectionViewCellTextField;
-
-
-@protocol BLMCollectionViewCellTextFieldDelegate <UITextFieldDelegate>
-
-- (NSIndexPath *)indexPathForCollectionViewCellTextField:(BLMCollectionViewCellTextField *)textField;
-
-@end
-
-
-#pragma mark 
-
-@interface BLMCollectionViewCellTextField : UITextField
-
-@property (nonatomic, weak) id<BLMCollectionViewCellTextFieldDelegate> delegate;
-@property (nonatomic, assign, readonly) CGFloat horizontalPadding;
-@property (nonatomic, assign, readonly) CGFloat verticalPadding;
-
-- (instancetype)initWithHorizontalPadding:(CGFloat)horizontalPadding verticalPadding:(CGFloat)verticalPadding;
-
-@end
-
-
-#pragma mark 
-
 @class BLMTextInputCell;
 
 
@@ -50,11 +25,14 @@
 @end
 
 
-#pragma mark 
+#pragma mark
 
-@interface BLMTextInputCell : BLMCollectionViewCell <BLMCollectionViewCellTextFieldDelegate>
+@class BLMTextField;
 
-@property (nonatomic, strong, readonly) BLMCollectionViewCellTextField *textField;
+
+@interface BLMTextInputCell : BLMCollectionViewCell
+
+@property (nonatomic, strong, readonly) BLMTextField *textField;
 @property (nonatomic, weak) id<BLMTextInputCellDelegate> delegate;
 
 - (void)updateTextFieldColor;

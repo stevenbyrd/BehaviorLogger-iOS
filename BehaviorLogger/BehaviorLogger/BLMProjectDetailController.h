@@ -9,21 +9,10 @@
 #import <UIKit/UIKit.h>
 
 
-typedef NS_ENUM(NSUInteger, BLMProjectDetailSection) {
-    BLMProjectDetailSectionBasicInfo,
-    BLMProjectDetailSectionSessionProperties,
-    BLMProjectDetailSectionBehaviors,
-    BLMProjectDetailSectionActionButtons,
-    BLMProjectDetailSectionCount
-};
-
-
 @class BLMProject;
 
 
 @interface BLMProjectDetailController : UIViewController
-
-@property (nonatomic, strong, readonly) NSUUID *projectUUID;
 
 - (instancetype)initWithProject:(BLMProject *)project;
 

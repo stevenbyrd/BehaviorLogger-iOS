@@ -10,7 +10,6 @@
 		AA0D49F21C902C9C00EFEB96 /* BLMSessionConfiguration.m in Sources */ = {isa = PBXBuildFile; fileRef = AA0D49F11C902C9C00EFEB96 /* BLMSessionConfiguration.m */; };
 		AA103CA11C5C5368006D2BC0 /* BLMUtils.m in Sources */ = {isa = PBXBuildFile; fileRef = AA103CA01C5C5368006D2BC0 /* BLMUtils.m */; };
 		AA103CA41C5CBF90006D2BC0 /* BLMBehavior.m in Sources */ = {isa = PBXBuildFile; fileRef = AA103CA31C5CBF90006D2BC0 /* BLMBehavior.m */; };
-		AA6A539F1C8E93B900422078 /* BLMProjectDetailCollectionViewLayout.m in Sources */ = {isa = PBXBuildFile; fileRef = AA6A539E1C8E93B900422078 /* BLMProjectDetailCollectionViewLayout.m */; };
 		AA6A53A21C8E985200422078 /* BLMCollectionView.m in Sources */ = {isa = PBXBuildFile; fileRef = AA6A53A11C8E985200422078 /* BLMCollectionView.m */; };
 		AA6A53A51C8F008C00422078 /* NSArray+CopyMinusObject.m in Sources */ = {isa = PBXBuildFile; fileRef = AA6A53A41C8F008C00422078 /* NSArray+CopyMinusObject.m */; };
 		AA848FFE1C8C251E0037EF80 /* UIResponder+FirstResponder.m in Sources */ = {isa = PBXBuildFile; fileRef = AA848FFD1C8C251E0037EF80 /* UIResponder+FirstResponder.m */; };
@@ -24,6 +23,7 @@
 		AABA338F1C3DC58A0086A9A1 /* BLMSession.m in Sources */ = {isa = PBXBuildFile; fileRef = AABA338E1C3DC58A0086A9A1 /* BLMSession.m */; };
 		AABA33921C3DCF990086A9A1 /* BLMProjectMenuController.m in Sources */ = {isa = PBXBuildFile; fileRef = AABA33911C3DCF990086A9A1 /* BLMProjectMenuController.m */; };
 		AABA33951C3DD0660086A9A1 /* BLMProjectDetailController.m in Sources */ = {isa = PBXBuildFile; fileRef = AABA33941C3DD0660086A9A1 /* BLMProjectDetailController.m */; };
+		AADCDD1E1C93D93D003CADD6 /* BLMTextField.m in Sources */ = {isa = PBXBuildFile; fileRef = AADCDD1D1C93D93D003CADD6 /* BLMTextField.m */; };
 		AAE8CB651C61C1E5008FF024 /* BLMTextInputCell.m in Sources */ = {isa = PBXBuildFile; fileRef = AAE8CB641C61C1E5008FF024 /* BLMTextInputCell.m */; };
 		AAE8CB691C61F178008FF024 /* BLMButtonCell.m in Sources */ = {isa = PBXBuildFile; fileRef = AAE8CB681C61F178008FF024 /* BLMButtonCell.m */; };
 /* End PBXBuildFile section */
@@ -35,8 +35,6 @@
 		AA103CA01C5C5368006D2BC0 /* BLMUtils.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BLMUtils.m; sourceTree = "<group>"; };
 		AA103CA21C5CBF90006D2BC0 /* BLMBehavior.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BLMBehavior.h; sourceTree = "<group>"; };
 		AA103CA31C5CBF90006D2BC0 /* BLMBehavior.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BLMBehavior.m; sourceTree = "<group>"; };
-		AA6A539D1C8E93B900422078 /* BLMProjectDetailCollectionViewLayout.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BLMProjectDetailCollectionViewLayout.h; sourceTree = "<group>"; };
-		AA6A539E1C8E93B900422078 /* BLMProjectDetailCollectionViewLayout.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BLMProjectDetailCollectionViewLayout.m; sourceTree = "<group>"; };
 		AA6A53A01C8E985200422078 /* BLMCollectionView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BLMCollectionView.h; sourceTree = "<group>"; };
 		AA6A53A11C8E985200422078 /* BLMCollectionView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BLMCollectionView.m; sourceTree = "<group>"; };
 		AA6A53A31C8F008C00422078 /* NSArray+CopyMinusObject.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSArray+CopyMinusObject.h"; sourceTree = "<group>"; };
@@ -62,6 +60,8 @@
 		AABA33911C3DCF990086A9A1 /* BLMProjectMenuController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BLMProjectMenuController.m; sourceTree = "<group>"; };
 		AABA33931C3DD0660086A9A1 /* BLMProjectDetailController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BLMProjectDetailController.h; sourceTree = "<group>"; };
 		AABA33941C3DD0660086A9A1 /* BLMProjectDetailController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BLMProjectDetailController.m; sourceTree = "<group>"; };
+		AADCDD1C1C93D93D003CADD6 /* BLMTextField.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BLMTextField.h; sourceTree = "<group>"; };
+		AADCDD1D1C93D93D003CADD6 /* BLMTextField.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BLMTextField.m; sourceTree = "<group>"; };
 		AAE8CB631C61C1E5008FF024 /* BLMTextInputCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BLMTextInputCell.h; sourceTree = "<group>"; };
 		AAE8CB641C61C1E5008FF024 /* BLMTextInputCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BLMTextInputCell.m; sourceTree = "<group>"; };
 		AAE8CB671C61F178008FF024 /* BLMButtonCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BLMButtonCell.h; sourceTree = "<group>"; };
@@ -79,17 +79,6 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		AA6A539C1C8E938700422078 /* Project Detail */ = {
-			isa = PBXGroup;
-			children = (
-				AA6A539D1C8E93B900422078 /* BLMProjectDetailCollectionViewLayout.h */,
-				AA6A539E1C8E93B900422078 /* BLMProjectDetailCollectionViewLayout.m */,
-				AABA33931C3DD0660086A9A1 /* BLMProjectDetailController.h */,
-				AABA33941C3DD0660086A9A1 /* BLMProjectDetailController.m */,
-			);
-			name = "Project Detail";
-			sourceTree = "<group>";
-		};
 		AA848FFB1C8C24EB0037EF80 /* Categories */ = {
 			isa = PBXGroup;
 			children = (
@@ -104,12 +93,9 @@
 		AA98B0D11C6056B4009B7698 /* Views */ = {
 			isa = PBXGroup;
 			children = (
-				AA6A53A01C8E985200422078 /* BLMCollectionView.h */,
-				AA6A53A11C8E985200422078 /* BLMCollectionView.m */,
-				AAE8CB631C61C1E5008FF024 /* BLMTextInputCell.h */,
-				AAE8CB641C61C1E5008FF024 /* BLMTextInputCell.m */,
-				AAE8CB671C61F178008FF024 /* BLMButtonCell.h */,
-				AAE8CB681C61F178008FF024 /* BLMButtonCell.m */,
+				AADCDD1F1C93DB3C003CADD6 /* Collection View */,
+				AADCDD1C1C93D93D003CADD6 /* BLMTextField.h */,
+				AADCDD1D1C93D93D003CADD6 /* BLMTextField.m */,
 			);
 			name = Views;
 			sourceTree = "<group>";
@@ -172,7 +158,8 @@
 			children = (
 				AABA33901C3DCF990086A9A1 /* BLMProjectMenuController.h */,
 				AABA33911C3DCF990086A9A1 /* BLMProjectMenuController.m */,
-				AA6A539C1C8E938700422078 /* Project Detail */,
+				AABA33931C3DD0660086A9A1 /* BLMProjectDetailController.h */,
+				AABA33941C3DD0660086A9A1 /* BLMProjectDetailController.m */,
 			);
 			name = Controllers;
 			sourceTree = "<group>";
@@ -192,6 +179,19 @@
 				AA0D49F11C902C9C00EFEB96 /* BLMSessionConfiguration.m */,
 			);
 			name = Models;
+			sourceTree = "<group>";
+		};
+		AADCDD1F1C93DB3C003CADD6 /* Collection View */ = {
+			isa = PBXGroup;
+			children = (
+				AA6A53A01C8E985200422078 /* BLMCollectionView.h */,
+				AA6A53A11C8E985200422078 /* BLMCollectionView.m */,
+				AAE8CB631C61C1E5008FF024 /* BLMTextInputCell.h */,
+				AAE8CB641C61C1E5008FF024 /* BLMTextInputCell.m */,
+				AAE8CB671C61F178008FF024 /* BLMButtonCell.h */,
+				AAE8CB681C61F178008FF024 /* BLMButtonCell.m */,
+			);
+			name = "Collection View";
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -278,7 +278,7 @@
 				AABA33431C3D2FB10086A9A1 /* BLMAppDelegate.m in Sources */,
 				AABA33921C3DCF990086A9A1 /* BLMProjectMenuController.m in Sources */,
 				AA6A53A51C8F008C00422078 /* NSArray+CopyMinusObject.m in Sources */,
-				AA6A539F1C8E93B900422078 /* BLMProjectDetailCollectionViewLayout.m in Sources */,
+				AADCDD1E1C93D93D003CADD6 /* BLMTextField.m in Sources */,
 				AABA33401C3D2FB10086A9A1 /* main.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

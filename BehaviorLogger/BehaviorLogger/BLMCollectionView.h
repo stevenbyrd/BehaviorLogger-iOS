@@ -69,10 +69,10 @@ typedef struct BLMCollectionViewSectionLayout {
 extern BLMCollectionViewSectionLayout const BLMCollectionViewSectionLayoutNull;
 
 
-extern NSString *const BLMCollectionViewKindHeader;
-extern NSString *const BLMCollectionViewKindItemAreaBackground;
-extern NSString *const BLMCollectionViewKindItemCell;
-extern NSString *const BLMCollectionViewKindFooter;
+extern NSString * _Nonnull const BLMCollectionViewKindHeader;
+extern NSString * _Nonnull const BLMCollectionViewKindItemAreaBackground;
+extern NSString * _Nonnull const BLMCollectionViewKindItemCell;
+extern NSString * _Nonnull const BLMCollectionViewKindFooter;
 
 
 extern CGFloat const BLMCollectionViewRoundedCornerRadius;
@@ -82,7 +82,7 @@ extern CGFloat const BLMCollectionViewRoundedCornerRadius;
 
 @interface BLMSectionHeaderView : UICollectionReusableView
 
-@property (nonatomic, strong, readonly) UILabel *label;
+@property (nonnull, nonatomic, strong, readonly) UILabel *label;
 
 @end
 
@@ -105,8 +105,8 @@ extern CGFloat const BLMCollectionViewRoundedCornerRadius;
 
 @protocol BLMCollectionViewCellLayoutDelegate <NSObject>
 
-- (NSArray<NSLayoutConstraint *> *)uniqueVerticalPositionConstraintsForSubview:(UIView *)subview;
-- (NSArray<NSLayoutConstraint *> *)uniqueHorizontalPositionConstraintsForSubview:(UIView *)subview;
+- (nonnull NSArray<NSLayoutConstraint *> *)uniqueVerticalPositionConstraintsForSubview:(nonnull UIView *)subview;
+- (nonnull NSArray<NSLayoutConstraint *> *)uniqueHorizontalPositionConstraintsForSubview:(nonnull UIView *)subview;
 
 @end
 
@@ -115,8 +115,8 @@ extern CGFloat const BLMCollectionViewRoundedCornerRadius;
 
 @interface BLMCollectionViewCell : UICollectionViewCell <BLMCollectionViewCellLayoutDelegate>
 
-@property (nonatomic, strong, readonly) UILabel *label;
-@property (nonatomic, strong, readonly) NSIndexPath *indexPath;
+@property (nonnull, nonatomic, strong, readonly) UILabel *label;
+@property (nonnull, nonatomic, strong, readonly) NSIndexPath *indexPath;
 
 @property (nonatomic, assign) NSInteger section;
 @property (nonatomic, assign) NSInteger item;
@@ -124,7 +124,7 @@ extern CGFloat const BLMCollectionViewRoundedCornerRadius;
 - (void)updateContent;
 - (void)configureLabelSubviewsPreferredMaxLayoutWidth;
 
-+ (UIColor *)errorColor;
++ (nonnull UIColor *)errorColor;
 
 @end
 
@@ -136,7 +136,7 @@ extern CGFloat const BLMCollectionViewRoundedCornerRadius;
 
 @protocol BLMCollectionViewLayoutDelegate <UICollectionViewDelegate>
 
-- (BLMCollectionViewSectionLayout)collectionView:(BLMCollectionView *)collectionView layoutForSection:(NSUInteger)section;
+- (BLMCollectionViewSectionLayout)collectionView:(nonnull BLMCollectionView *)collectionView layoutForSection:(NSUInteger)section;
 
 @end
 
@@ -145,6 +145,15 @@ extern CGFloat const BLMCollectionViewRoundedCornerRadius;
 
 @interface BLMCollectionView : UICollectionView
 
-@property (nonatomic, weak) id<BLMCollectionViewLayoutDelegate> delegate;
+@property (nullable, nonatomic, weak) id<BLMCollectionViewLayoutDelegate> delegate;
+
+@end
+
+
+#pragma mark
+
+@interface BLMCollectionViewLayout : UICollectionViewLayout
+
+@property (nullable, nonatomic, readonly) BLMCollectionView *collectionView;
 
 @end

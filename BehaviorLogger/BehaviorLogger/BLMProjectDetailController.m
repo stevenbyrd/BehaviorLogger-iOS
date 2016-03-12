@@ -9,19 +9,15 @@
 #import "BLMBehavior.h"
 #import "BLMButtonCell.h"
 #import "BLMCollectionView.h"
-#import "BLMCollectionView.h"
 #import "BLMDataManager.h"
-#import "BLMProject.h"
-#import "BLMProjectDetailCollectionViewLayout.h"
 #import "BLMProjectDetailController.h"
 #import "BLMProjectMenuController.h"
-#import "BLMSession.h"
 #import "BLMTextInputCell.h"
+#import "BLMTextField.h"
 #import "BLMUtils.h"
 #import "BLMViewUtils.h"
 
 #import "NSArray+CopyMinusObject.h"
-#import "UIResponder+FirstResponder.h"
 
 
 #pragma mark Constants
@@ -38,27 +34,36 @@ static CGFloat const BehaviorCellDeleteButtonImageRadius = 12.0;
 static CGFloat const BehaviorCellDeleteButtonOffset = ((2 * BehaviorCellDeleteButtonImageRadius) / 3.0);
 
 
-typedef NS_ENUM(NSInteger, BasicInfoSectionItem) {
-    BasicInfoSectionItemProjectName,
-    BasicInfoSectionItemClientName,
-    BasicInfoSectionItemCount
+typedef NS_ENUM(NSUInteger, Section) {
+    SectionBasicProperties,
+    SectionSessionProperties,
+    SectionBehaviors,
+    SectionActionButtons,
+    SectionCount
 };
 
 
-typedef NS_ENUM(NSInteger, SessionPropertiesSectionItem) {
-    SessionPropertiesSectionItemCondition,
-    SessionPropertiesSectionItemLocation,
-    SessionPropertiesSectionItemTherapist,
-    SessionPropertiesSectionItemObserver,
-    SessionPropertiesSectionItemCount
+typedef NS_ENUM(NSUInteger, BasicInfo) {
+    BasicInfoProjectName,
+    BasicInfoClientName,
+    BasicInfoCount
 };
 
 
-typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
-    ActionButtonsSectionItemCreateSession,
-    ActionButtonsSectionItemViewSessionHistory,
-    ActionButtonsSectionItemDeleteProject,
-    ActionButtonsSectionItemCount
+typedef NS_ENUM(NSUInteger, SessionConfigurationInfo) {
+    SessionConfigurationInfoCondition,
+    SessionConfigurationInfoLocation,
+    SessionConfigurationInfoTherapist,
+    SessionConfigurationInfoObserver,
+    SessionConfigurationInfoCount
+};
+
+
+typedef NS_ENUM(NSUInteger, ActionButton) {
+    ActionButtonCreateSession,
+    ActionButtonViewSessionHistory,
+    ActionButtonDeleteProject,
+    ActionButtonCount
 };
 
 
@@ -379,6 +384,7 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
 
 @interface BLMProjectDetailController () <UICollectionViewDataSource, BLMCollectionViewLayoutDelegate, BehaviorCellDelegate, BLMButtonCellDelegate>
 
+@property (nonatomic, strong, readonly) NSUUID *projectUUID;
 @property (nonatomic, strong, readonly) BLMCollectionView *collectionView;
 @property (nonatomic, strong) NSUUID *addedBehaviorUUID;
 
@@ -413,7 +419,7 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
     self.navigationItem.title = @"Project Details";
     self.edgesForExtendedLayout = UIRectEdgeNone;
 
-    _collectionView = [[BLMCollectionView alloc] initWithFrame:CGRectZero collectionViewLayout:[[BLMProjectDetailCollectionViewLayout alloc] init]];
+    _collectionView = [[BLMCollectionView alloc] initWithFrame:CGRectZero];
 
     [self.collectionView registerClass:[BLMSectionHeaderView class] forSupplementaryViewOfKind:BLMCollectionViewKindHeader withReuseIdentifier:NSStringFromClass([BLMSectionHeaderView class])];
     [self.collectionView registerClass:[BLMSectionSeparatorFooterView class] forSupplementaryViewOfKind:BLMCollectionViewKindFooter withReuseIdentifier:NSStringFromClass([BLMSectionSeparatorFooterView class])];
@@ -433,8 +439,6 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
     [self.view addSubview:self.collectionView];
     [self.view addConstraints:[BLMViewUtils constraintsForItem:self.collectionView equalToItem:self.view]];
 
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleKeyboardWillShow:) name:UIKeyboardWillShowNotification object:nil];
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleKeyboardWillHide:) name:UIKeyboardWillHideNotification object:nil];
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleProjectUpdated:) name:BLMProjectUpdatedNotification object:self.project];
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleSessionConfigurationUpdated:) name:BLMSessionConfigurationUpdatedNotification object:self.projectSessionConfiguration];
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleBehaviorUpdated:) name:BLMBehaviorUpdatedNotification object:nil];
@@ -500,62 +504,11 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
 
 
 - (NSIndexPath *)indexPathForAddBehaviorButtonCell {
-    NSUInteger cellItem = ([self.collectionView numberOfItemsInSection:BLMProjectDetailSectionBehaviors] - 1);
-    return [NSIndexPath indexPathForItem:cellItem inSection:BLMProjectDetailSectionBehaviors];
-}
-
-
-- (void)updateBottomInset:(CGFloat)bottomInset afterDelay:(NSTimeInterval)delay duration:(NSTimeInterval)duration curve:(UIViewAnimationCurve)curve completion:(void(^)(BOOL finished))completion {
-    if (self.collectionView.contentInset.bottom == bottomInset) {
-        return;
-    }
-
-    UIViewAnimationOptions options = (curve << 16); // The UIViewAnimationOptions constants regarding animation curve are UIViewAnimationCurve enum values bit-shifted left by 16
-
-    UIEdgeInsets contentInset = self.collectionView.contentInset;
-    contentInset.bottom = bottomInset;
-
-    [UIView animateWithDuration:duration delay:delay options:options animations:^{
-        self.collectionView.contentInset = contentInset;
-    } completion:completion];
+    NSUInteger cellItem = ([self.collectionView numberOfItemsInSection:SectionBehaviors] - 1);
+    return [NSIndexPath indexPathForItem:cellItem inSection:SectionBehaviors];
 }
 
 #pragma mark Event Handling
-
-- (void)handleKeyboardWillShow:(NSNotification *)notification {
-    CGRect keyboardScreenFrame = [notification.userInfo[UIKeyboardFrameEndUserInfoKey] CGRectValue];
-    CGRect keyboardWindowFrame = [self.view.window convertRect:keyboardScreenFrame fromWindow:nil];
-    CGRect keyboardViewFrame = [self.view convertRect:keyboardWindowFrame fromView:nil];
-
-    CGFloat bottomInset = (CGRectGetMaxY(self.collectionView.frame) - CGRectGetMinY(keyboardViewFrame));//MAX(self.collectionView.contentInset.bottom, CGRectGetMinY(keyboardViewFrame));
-    NSTimeInterval duration = [BLMUtils doubleFromDictionary:notification.userInfo forKey:UIKeyboardAnimationDurationUserInfoKey defaultValue:0.0];
-    UIViewAnimationCurve curve = [BLMUtils integerFromDictionary:notification.userInfo forKey:UIKeyboardAnimationCurveUserInfoKey defaultValue:UIViewAnimationCurveLinear];
-
-    [self updateBottomInset:bottomInset afterDelay:0.0 duration:duration curve:curve completion:^(BOOL finished) {
-        UIResponder *firstResponder = [UIResponder currentFirstResponder];
-        assert(firstResponder != nil);
-
-        if (![firstResponder isKindOfClass:[BLMCollectionViewCellTextField class]]) {
-            return;
-        }
-
-        BLMCollectionViewCellTextField *textField = (BLMCollectionViewCellTextField *)firstResponder;
-        id<BLMCollectionViewCellTextFieldDelegate> delegate = textField.delegate;
-        NSIndexPath *indexPath = [delegate indexPathForCollectionViewCellTextField:textField];
-        UICollectionViewLayoutAttributes *cellLayout = [(BLMProjectDetailCollectionViewLayout *)self.collectionView.collectionViewLayout layoutAttributesForItemAtIndexPath:indexPath];
-
-        [self.collectionView scrollRectToVisible:cellLayout.frame animated:YES];
-    }];
-}
-
-
-- (void)handleKeyboardWillHide:(NSNotification *)notification {
-    NSTimeInterval duration = [BLMUtils doubleFromDictionary:notification.userInfo forKey:UIKeyboardAnimationDurationUserInfoKey defaultValue:0.0];
-    UIViewAnimationCurve curve = [BLMUtils integerFromDictionary:notification.userInfo forKey:UIKeyboardAnimationCurveUserInfoKey defaultValue:UIViewAnimationCurveLinear];
-
-    [self updateBottomInset:0.0 afterDelay:0.0 duration:duration curve:curve completion:nil];
-}
-
 
 - (void)handleProjectUpdated:(NSNotification *)notification {
     BLMProject *original = (BLMProject *)notification.userInfo[BLMProjectOldProjectUserInfoKey];
@@ -569,7 +522,7 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleProjectUpdated:) name:BLMProjectUpdatedNotification object:updated];
 
     if (![BLMUtils isObject:original.sessionConfigurationUUID equalToObject:updated.sessionConfigurationUUID]) {
-        [self.collectionView reloadSections:[NSIndexSet indexSetWithIndex:BLMProjectDetailSectionBehaviors]];
+        [self.collectionView reloadSections:[NSIndexSet indexSetWithIndex:SectionBehaviors]];
     }
 }
 
@@ -596,7 +549,7 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
         [deletedUUIDs minusSet:[NSSet setWithArray:updated.behaviorUUIDs]];
 
         for (NSUUID *UUID in deletedUUIDs) {
-            [deletedIndexPaths addObject:[NSIndexPath indexPathForItem:[original.behaviorUUIDs indexOfObject:UUID] inSection:BLMProjectDetailSectionBehaviors]];
+            [deletedIndexPaths addObject:[NSIndexPath indexPathForItem:[original.behaviorUUIDs indexOfObject:UUID] inSection:SectionBehaviors]];
         }
 
         NSMutableSet<NSUUID *> *insertedUUIDs = [NSMutableSet setWithArray:updated.behaviorUUIDs];
@@ -607,13 +560,13 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
 
         if ([insertedUUIDs containsObject:self.addedBehaviorUUID]) {
             [insertedUUIDs removeObject:self.addedBehaviorUUID];
-            [reloadIndexPaths addObject:[NSIndexPath indexPathForItem:[updated.behaviorUUIDs indexOfObject:self.addedBehaviorUUID] inSection:BLMProjectDetailSectionBehaviors]];
+            [reloadIndexPaths addObject:[NSIndexPath indexPathForItem:[updated.behaviorUUIDs indexOfObject:self.addedBehaviorUUID] inSection:SectionBehaviors]];
 
             self.addedBehaviorUUID = nil;
         }
 
         for (NSUUID *UUID in insertedUUIDs) {
-            [insertedIndexPaths addObject:[NSIndexPath indexPathForItem:[updated.behaviorUUIDs indexOfObject:UUID] inSection:BLMProjectDetailSectionBehaviors]];
+            [insertedIndexPaths addObject:[NSIndexPath indexPathForItem:[updated.behaviorUUIDs indexOfObject:UUID] inSection:SectionBehaviors]];
         }
 
         [self.collectionView deleteItemsAtIndexPaths:deletedIndexPaths];
@@ -666,14 +619,13 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
 
         [self.collectionView performBatchUpdates:^{
             self.addedBehaviorUUID = nil;
-            [self.collectionView deleteItemsAtIndexPaths:@[[NSIndexPath indexPathForItem:behaviorUUIDs.count inSection:BLMProjectDetailSectionBehaviors]]];
+            [self.collectionView deleteItemsAtIndexPaths:@[[NSIndexPath indexPathForItem:behaviorUUIDs.count inSection:SectionBehaviors]]];
             [self.collectionView reloadItemsAtIndexPaths:@[[self indexPathForAddBehaviorButtonCell]]];
         } completion:^(BOOL finished) {
             assert(finished);
         }];
     } else if ([behaviorUUIDs containsObject:behavior.UUID]) {
         NSArray *updatedBehaviorUUIDs = [behaviorUUIDs arrayByRemovingObject:behavior.UUID];
-
         [[BLMDataManager sharedManager] updateSessionConfigurationForUUID:sessionConfiguration.UUID property:BLMSessionConfigurationPropertyBehaviorUUIDs value:updatedBehaviorUUIDs completion:nil];
     }
 }
@@ -681,56 +633,56 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
 #pragma mark UICollectionViewDataSource
 
 - (NSInteger)numberOfSectionsInCollectionView:(UICollectionView *)collectionView {
-    return BLMProjectDetailSectionCount;
+    return SectionCount;
 }
 
 
 - (NSInteger)collectionView:(UICollectionView *)collectionView numberOfItemsInSection:(NSInteger)section {
-    NSInteger numberOfItems = 0;
+    NSInteger itemCount = 0;
 
-    switch ((BLMProjectDetailSection)section) {
-        case BLMProjectDetailSectionBasicInfo: {
-            numberOfItems = BasicInfoSectionItemCount;
+    switch ((Section)section) {
+        case SectionBasicProperties: {
+            itemCount = BasicInfoCount;
             break;
         }
 
-        case BLMProjectDetailSectionSessionProperties: {
-            numberOfItems = SessionPropertiesSectionItemCount;
+        case SectionSessionProperties: {
+            itemCount = SessionConfigurationInfoCount;
             break;
         }
 
-        case BLMProjectDetailSectionBehaviors: {
-            numberOfItems = self.projectSessionConfiguration.behaviorUUIDs.count;
+        case SectionBehaviors: {
+            itemCount = self.projectSessionConfiguration.behaviorUUIDs.count;
 
             if (self.addedBehaviorUUID != nil) {
-                numberOfItems += 1; // +1 for the BLMBehavior that's been added to the data model but not to a session configuration
+                itemCount += 1; // +1 for the BLMBehavior that's been added to the data model but not to a session configuration
             }
 
-            numberOfItems += 1; // +1 for the add behavior button cell
+            itemCount += 1; // +1 for the add behavior button cell
             break;
         }
 
-        case BLMProjectDetailSectionActionButtons: {
-            numberOfItems = ActionButtonsSectionItemCount;
+        case SectionActionButtons: {
+            itemCount = ActionButtonCount;
             break;
         }
 
-        case BLMProjectDetailSectionCount: {
+        case SectionCount: {
             assert(NO);
             break;
         }
     }
 
-    return numberOfItems;
+    return itemCount;
 }
 
 
 - (UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath {
     BLMCollectionViewCell *cell = nil;
 
-    switch ((BLMProjectDetailSection)indexPath.section) {
-        case BLMProjectDetailSectionBasicInfo:
-        case BLMProjectDetailSectionSessionProperties: {
+    switch ((Section)indexPath.section) {
+        case SectionBasicProperties:
+        case SectionSessionProperties: {
             BLMTextInputCell *textInputCell = (BLMTextInputCell *)[collectionView dequeueReusableCellWithReuseIdentifier:NSStringFromClass([BLMTextInputCell class]) forIndexPath:indexPath];
             textInputCell.delegate = self;
 
@@ -738,7 +690,7 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
             break;
         }
 
-        case BLMProjectDetailSectionBehaviors: {
+        case SectionBehaviors: {
             NSArray<NSUUID *> *behaviorUUIDs = self.projectSessionConfiguration.behaviorUUIDs;
 
             if ((indexPath.item < behaviorUUIDs.count) || ((indexPath.item == behaviorUUIDs.count) && (self.addedBehaviorUUID != nil))) {
@@ -763,7 +715,7 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
             break;
         }
 
-        case BLMProjectDetailSectionActionButtons: {
+        case SectionActionButtons: {
             BLMButtonCell *buttonCell = [collectionView dequeueReusableCellWithReuseIdentifier:NSStringFromClass([BLMButtonCell class]) forIndexPath:indexPath];
             buttonCell.delegate = self;
 
@@ -771,7 +723,7 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
             break;
         }
 
-        case BLMProjectDetailSectionCount: {
+        case SectionCount: {
             assert(NO);
             break;
         }
@@ -794,28 +746,28 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
 
         view = headerView;
 
-        switch ((BLMProjectDetailSection)indexPath.section) {
-            case BLMProjectDetailSectionBasicInfo: {
+        switch ((Section)indexPath.section) {
+            case SectionBasicProperties: {
                 assert(NO);
                 break;
             }
 
-            case BLMProjectDetailSectionSessionProperties: {
+            case SectionSessionProperties: {
                 headerView.label.text = @"Default Session Properties";
                 break;
             }
 
-            case BLMProjectDetailSectionBehaviors: {
+            case SectionBehaviors: {
                 headerView.label.text = @"Behaviors";
                 break;
             }
 
-            case BLMProjectDetailSectionActionButtons: {
+            case SectionActionButtons: {
                 assert(NO);
                 break;
             }
                 
-            case BLMProjectDetailSectionCount: {
+            case SectionCount: {
                 assert(NO);
                 break;
             }
@@ -832,8 +784,8 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
 #pragma mark UICollectionViewDelegate / BLMCollectionViewLayoutDelegate
 
 - (BLMCollectionViewSectionLayout)collectionView:(BLMCollectionView *)collectionView layoutForSection:(NSUInteger)section {
-    switch ((BLMProjectDetailSection)section) {
-        case BLMProjectDetailSectionBasicInfo: {
+    switch ((Section)section) {
+        case SectionBasicProperties: {
             return (BLMCollectionViewSectionLayout) {
                 .Header = {
                     .Height = 0.0,
@@ -862,7 +814,7 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
             };
         }
 
-        case BLMProjectDetailSectionSessionProperties: {
+        case SectionSessionProperties: {
             return (BLMCollectionViewSectionLayout) {
                 .Header = {
                     .Height = SectionHeaderHeight,
@@ -886,7 +838,7 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
             };
         }
 
-        case BLMProjectDetailSectionBehaviors: {
+        case SectionBehaviors: {
             return (BLMCollectionViewSectionLayout) {
                 .Header = {
                     .Height = SectionHeaderHeight,
@@ -915,7 +867,7 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
             };
         }
 
-        case BLMProjectDetailSectionActionButtons: {
+        case SectionActionButtons: {
             return (BLMCollectionViewSectionLayout) {
                 .Header = {
                     .Height = 0.0,
@@ -939,7 +891,7 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
             };
         }
 
-        case BLMProjectDetailSectionCount: {
+        case SectionCount: {
             assert(NO);
             return BLMCollectionViewSectionLayoutNull;
         }
@@ -949,109 +901,106 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
 #pragma mark BLMToggleSwitchTextInputCellDelegate
 
 - (NSString *)labelForTextInputCell:(BLMTextInputCell *)cell {
-    switch ((BLMProjectDetailSection)cell.section) {
-        case BLMProjectDetailSectionBasicInfo: {
-            switch ((BasicInfoSectionItem)cell.item) {
-                case BasicInfoSectionItemProjectName:
+    switch ((Section)cell.section) {
+        case SectionBasicProperties: {
+            switch ((BasicInfo)cell.item) {
+                case BasicInfoProjectName:
                     return @"Project:";
 
-                case BasicInfoSectionItemClientName:
-                    return @"Client Name:";
+                case BasicInfoClientName:
+                    return @"Client:";
 
-                case BasicInfoSectionItemCount: {
-                    break;
+                case BasicInfoCount: {
+                    assert(NO);
+                    return nil;
                 }
             }
         }
 
-        case BLMProjectDetailSectionSessionProperties: {
-            switch ((SessionPropertiesSectionItem)cell.item) {
-                case SessionPropertiesSectionItemCondition:
+        case SectionSessionProperties: {
+            switch ((SessionConfigurationInfo)cell.item) {
+                case SessionConfigurationInfoCondition:
                     return @"Condition:";
 
-                case SessionPropertiesSectionItemLocation:
+                case SessionConfigurationInfoLocation:
                     return @"Location:";
 
-                case SessionPropertiesSectionItemTherapist:
+                case SessionConfigurationInfoTherapist:
                     return @"Therapist:";
 
-                case SessionPropertiesSectionItemObserver:
+                case SessionConfigurationInfoObserver:
                     return @"Observer:";
 
-                case SessionPropertiesSectionItemCount: {
-                    break;
+                case SessionConfigurationInfoCount: {
+                    assert(NO);
+                    return nil;
                 }
             }
         }
 
-        case BLMProjectDetailSectionBehaviors:
+        case SectionBehaviors:
             return @"Name:";
 
-        case BLMProjectDetailSectionActionButtons:
-        case BLMProjectDetailSectionCount: {
-            break;
+        case SectionActionButtons:
+        case SectionCount: {
+            assert(NO);
+            return nil;
         }
     }
-
-    assert(NO);
-    return nil;
 }
 
 
 - (NSString *)defaultInputForTextInputCell:(BLMTextInputCell *)cell {
-    switch ((BLMProjectDetailSection)cell.section) {
-        case BLMProjectDetailSectionBasicInfo: {
-            switch ((BasicInfoSectionItem)cell.item) {
-                case BasicInfoSectionItemProjectName:
+    switch ((Section)cell.section) {
+        case SectionBasicProperties: {
+            switch ((BasicInfo)cell.item) {
+                case BasicInfoProjectName:
                     return self.project.name;
 
-                case BasicInfoSectionItemClientName:
+                case BasicInfoClientName:
                     return self.project.client;
 
-                case BasicInfoSectionItemCount: {
+                case BasicInfoCount: {
                     assert(NO);
-                    break;
+                    return nil;
                 }
             }
         }
 
-        case BLMProjectDetailSectionSessionProperties: {
-            switch ((SessionPropertiesSectionItem)cell.item) {
-                case SessionPropertiesSectionItemCondition:
+        case SectionSessionProperties: {
+            switch ((SessionConfigurationInfo)cell.item) {
+                case SessionConfigurationInfoCondition:
                     return self.projectSessionConfiguration.condition;
 
-                case SessionPropertiesSectionItemLocation:
+                case SessionConfigurationInfoLocation:
                     return self.projectSessionConfiguration.location;
 
-                case SessionPropertiesSectionItemTherapist:
+                case SessionConfigurationInfoTherapist:
                     return self.projectSessionConfiguration.therapist;
 
-                case SessionPropertiesSectionItemObserver:
+                case SessionConfigurationInfoObserver:
                     return self.projectSessionConfiguration.observer;
 
-                case SessionPropertiesSectionItemCount: {
+                case SessionConfigurationInfoCount: {
                     assert(NO);
-                    break;
+                    return nil;
                 }
             }
         }
 
-        case BLMProjectDetailSectionBehaviors: {
+        case SectionBehaviors: {
             BehaviorCell *behaviorCell = (BehaviorCell *)cell;
             NSUUID *UUID = behaviorCell.behavior.UUID;
 
             return [[BLMDataManager sharedManager] behaviorForUUID:UUID].name;
         }
 
-        case BLMProjectDetailSectionActionButtons:
-        case BLMProjectDetailSectionCount: {
+        case SectionActionButtons:
+        case SectionCount: {
             assert(NO);
-            break;
+            return nil;
         }
     }
-
-    assert(NO);
-    return nil;
 }
 
 
@@ -1059,87 +1008,68 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
     NSString *placeholder = nil;
     NSDictionary *attributes = nil;
     
-    switch ((BLMProjectDetailSection)cell.section) {
-        case BLMProjectDetailSectionBasicInfo:
-            placeholder = [NSString stringWithFormat:@"Required (%lu+ characters)", (unsigned long)[self minimumInputLengthForTextInputCell:cell]];
+    switch ((Section)cell.section) {
+        case SectionBasicProperties:
+            placeholder = [NSString stringWithFormat:@"Required (%tu+ characters)", [self minimumInputLengthForTextInputCell:cell]];
             attributes = [BLMTextInputCell errorAttributes];
             break;
 
-        case BLMProjectDetailSectionSessionProperties:
+        case SectionSessionProperties:
             placeholder = @"Optional";
             break;
 
-        case BLMProjectDetailSectionBehaviors:
-            placeholder = [NSString stringWithFormat:@"%lu+ characters", (unsigned long)[self minimumInputLengthForTextInputCell:cell]];
+        case SectionBehaviors:
+            placeholder = [NSString stringWithFormat:@"%tu+ characters", [self minimumInputLengthForTextInputCell:cell]];
             attributes = [BLMTextInputCell errorAttributes];
             break;
 
-        case BLMProjectDetailSectionActionButtons:
-        case BLMProjectDetailSectionCount: {
+        case SectionActionButtons:
+        case SectionCount: {
             assert(NO);
-            break;
+            return nil;
         }
     }
 
-    if (placeholder.length == 0) {
-        assert(NO);
-        return nil;
-    }
-
+    assert(placeholder.length > 0);
     return [[NSAttributedString alloc] initWithString:placeholder attributes:attributes];
 }
 
 
 - (NSUInteger)minimumInputLengthForTextInputCell:(BLMTextInputCell *)cell {
-    switch ((BLMProjectDetailSection)cell.section) {
-        case BLMProjectDetailSectionBasicInfo: {
-            switch ((BasicInfoSectionItem)cell.item) {
-                case BasicInfoSectionItemProjectName:
+    switch ((Section)cell.section) {
+        case SectionBasicProperties: {
+            switch ((BasicInfo)cell.item) {
+                case BasicInfoProjectName:
                     return BLMProjectNameMinimumLength;
 
-                case BasicInfoSectionItemClientName:
+                case BasicInfoClientName:
                     return BLMProjectClientMinimumLength;
 
-                case BasicInfoSectionItemCount: {
+                case BasicInfoCount: {
                     assert(NO);
-                    break;
-                }
-            }
-        }
-
-        case BLMProjectDetailSectionSessionProperties: {
-            switch ((SessionPropertiesSectionItem)cell.item) {
-                case SessionPropertiesSectionItemCondition:
-                case SessionPropertiesSectionItemLocation:
-                case SessionPropertiesSectionItemTherapist:
-                case SessionPropertiesSectionItemObserver:
                     return 0;
-
-                case SessionPropertiesSectionItemCount: {
-                    assert(NO);
-                    break;
                 }
             }
         }
 
-        case BLMProjectDetailSectionBehaviors:
+        case SectionSessionProperties:
+            return 0;
+
+        case SectionBehaviors:
             return BLMBehaviorNameMinimumLength;
 
-        case BLMProjectDetailSectionActionButtons:
-        case BLMProjectDetailSectionCount: {
+        case SectionActionButtons:
+        case SectionCount: {
             assert(NO);
-            break;
+            return 0;
         }
     }
-
-    assert(NO);
-    return 0;
 }
 
 
 - (void)didChangeInputForTextInputCell:(BLMTextInputCell *)cell {
-    switch ((BLMProjectDetailSection)cell.section) {
-        case BLMProjectDetailSectionBehaviors: {
+    switch ((Section)cell.section) {
+        case SectionBehaviors: {
             BehaviorCell *behaviorCell = (BehaviorCell *)cell;
             NSUUID *UUID = behaviorCell.behavior.UUID;
 
@@ -1151,12 +1081,12 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
             break;
         }
 
-        case BLMProjectDetailSectionBasicInfo:
-        case BLMProjectDetailSectionSessionProperties:
-        case BLMProjectDetailSectionActionButtons:
+        case SectionBasicProperties:
+        case SectionSessionProperties:
+        case SectionActionButtons:
             break;
 
-        case BLMProjectDetailSectionCount: {
+        case SectionCount: {
             assert(NO);
             break;
         }
@@ -1165,20 +1095,20 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
 
 
 - (BOOL)shouldAcceptInputForTextInputCell:(BLMTextInputCell *)cell {
-    switch ((BLMProjectDetailSection)cell.section) {
-        case BLMProjectDetailSectionBasicInfo:
+    switch ((Section)cell.section) {
+        case SectionBasicProperties:
             return (cell.textField.text.length >= [self minimumInputLengthForTextInputCell:cell]);
 
-        case BLMProjectDetailSectionSessionProperties:
+        case SectionSessionProperties:
             return YES;
 
-        case BLMProjectDetailSectionBehaviors: {
+        case SectionBehaviors: {
             BehaviorCell *behaviorCell = (BehaviorCell *)cell;
             return [self isBehaviorName:cell.textField.text validForUUID:behaviorCell.behavior.UUID];
         }
 
-        case BLMProjectDetailSectionActionButtons:
-        case BLMProjectDetailSectionCount: {
+        case SectionActionButtons:
+        case SectionCount: {
             assert(NO);
             break;
         }
@@ -1187,20 +1117,20 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
 
 
 - (void)didAcceptInputForTextInputCell:(BLMTextInputCell *)cell {
-    switch ((BLMProjectDetailSection)cell.section) {
-        case BLMProjectDetailSectionBasicInfo: {
+    switch ((Section)cell.section) {
+        case SectionBasicProperties: {
             BLMProjectProperty updatedProperty;
 
-            switch ((BasicInfoSectionItem)cell.item) {
-                case BasicInfoSectionItemProjectName:
+            switch ((BasicInfo)cell.item) {
+                case BasicInfoProjectName:
                     updatedProperty = BLMProjectPropertyName;
                     break;
 
-                case BasicInfoSectionItemClientName:
+                case BasicInfoClientName:
                     updatedProperty = BLMProjectPropertyClient;
                     break;
 
-                case BasicInfoSectionItemCount: {
+                case BasicInfoCount: {
                     assert(NO);
                     break;
                 }
@@ -1210,27 +1140,27 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
             break;
         }
 
-        case BLMProjectDetailSectionSessionProperties: {
+        case SectionSessionProperties: {
             BLMSessionConfigurationProperty updatedProperty;
 
-            switch ((SessionPropertiesSectionItem)cell.item) {
-                case SessionPropertiesSectionItemCondition:
+            switch ((SessionConfigurationInfo)cell.item) {
+                case SessionConfigurationInfoCondition:
                     updatedProperty = BLMSessionConfigurationPropertyCondition;
                     break;
 
-                case SessionPropertiesSectionItemLocation:
+                case SessionConfigurationInfoLocation:
                     updatedProperty = BLMSessionConfigurationPropertyLocation;
                     break;
 
-                case SessionPropertiesSectionItemTherapist:
+                case SessionConfigurationInfoTherapist:
                     updatedProperty = BLMSessionConfigurationPropertyTherapist;
                     break;
 
-                case SessionPropertiesSectionItemObserver:
+                case SessionConfigurationInfoObserver:
                     updatedProperty = BLMSessionConfigurationPropertyObserver;
                     break;
 
-                case SessionPropertiesSectionItemCount: {
+                case SessionConfigurationInfoCount: {
                     assert(NO);
                     break;
                 }
@@ -1240,7 +1170,7 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
             break;
         }
 
-        case BLMProjectDetailSectionBehaviors: {
+        case SectionBehaviors: {
             BehaviorCell *behaviorCell = (BehaviorCell *)cell;
             NSUUID *UUID = behaviorCell.behavior.UUID;
 
@@ -1257,8 +1187,8 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
             break;
         }
 
-        case BLMProjectDetailSectionActionButtons:
-        case BLMProjectDetailSectionCount: {
+        case SectionActionButtons:
+        case SectionCount: {
             assert(NO);
             break;
         }
@@ -1286,17 +1216,17 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
 #pragma mark BLMButtonCellDelegate
 
 - (BOOL)isButtonEnabledForButtonCell:(BLMButtonCell *)cell {
-    switch ((BLMProjectDetailSection)cell.section) {
-        case BLMProjectDetailSectionBehaviors:
+    switch ((Section)cell.section) {
+        case SectionBehaviors:
             return ((self.addedBehaviorUUID == nil)
                     || [self isBehaviorName:[[BLMDataManager sharedManager] behaviorForUUID:self.addedBehaviorUUID].name validForUUID:self.addedBehaviorUUID]);
 
-        case BLMProjectDetailSectionActionButtons:
+        case SectionActionButtons:
             return YES;
 
-        case BLMProjectDetailSectionBasicInfo:
-        case BLMProjectDetailSectionSessionProperties:
-        case BLMProjectDetailSectionCount: {
+        case SectionBasicProperties:
+        case SectionSessionProperties:
+        case SectionCount: {
             assert(NO);
             return NO;
         }
@@ -1305,8 +1235,8 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
 
 
 - (UIImage *)imageForButtonCell:(BLMButtonCell *)cell forState:(UIControlState)state {
-    switch ((BLMProjectDetailSection)cell.section) {
-        case BLMProjectDetailSectionBehaviors: {
+    switch ((Section)cell.section) {
+        case SectionBehaviors: {
             assert(cell.item == self.indexPathForAddBehaviorButtonCell.item);
 
             static UIImage *highlightedPlusSignImage = nil;
@@ -1321,24 +1251,22 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
             return ((state == UIControlStateNormal) ? normalPlusSignImage : highlightedPlusSignImage);
         }
 
-        case BLMProjectDetailSectionActionButtons:
-            break;
+        case SectionActionButtons:
+            return nil;
 
-        case BLMProjectDetailSectionBasicInfo:
-        case BLMProjectDetailSectionSessionProperties:
-        case BLMProjectDetailSectionCount: {
+        case SectionBasicProperties:
+        case SectionSessionProperties:
+        case SectionCount: {
             assert(NO);
-            break;
+            return nil;
         }
     }
-
-    return nil;
 }
 
 
 - (NSAttributedString *)attributedTitleForButtonCell:(BLMButtonCell *)cell forState:(UIControlState)state {
-    switch ((BLMProjectDetailSection)cell.section) {
-        case BLMProjectDetailSectionBehaviors: {
+    switch ((Section)cell.section) {
+        case SectionBehaviors: {
             assert(cell.item == self.indexPathForAddBehaviorButtonCell.item);
 
             BLMColorHexCode colorHexValue = ((state == UIControlStateNormal) ? BLMColorHexCodeGreen : BLMColorHexCodePurple);
@@ -1347,30 +1275,30 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
             return [[NSAttributedString alloc] initWithString:@"Add Behavior" attributes:attributes];
         }
 
-        case BLMProjectDetailSectionActionButtons: {
+        case SectionActionButtons: {
             BLMColorHexCode colorHexValue = ((state == UIControlStateNormal) ? BLMColorHexCodeBlue : BLMColorHexCodePurple);
             NSDictionary *attributes = @{ NSForegroundColorAttributeName:[BLMViewUtils colorWithHexValue:colorHexValue alpha:1.0] };
 
-            switch ((ActionButtonsSectionItem)cell.item) {
-                case ActionButtonsSectionItemCreateSession:
+            switch ((ActionButton)cell.item) {
+                case ActionButtonCreateSession:
                     return [[NSAttributedString alloc] initWithString:@"Create Session" attributes:attributes];
 
-                case ActionButtonsSectionItemViewSessionHistory:
+                case ActionButtonViewSessionHistory:
                     return [[NSAttributedString alloc] initWithString:@"View Session History" attributes:attributes];
 
-                case ActionButtonsSectionItemDeleteProject:
+                case ActionButtonDeleteProject:
                     return [[NSAttributedString alloc] initWithString:@"Delete Project" attributes:attributes];
 
-                case ActionButtonsSectionItemCount: {
+                case ActionButtonCount: {
                     assert(NO);
                     return nil;
                 }
             }
         }
 
-        case BLMProjectDetailSectionBasicInfo:
-        case BLMProjectDetailSectionSessionProperties:
-        case BLMProjectDetailSectionCount: {
+        case SectionBasicProperties:
+        case SectionSessionProperties:
+        case SectionCount: {
             assert(NO);
             break;
         }
@@ -1381,13 +1309,13 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
 
 
 - (void)didFireActionForButtonCell:(BLMButtonCell *)cell {
-    switch ((BLMProjectDetailSection)cell.section) {
-        case BLMProjectDetailSectionBehaviors: {
-            assert(cell.item == ([self.collectionView numberOfItemsInSection:BLMProjectDetailSectionBehaviors] - 1));
+    switch ((Section)cell.section) {
+        case SectionBehaviors: {
+            assert(cell.item == ([self.collectionView numberOfItemsInSection:SectionBehaviors] - 1));
 
             if (self.addedBehaviorUUID != nil) { // There is a valid behavior item that has not been officially added to the data model
                 NSArray<NSUUID *> *behaviorUUIDs = self.projectSessionConfiguration.behaviorUUIDs;
-                NSIndexPath *addedBehaviorIndexPath = [NSIndexPath indexPathForItem:behaviorUUIDs.count inSection:BLMProjectDetailSectionBehaviors];
+                NSIndexPath *addedBehaviorIndexPath = [NSIndexPath indexPathForItem:behaviorUUIDs.count inSection:SectionBehaviors];
                 BehaviorCell *addedBehaviorCell = (BehaviorCell *)[self.collectionView cellForItemAtIndexPath:addedBehaviorIndexPath];
 
                 assert([BLMUtils isString:addedBehaviorCell.textField.text equalToString:addedBehaviorCell.behavior.name]);
@@ -1408,12 +1336,12 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
                 self.addedBehaviorUUID = behavior.UUID;
 
                 NSArray<NSUUID *> *behaviorUUIDs = self.projectSessionConfiguration.behaviorUUIDs;
-                NSIndexPath *addedBehaviorIndexPath = [NSIndexPath indexPathForItem:behaviorUUIDs.count inSection:BLMProjectDetailSectionBehaviors];
+                NSIndexPath *addedBehaviorIndexPath = [NSIndexPath indexPathForItem:behaviorUUIDs.count inSection:SectionBehaviors];
 
                 [self.collectionView performBatchUpdates:^{
                     [self.collectionView insertItemsAtIndexPaths:@[addedBehaviorIndexPath]];
                 } completion:^(BOOL finished) {
-                    [self.collectionView reloadItemsAtIndexPaths:@[[NSIndexPath indexPathForItem:(behaviorUUIDs.count + 1) inSection:BLMProjectDetailSectionBehaviors]]];
+                    [self.collectionView reloadItemsAtIndexPaths:@[[NSIndexPath indexPathForItem:(behaviorUUIDs.count + 1) inSection:SectionBehaviors]]];
                     [self.collectionView scrollToItemAtIndexPath:addedBehaviorIndexPath atScrollPosition:UICollectionViewScrollPositionTop animated:YES];
 
                     BehaviorCell *addedBehaviorCell = (BehaviorCell *)[self.collectionView cellForItemAtIndexPath:addedBehaviorIndexPath];
@@ -1428,18 +1356,18 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
             break;
         }
 
-        case BLMProjectDetailSectionActionButtons: {
-            switch ((ActionButtonsSectionItem)cell.item) {
-                case ActionButtonsSectionItemCreateSession:
+        case SectionActionButtons: {
+            switch ((ActionButton)cell.item) {
+                case ActionButtonCreateSession:
                     break;
 
-                case ActionButtonsSectionItemViewSessionHistory:
+                case ActionButtonViewSessionHistory:
                     break;
 
-                case ActionButtonsSectionItemDeleteProject:
+                case ActionButtonDeleteProject:
                     break;
 
-                case ActionButtonsSectionItemCount: {
+                case ActionButtonCount: {
                     assert(NO);
                     break;
                 }
@@ -1447,9 +1375,9 @@ typedef NS_ENUM(NSInteger, ActionButtonsSectionItem) {
             break;
         }
 
-        case BLMProjectDetailSectionBasicInfo:
-        case BLMProjectDetailSectionSessionProperties:
-        case BLMProjectDetailSectionCount: {
+        case SectionBasicProperties:
+        case SectionSessionProperties:
+        case SectionCount: {
             assert(NO);
             break;
         }

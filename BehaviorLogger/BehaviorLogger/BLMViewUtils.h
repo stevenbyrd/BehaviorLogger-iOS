@@ -23,6 +23,13 @@ typedef NS_ENUM(NSUInteger, BLMColorHexCode) {
 };
 
 
+#pragma mark
+
+extern CGRect CGRectPixelAlign(CGRect rect);
+
+
+#pragma mark
+
 @interface BLMViewUtils : NSObject
 
 #pragma mark Colors

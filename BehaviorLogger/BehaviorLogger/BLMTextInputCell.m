@@ -6,42 +6,18 @@
 //  Copyright © 2016 3Bird. All rights reserved.
 //
 
+#import "BLMTextField.h"
 #import "BLMTextInputCell.h"
 #import "BLMViewUtils.h"
 #import "BLMUtils.h"
 
 
-@implementation BLMCollectionViewCellTextField
+#pragma mark
 
-@dynamic delegate;
-
-- (instancetype)initWithHorizontalPadding:(CGFloat)horizontalPadding verticalPadding:(CGFloat)verticalPadding {
-    self = [super initWithFrame:CGRectZero];
-
-    if (self == nil) {
-        return nil;
-    }
-
-    _horizontalPadding = horizontalPadding;
-    _verticalPadding = verticalPadding;
-
-    return self;
-}
-
-
-- (CGRect)textRectForBounds:(CGRect)bounds { // placeholder position
-    return CGRectInset(bounds, (self.horizontalPadding - 1.0), self.verticalPadding); // -1.0 pixel workaround for NSAttributedString size bug
-}
-
-
-- (CGRect)editingRectForBounds:(CGRect)bounds { // text position
-    return CGRectInset(bounds, (self.horizontalPadding - 1.0), self.verticalPadding); // -1.0 pixel workaround for NSAttributedString size bug
-}
+@interface BLMTextInputCell () <BLMTextFieldDelegate>
 
 @end
 
-
-#pragma mark
 
 @implementation BLMTextInputCell
 
@@ -52,7 +28,7 @@
         return nil;
     }
     
-    _textField = [[BLMCollectionViewCellTextField alloc] initWithHorizontalPadding:5.0 verticalPadding:5.0];
+    _textField = [[BLMTextField alloc] initWithHorizontalPadding:5.0 verticalPadding:5.0];
 
     self.textField.delegate = self;
     self.textField.minimumFontSize = 10.0;
@@ -124,9 +100,9 @@
     return errorAttributes;
 }
 
-#pragma mark BLMCollectionViewCellTextFieldDelegate / UITextFieldDelegate
+#pragma mark BLMTextFieldDelegate / UITextFieldDelegate
 
-- (NSIndexPath *)indexPathForCollectionViewCellTextField:(BLMCollectionViewCellTextField *)textField {
+- (NSIndexPath *)indexPathForCollectionViewCellTextField:(BLMTextField *)textField {
     return self.indexPath;
 }
 

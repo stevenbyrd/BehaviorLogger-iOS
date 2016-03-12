@@ -9,6 +9,20 @@
 #import "BLMViewUtils.h"
 
 
+CGRect CGRectPixelAlign(CGRect rect) {
+    return (CGRect) {
+        .origin = {
+            .x = (NSInteger)((CGRectGetMinX(rect) + 0.5) / 1),
+            .y = (NSInteger)((CGRectGetMinY(rect) + 0.5) / 1)
+        },
+        .size = {
+            .width = (NSInteger)((CGRectGetWidth(rect) + 0.5) / 1),
+            .height = (NSInteger)((CGRectGetHeight(rect) + 0.5) / 1)
+        }
+    };
+}
+
+
 #pragma mark
 
 @implementation BLMViewUtils
