@@ -243,7 +243,9 @@ typedef NS_ENUM(NSInteger, TableSection) {
 
     BLMProject *project = (BLMProject *)notification.object;
 
+    [self.projectNameSet addObject:project.name];
     [self.projectUUIDs addObject:project.UUID];
+
     [self sortProjectUUIDs];
 
     NSUInteger index = [self.projectUUIDs indexOfObject:project.UUID];
@@ -262,6 +264,7 @@ typedef NS_ENUM(NSInteger, TableSection) {
     if (index != NSNotFound) {
         [self.tableView beginUpdates];
 
+        [self.projectNameSet removeObject:project.name];
         [self.projectUUIDs removeObjectAtIndex:index];
 
         [self.tableView deleteRowsAtIndexPaths:@[[NSIndexPath indexPathForItem:index inSection:TableSectionProjectList]] withRowAnimation:UITableViewRowAnimationNone];
@@ -282,6 +285,13 @@ typedef NS_ENUM(NSInteger, TableSection) {
     assert([NSThread isMainThread]);
 
     BLMProject *project = (BLMProject *)notification.object;
+    BLMProject *updatedProject = notification.userInfo[BLMProjectNewProjectUserInfoKey];
+
+    if (![BLMUtils isString:project.name equalToString:updatedProject.name]) {
+        [self.projectNameSet removeObject:project.name];
+        [self.projectNameSet addObject:updatedProject.name];
+    }
+
     NSInteger index = [self.projectUUIDs indexOfObject:project.UUID];
 
     if (index != NSNotFound) {
@@ -360,7 +370,6 @@ typedef NS_ENUM(NSInteger, TableSection) {
             break;
 
         case TableSectionCreateProject:
-//            [self.tableView deselectRowAtIndexPath:indexPath animated:NO];
             [self showCreateProjectController];
             break;
             
