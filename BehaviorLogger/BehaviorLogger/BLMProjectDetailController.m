@@ -28,7 +28,7 @@ static UIEdgeInsets const SectionHeaderInsets = { .top = 0.0, .left = 10.0, .bot
 static UIEdgeInsets const ItemAreaStandardInsets = { .top = 10.0, .left = 20.0, .bottom = 10.0, .right = 20.0 };
 
 static CGFloat const SectionSeparatorHeight = 1.0;
-static UIEdgeInsets const SectionSeparatorInsets = { .top = 0.0, .left = 20.0, .bottom = 0.0, .right = 20.0 };
+static UIEdgeInsets const SectionSeparatorInsets = { .top = 10.0, .left = 20.0, .bottom = 0.0, .right = 20.0 };
 
 static CGFloat const BehaviorCellDeleteButtonImageRadius = 12.0;
 static CGFloat const BehaviorCellDeleteButtonOffset = ((2 * BehaviorCellDeleteButtonImageRadius) / 3.0);

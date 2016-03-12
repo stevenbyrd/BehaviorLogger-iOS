@@ -20,6 +20,45 @@ extern NSString *const BLMDataManagerProjectErrorDomain;
 extern NSString *const BLMDataManagerBehaviorErrorDomain;
 
 
+#pragma mark
+
+@interface BLMModelObjectEnumerator<ObjectType> : NSEnumerator<ObjectType>
+
+@end
+
+
+#pragma mark
+
+@protocol BLMUUIDEnumeration <NSObject>
+
++ (instancetype)enumeratorFromUUIDEnumerator:(NSEnumerator<NSUUID *> *)UUIDEnumerator;
+
+@end
+
+
+#pragma mark 
+
+@interface BLMBehaviorEnumerator : BLMModelObjectEnumerator<BLMBehavior *> <BLMUUIDEnumeration>
+
+@end
+
+
+#pragma mark
+
+@interface BLMProjectEnumerator : BLMModelObjectEnumerator<BLMProject *> <BLMUUIDEnumeration>
+
+@end
+
+
+#pragma mark
+
+@interface BLMSessionConfigurationEnumerator : BLMModelObjectEnumerator<BLMSessionConfiguration *> <BLMUUIDEnumeration>
+
+@end
+
+
+#pragma mark
+
 @interface BLMDataManager : NSObject
 
 #pragma Lifecycle
@@ -31,24 +70,24 @@ extern NSString *const BLMDataManagerBehaviorErrorDomain;
 
 #pragma Project State
 
-- (NSEnumerator<NSUUID *> *)projectUUIDEnumerator;
 - (BLMProject *)projectForUUID:(NSUUID *)UUID;
-- (void)createProjectWithName:(NSString *)name client:(NSString *)client completion:(void(^)(BLMProject *project, NSError *error))completion;
+- (BLMProjectEnumerator *)projectEnumerator;
+- (void)createProjectWithName:(NSString *)name client:(NSString *)client sessionConfigurationUUID:(NSUUID *)sessionConfigurationUUID completion:(void(^)(BLMProject *project, NSError *error))completion;
 - (void)updateProjectForUUID:(NSUUID *)UUID property:(BLMProjectProperty)property value:(id)value completion:(void(^)(BLMProject *updatedProject, NSError *error))completion;
 - (void)deleteProjectForUUID:(NSUUID *)UUID completion:(void(^)(NSError *error))completion;
 
 #pragma Behavior State
 
-- (NSEnumerator<NSUUID *> *)behaviorUUIDEnumerator;
 - (BLMBehavior *)behaviorForUUID:(NSUUID *)UUID;
+- (BLMBehaviorEnumerator *)behaviorEnumerator;
 - (void)createBehaviorWithName:(NSString *)name continuous:(BOOL)continuous completion:(void(^)(BLMBehavior *behavior, NSError *error))completion;
 - (void)updateBehaviorForUUID:(NSUUID *)UUID property:(BLMBehaviorProperty)property value:(id)value completion:(void(^)(BLMBehavior *updatedBehavior, NSError *error))completion;
 - (void)deleteBehaviorForUUID:(NSUUID *)UUID completion:(void(^)(NSError *error))completion;
 
 #pragma mark Session Configuration State
 
-- (NSEnumerator<NSUUID *> *)sessionConfigurationUUIDEnumerator;
 - (BLMSessionConfiguration *)sessionConfigurationForUUID:(NSUUID *)UUID;
+- (BLMSessionConfigurationEnumerator *)sessionConfigurationEnumerator;
 - (void)createSessionConfigurationWithCondition:(NSString *)condition location:(NSString *)location therapist:(NSString *)therapist observer:(NSString *)observer timeLimit:(BLMTimeInterval)timeLimit timeLimitOptions:(BLMTimeLimitOptions)timeLimitOptions behaviorUUIDs:(NSArray<NSUUID *> *)behaviorUUIDs completion:(void(^)(BLMSessionConfiguration *sessionConfiguration, NSError *error))completion;
 - (void)updateSessionConfigurationForUUID:(NSUUID *)UUID property:(BLMSessionConfigurationProperty)property value:(id)value completion:(void(^)(BLMSessionConfiguration *updatedSessionConfiguration, NSError *error))completion;
 - (void)deleteSessionConfigurationForUUID:(NSUUID *)UUID completion:(void(^)(NSError *error))completion;

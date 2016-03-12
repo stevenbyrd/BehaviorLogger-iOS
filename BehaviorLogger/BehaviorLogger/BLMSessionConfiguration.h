@@ -17,11 +17,6 @@ extern NSString *const BLMSessionConfigurationOldSessionConfigurationUserInfoKey
 extern NSString *const BLMSessionConfigurationNewSessionConfigurationUserInfoKey;
 
 
-#pragma mark
-
-@class BLMBehavior;
-
-
 typedef NSInteger BLMTimeInterval; // Represents an interval of time in seconds
 
 
@@ -45,6 +40,9 @@ typedef NS_ENUM(NSInteger, BLMSessionConfigurationProperty) {
 
 #pragma mark
 
+@class BLMBehaviorEnumerator;
+
+
 @interface BLMSessionConfiguration : NSObject <NSCoding>
 
 @property (nonatomic, strong, readonly) NSUUID *UUID;
@@ -59,6 +57,6 @@ typedef NS_ENUM(NSInteger, BLMSessionConfigurationProperty) {
 - (instancetype)initWithUUID:(NSUUID *)UUID condition:(NSString *)condition location:(NSString *)location therapist:(NSString *)therapist observer:(NSString *)observer timeLimit:(BLMTimeInterval)timeLimit timeLimitOptions:(BLMTimeLimitOptions)timeLimitOptions behaviorUUIDs:(NSArray<NSUUID *> *)behaviorUUIDs;
 - (instancetype)copyWithUpdatedValuesByProperty:(NSDictionary<NSNumber *, id> *)valuesByProperty; // @(BLMSessionConfigurationProperty) -> id
 
-- (NSEnumerator<BLMBehavior *> *)behaviorEnumerator;
+- (BLMBehaviorEnumerator *)behaviorEnumerator;
 
 @end

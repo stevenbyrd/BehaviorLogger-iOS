@@ -30,99 +30,6 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
 
 #pragma mark
 
-@interface BehaviorEnumerator : NSEnumerator<BLMBehavior *>
-
-@property (nonatomic, strong, readonly) NSEnumerator<NSUUID *> *UUIDEnumerator;
-@property (nonatomic, copy, readonly) NSArray<NSUUID *> *behaviorUUIDs;
-
-@end
-
-
-@implementation BehaviorEnumerator
-
-- (instancetype)initWithBehaviorUUIDs:(NSArray<NSUUID *> *)behaviorUUIDs {
-    self = [super init];
-
-    if (self == nil) {
-        return nil;
-    }
-
-    _behaviorUUIDs = [behaviorUUIDs copy];
-
-    return self;
-}
-
-
-- (id)nextObject {
-    if (self.UUIDEnumerator == nil) {
-        _UUIDEnumerator = self.behaviorUUIDs.objectEnumerator;
-    }
-
-    NSUUID *UUID = self.UUIDEnumerator.nextObject;
-
-    return ((UUID == nil) ? nil : [[BLMDataManager sharedManager] behaviorForUUID:UUID]);
-}
-
-
-- (NSArray *)allObjects {
-    NSMutableArray *allObjects = [NSMutableArray array];
-
-    for (NSUUID *UUID in self.behaviorUUIDs) {
-        BLMBehavior *behavior = [[BLMDataManager sharedManager] behaviorForUUID:UUID];
-
-        if (behavior != nil) {
-            [allObjects addObject:behavior];
-        }
-    }
-
-    return allObjects;
-}
-
-
-- (NSUInteger)countByEnumeratingWithState:(NSFastEnumerationState *)state objects:(id __unsafe_unretained [])objects count:(NSUInteger)count {
-    typedef NS_ENUM(NSUInteger, EnumerationState) {
-        EnumerationStateUninitialized,
-        EnumerationStateStarted,
-    };
-
-    typedef NS_ENUM(NSUInteger, ExtraState) {
-        ExtraStateBehaviorUUIDIndex,
-        ExtraStateMutations,
-    };
-
-    switch ((EnumerationState)state->state) {
-        case EnumerationStateUninitialized:
-            state->state = EnumerationStateStarted;
-            state->extra[ExtraStateBehaviorUUIDIndex] = 0;
-            state->mutationsPtr = &state->extra[ExtraStateMutations]; // We're ignoring mutations, so mutationsPtr points to value that will not change (note: must not be NULL)
-
-        case EnumerationStateStarted: {
-            assert(count >= 1);
-            objects[0] = nil;
-
-            while (objects[0] == nil) {
-                NSUInteger index = state->extra[ExtraStateBehaviorUUIDIndex];
-
-                if (index == self.behaviorUUIDs.count) {
-                    return 0;
-                }
-
-                objects[0] = [[BLMDataManager sharedManager] behaviorForUUID:self.behaviorUUIDs[index]];
-                state->extra[ExtraStateBehaviorUUIDIndex] += 1;
-            }
-
-            state->itemsPtr = objects;
-            
-            return 1;
-        }
-    }
-}
-
-@end
-
-
-#pragma mark
-
 @implementation BLMSessionConfiguration
 
 - (instancetype)initWithUUID:(NSUUID *)UUID condition:(NSString *)condition location:(NSString *)location therapist:(NSString *)therapist observer:(NSString *)observer timeLimit:(BLMTimeInterval)timeLimit timeLimitOptions:(BLMTimeLimitOptions)timeLimitOptions behaviorUUIDs:(NSArray<NSUUID *> *)behaviorUUIDs {
@@ -211,7 +118,7 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
 
 
 - (NSEnumerator<BLMBehavior *> *)behaviorEnumerator {
-    return [[BehaviorEnumerator alloc] initWithBehaviorUUIDs:self.behaviorUUIDs];
+    return [BLMBehaviorEnumerator enumeratorFromUUIDEnumerator:self.behaviorUUIDs.objectEnumerator];
 }
 
 @end

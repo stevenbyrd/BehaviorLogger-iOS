@@ -43,6 +43,145 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
 
 #pragma mark
 
+@interface BLMModelObjectEnumerator<ObjectType> ()
+
+@property (nonatomic, strong, readonly) NSEnumerator<NSUUID *> *UUIDEnumerator;
+@property (nonatomic, copy, readonly) ObjectType (^objectRetrievalBlock)(NSUUID *UUID);
+
+- (instancetype)initWithUUIDEnumerator:(NSEnumerator<NSUUID *> *)UUIDEnumerator objectRetrievalBlock:(ObjectType(^)(NSUUID *UUID))objectRetrievalBlock;
+
+@end
+
+
+@implementation BLMModelObjectEnumerator
+
+- (instancetype)initWithUUIDEnumerator:(NSEnumerator<NSUUID *> *)UUIDEnumerator objectRetrievalBlock:(id(^)(NSUUID *UUID))objectRetrievalBlock {
+    assert(![self isMemberOfClass:[BLMModelObjectEnumerator class]]);
+    assert([self conformsToProtocol:@protocol(BLMUUIDEnumeration)]);
+    assert(UUIDEnumerator != nil);
+    assert(objectRetrievalBlock != nil);
+
+    self = [super init];
+
+    if (self == nil) {
+        return nil;
+    }
+
+    _UUIDEnumerator = UUIDEnumerator;
+    _objectRetrievalBlock = [objectRetrievalBlock copy];
+
+    return self;
+}
+
+
+- (id)nextObject {
+    id object = nil;
+
+    while (object == nil) {
+        NSUUID *UUID = self.UUIDEnumerator.nextObject;
+
+        if (UUID == nil) {
+            return nil;
+        }
+
+        object = self.objectRetrievalBlock(UUID);
+    }
+
+    return object;
+}
+
+
+- (NSArray *)allObjects {
+    NSMutableArray *allObjects = [NSMutableArray array];
+
+    for (NSUUID *UUID in self.UUIDEnumerator.allObjects) {
+        id object = self.objectRetrievalBlock(UUID);
+
+        if (object != nil) {
+            [allObjects addObject:object];
+        }
+    }
+
+    return allObjects;
+}
+
+
+- (NSUInteger)countByEnumeratingWithState:(NSFastEnumerationState *)state objects:(id __unsafe_unretained [])objects count:(NSUInteger)count {
+    typedef NS_ENUM(NSUInteger, EnumerationState) {
+        EnumerationStateUninitialized,
+        EnumerationStateStarted,
+    };
+
+    switch ((EnumerationState)state->state) {
+        case EnumerationStateUninitialized:
+            state->state = EnumerationStateStarted;
+            state->mutationsPtr = &state->state; // We're ignoring mutations, so mutationsPtr points to value that will not change (note: must not be NULL)
+
+        case EnumerationStateStarted: {
+            assert(count >= 1);
+            objects[0] = nil;
+
+            while (objects[0] == nil) {
+                NSUUID *UUID = self.UUIDEnumerator.nextObject;
+
+                if (UUID == nil) {
+                    return 0;
+                }
+
+                objects[0] = self.objectRetrievalBlock(UUID);
+            }
+
+            state->itemsPtr = objects;
+            
+            return 1;
+        }
+    }
+}
+
+@end
+
+
+#pragma mark
+
+@implementation BLMBehaviorEnumerator
+
++ (instancetype)enumeratorFromUUIDEnumerator:(NSEnumerator<NSUUID *> *)UUIDEnumerator {
+    return [[self alloc] initWithUUIDEnumerator:UUIDEnumerator objectRetrievalBlock:^BLMBehavior *(NSUUID *UUID) {
+        return [[BLMDataManager sharedManager] behaviorForUUID:UUID];
+    }];
+}
+
+@end
+
+
+#pragma mark
+
+@implementation BLMProjectEnumerator
+
++ (instancetype)enumeratorFromUUIDEnumerator:(NSEnumerator<NSUUID *> *)UUIDEnumerator {
+    return [[self alloc] initWithUUIDEnumerator:UUIDEnumerator objectRetrievalBlock:^BLMProject *(NSUUID *UUID) {
+        return [[BLMDataManager sharedManager] projectForUUID:UUID];
+    }];
+}
+
+@end
+
+
+#pragma mark
+
+@implementation BLMSessionConfigurationEnumerator
+
++ (instancetype)enumeratorFromUUIDEnumerator:(NSEnumerator<NSUUID *> *)UUIDEnumerator {
+    return [[self alloc] initWithUUIDEnumerator:UUIDEnumerator objectRetrievalBlock:^BLMSessionConfiguration *(NSUUID *UUID) {
+        return [[BLMDataManager sharedManager] sessionConfigurationForUUID:UUID];
+    }];
+}
+
+@end
+
+
+#pragma mark
+
 @interface BLMDataManager ()
 
 @property (nonatomic, copy, readonly) NSMutableDictionary<NSUUID*, BLMProject *> *projectByUUID;
@@ -99,13 +238,6 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
 
 #pragma mark Project State
 
-- (NSEnumerator<NSUUID *> *)projectUUIDEnumerator {
-    assert([NSThread isMainThread]);
-
-    return self.projectByUUID.keyEnumerator;
-}
-
-
 - (BLMProject *)projectForUUID:(NSUUID *)UUID {
     assert([NSThread isMainThread]);
     assert(UUID != nil);
@@ -114,31 +246,27 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
 }
 
 
-- (void)createProjectWithName:(NSString *)name client:(NSString *)client completion:(void(^)(BLMProject *project, NSError *error))completion {
+- (BLMProjectEnumerator *)projectEnumerator {
     assert([NSThread isMainThread]);
 
-    NSString *lowercaseName = [name.lowercaseString stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+    return [BLMProjectEnumerator enumeratorFromUUIDEnumerator:self.projectByUUID.keyEnumerator];
+}
 
-    for (NSUUID *UUID in self.projectByUUID.keyEnumerator) {
-        if ([BLMUtils isString:self.projectByUUID[UUID].name.lowercaseString equalToString:lowercaseName]) {
-            completion(nil, [NSError errorWithDomain:BLMDataManagerProjectErrorDomain code:-1 userInfo:@{ NSLocalizedDescriptionKey : @"A project with that name already exists." }]);
-            return;
-        }
+
+- (void)createProjectWithName:(NSString *)name client:(NSString *)client sessionConfigurationUUID:(NSUUID *)sessionConfigurationUUID completion:(void(^)(BLMProject *project, NSError *error))completion {
+    assert([NSThread isMainThread]);
+
+    BLMProject *project = [[BLMProject alloc] initWithUUID:[NSUUID UUID] name:name client:client sessionConfigurationUUID:sessionConfigurationUUID sessionByUUID:nil];
+    self.projectByUUID[project.UUID] = project;
+
+    [self archiveCurrentState];
+
+    NSDictionary *userInfo = @{ BLMProjectNewProjectUserInfoKey:project };
+    [[NSNotificationCenter defaultCenter] postNotificationName:BLMProjectCreatedNotification object:project userInfo:userInfo];
+
+    if (completion != nil) {
+        completion(project, nil);
     }
-
-    [self createSessionConfigurationWithCondition:nil location:nil therapist:nil observer:nil timeLimit:0 timeLimitOptions:0 behaviorUUIDs:@[] completion:^(BLMSessionConfiguration *sessionConfiguration, NSError *error) {
-        BLMProject *project = [[BLMProject alloc] initWithUUID:[NSUUID UUID] name:name client:client sessionConfigurationUUID:sessionConfiguration.UUID sessionByUUID:nil];
-        self.projectByUUID[project.UUID] = project;
-
-        [self archiveCurrentState];
-
-        NSDictionary *userInfo = @{ BLMProjectNewProjectUserInfoKey:project };
-        [[NSNotificationCenter defaultCenter] postNotificationName:BLMProjectCreatedNotification object:project userInfo:userInfo];
-
-        if (completion != nil) {
-            completion(project, nil);
-        }
-    }];
 }
 
 
@@ -180,18 +308,18 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
 
 #pragma mark Behavior State
 
-- (NSEnumerator<NSUUID *> *)behaviorUUIDEnumerator {
-    assert([NSThread isMainThread]);
-
-    return self.behaviorByUUID.keyEnumerator;
-}
-
-
 - (BLMBehavior *)behaviorForUUID:(NSUUID *)UUID {
     assert([NSThread isMainThread]);
     assert(UUID != nil);
 
     return self.behaviorByUUID[UUID];
+}
+
+
+- (BLMBehaviorEnumerator *)behaviorEnumerator {
+    assert([NSThread isMainThread]);
+
+    return [BLMBehaviorEnumerator enumeratorFromUUIDEnumerator:self.behaviorByUUID.keyEnumerator];
 }
 
 
@@ -254,14 +382,17 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
 
 #pragma mark Session Configuration State
 
-- (NSEnumerator<NSUUID *> *)sessionConfigurationUUIDEnumerator {
-    return self.sessionConfigurationByUUID.keyEnumerator;
+- (BLMSessionConfiguration *)sessionConfigurationForUUID:(NSUUID *)UUID {
+    assert([NSThread isMainThread]);
+
+    return self.sessionConfigurationByUUID[UUID];
 }
 
 
-- (BLMSessionConfiguration *)sessionConfigurationForUUID:(NSUUID *)UUID {
+- (BLMSessionConfigurationEnumerator *)sessionConfigurationEnumerator {
     assert([NSThread isMainThread]);
-    return self.sessionConfigurationByUUID[UUID];
+
+    return [BLMSessionConfigurationEnumerator enumeratorFromUUIDEnumerator:self.sessionConfigurationByUUID.keyEnumerator];
 }
 
 

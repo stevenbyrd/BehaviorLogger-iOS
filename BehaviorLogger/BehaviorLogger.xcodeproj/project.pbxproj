@@ -23,6 +23,7 @@
 		AABA338F1C3DC58A0086A9A1 /* BLMSession.m in Sources */ = {isa = PBXBuildFile; fileRef = AABA338E1C3DC58A0086A9A1 /* BLMSession.m */; };
 		AABA33921C3DCF990086A9A1 /* BLMProjectMenuController.m in Sources */ = {isa = PBXBuildFile; fileRef = AABA33911C3DCF990086A9A1 /* BLMProjectMenuController.m */; };
 		AABA33951C3DD0660086A9A1 /* BLMProjectDetailController.m in Sources */ = {isa = PBXBuildFile; fileRef = AABA33941C3DD0660086A9A1 /* BLMProjectDetailController.m */; };
+		AADCDD171C93AD3E003CADD6 /* BLMCreateProjectController.m in Sources */ = {isa = PBXBuildFile; fileRef = AADCDD161C93AD3E003CADD6 /* BLMCreateProjectController.m */; };
 		AADCDD1E1C93D93D003CADD6 /* BLMTextField.m in Sources */ = {isa = PBXBuildFile; fileRef = AADCDD1D1C93D93D003CADD6 /* BLMTextField.m */; };
 		AAE8CB651C61C1E5008FF024 /* BLMTextInputCell.m in Sources */ = {isa = PBXBuildFile; fileRef = AAE8CB641C61C1E5008FF024 /* BLMTextInputCell.m */; };
 		AAE8CB691C61F178008FF024 /* BLMButtonCell.m in Sources */ = {isa = PBXBuildFile; fileRef = AAE8CB681C61F178008FF024 /* BLMButtonCell.m */; };
@@ -60,6 +61,8 @@
 		AABA33911C3DCF990086A9A1 /* BLMProjectMenuController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BLMProjectMenuController.m; sourceTree = "<group>"; };
 		AABA33931C3DD0660086A9A1 /* BLMProjectDetailController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BLMProjectDetailController.h; sourceTree = "<group>"; };
 		AABA33941C3DD0660086A9A1 /* BLMProjectDetailController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BLMProjectDetailController.m; sourceTree = "<group>"; };
+		AADCDD151C93AD3E003CADD6 /* BLMCreateProjectController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BLMCreateProjectController.h; sourceTree = "<group>"; };
+		AADCDD161C93AD3E003CADD6 /* BLMCreateProjectController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BLMCreateProjectController.m; sourceTree = "<group>"; };
 		AADCDD1C1C93D93D003CADD6 /* BLMTextField.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BLMTextField.h; sourceTree = "<group>"; };
 		AADCDD1D1C93D93D003CADD6 /* BLMTextField.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BLMTextField.m; sourceTree = "<group>"; };
 		AAE8CB631C61C1E5008FF024 /* BLMTextInputCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BLMTextInputCell.h; sourceTree = "<group>"; };
@@ -158,6 +161,8 @@
 			children = (
 				AABA33901C3DCF990086A9A1 /* BLMProjectMenuController.h */,
 				AABA33911C3DCF990086A9A1 /* BLMProjectMenuController.m */,
+				AADCDD151C93AD3E003CADD6 /* BLMCreateProjectController.h */,
+				AADCDD161C93AD3E003CADD6 /* BLMCreateProjectController.m */,
 				AABA33931C3DD0660086A9A1 /* BLMProjectDetailController.h */,
 				AABA33941C3DD0660086A9A1 /* BLMProjectDetailController.m */,
 			);
@@ -278,6 +283,7 @@
 				AABA33431C3D2FB10086A9A1 /* BLMAppDelegate.m in Sources */,
 				AABA33921C3DCF990086A9A1 /* BLMProjectMenuController.m in Sources */,
 				AA6A53A51C8F008C00422078 /* NSArray+CopyMinusObject.m in Sources */,
+				AADCDD171C93AD3E003CADD6 /* BLMCreateProjectController.m in Sources */,
 				AADCDD1E1C93D93D003CADD6 /* BLMTextField.m in Sources */,
 				AABA33401C3D2FB10086A9A1 /* main.m in Sources */,
 			);
