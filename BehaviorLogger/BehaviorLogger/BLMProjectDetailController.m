@@ -1365,6 +1365,7 @@ typedef NS_ENUM(NSUInteger, ActionButton) {
                     break;
 
                 case ActionButtonDeleteProject:
+                    [[BLMDataManager sharedManager] deleteProjectForUUID:self.projectUUID completion:nil];
                     break;
 
                 case ActionButtonCount: {

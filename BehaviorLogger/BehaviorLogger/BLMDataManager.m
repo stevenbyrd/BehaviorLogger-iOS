@@ -299,6 +299,8 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
 
     [self.projectByUUID removeObjectForKey:UUID];
 
+    [self archiveCurrentState];
+
     [[NSNotificationCenter defaultCenter] postNotificationName:BLMProjectDeletedNotification object:project userInfo:nil];
 
     if (completion != nil) {

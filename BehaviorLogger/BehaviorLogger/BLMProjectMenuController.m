@@ -224,7 +224,7 @@ typedef NS_ENUM(NSInteger, TableSection) {
     NSIndexPath *indexPath = [NSIndexPath indexPathForRow:selectedIndex inSection:TableSectionProjectList];
     UITableViewScrollPosition scrollPosition = ((self.selectedProjectUUID == nil) ? UITableViewScrollPositionBottom : UITableViewScrollPositionNone);
 
-    [self.tableView selectRowAtIndexPath:indexPath animated:YES scrollPosition:scrollPosition];
+    [self.tableView selectRowAtIndexPath:indexPath animated:NO scrollPosition:scrollPosition];
 
     self.selectedProjectUUID = UUID;
 }
