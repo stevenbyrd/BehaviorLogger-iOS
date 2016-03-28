@@ -1198,6 +1198,10 @@ typedef NS_ENUM(NSUInteger, ActionButton) {
 #pragma mark BehaviorCellDelegate
 
 - (void)didFireDeleteButtonActionForBehaviorCell:(BehaviorCell *)cell {
+    if (cell.textField.isEditing) {
+        [cell.textField endEditing:YES];
+    }
+
     if ([BLMUtils isObject:cell.behavior.UUID equalToObject:self.addedBehaviorUUID]) {
         [[BLMDataManager sharedManager] deleteBehaviorForUUID:self.addedBehaviorUUID completion:nil];
     } else {
