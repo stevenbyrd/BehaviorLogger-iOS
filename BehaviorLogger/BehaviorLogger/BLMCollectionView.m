@@ -263,6 +263,7 @@ static CGFloat const HeaderFontSize = 18.0;
     [self updateBottomInset:0.0 afterDelay:0.0 duration:duration curve:curve completion:nil];
 }
 
+
 - (void)updateBottomInset:(CGFloat)bottomInset afterDelay:(NSTimeInterval)delay duration:(NSTimeInterval)duration curve:(UIViewAnimationCurve)curve completion:(void(^)(BOOL finished))completion {
     if (self.contentInset.bottom == bottomInset) {
         return;

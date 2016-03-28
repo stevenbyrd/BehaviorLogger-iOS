@@ -384,7 +384,7 @@ typedef NS_ENUM(NSUInteger, ActionButton) {
     }
 }
 
-#pragma mark BLMToggleSwitchTextInputCellDelegate
+#pragma mark BLMTextInputCellDelegate
 
 - (NSString *)labelForTextInputCell:(BLMTextInputCell *)cell {
     switch ((Section)cell.section) {
