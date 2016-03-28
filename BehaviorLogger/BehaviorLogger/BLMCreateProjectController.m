@@ -24,7 +24,7 @@ static UIEdgeInsets const SectionHeaderInsets = { .top = 0.0, .left = 10.0, .bot
 static CGFloat const SectionSeparatorHeight = 1.0;
 static UIEdgeInsets const SectionSeparatorInsets = { .top = 10.0, .left = 20.0, .bottom = 0.0, .right = 20.0 };
 
-static UIEdgeInsets const ItemAreaStandardInsets = { .top = 10.0, .left = 20.0, .bottom = 10.0, .right = 20.0 };
+static UIEdgeInsets const ItemAreaStandardInsets = { .top = 5.0, .left = 20.0, .bottom = 10.0, .right = 20.0 };
 
 
 typedef NS_ENUM(NSUInteger, Section) {
@@ -308,12 +308,7 @@ typedef NS_ENUM(NSUInteger, ActionButton) {
                 },
                 .ItemArea = {
                     .HasBackground = NO,
-                    .Insets = {
-                        .top = 20.0,
-                        .left = 20.0,
-                        .bottom = 10.0,
-                        .right = 20.0
-                    },
+                    .Insets = ItemAreaStandardInsets,
                     .Grid = {
                         .ColumnCount = 2,
                         .ColumnSpacing = 20.0,

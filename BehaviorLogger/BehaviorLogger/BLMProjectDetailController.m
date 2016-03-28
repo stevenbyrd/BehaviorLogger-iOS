@@ -25,7 +25,7 @@
 static CGFloat const SectionHeaderHeight = 30.0;
 static UIEdgeInsets const SectionHeaderInsets = { .top = 0.0, .left = 10.0, .bottom = 10.0, .right = 20.0 };
 
-static UIEdgeInsets const ItemAreaStandardInsets = { .top = 10.0, .left = 20.0, .bottom = 10.0, .right = 20.0 };
+static UIEdgeInsets const ItemAreaStandardInsets = { .top = 5.0, .left = 20.0, .bottom = 10.0, .right = 20.0 };
 
 static CGFloat const SectionSeparatorHeight = 1.0;
 static UIEdgeInsets const SectionSeparatorInsets = { .top = 10.0, .left = 20.0, .bottom = 0.0, .right = 20.0 };

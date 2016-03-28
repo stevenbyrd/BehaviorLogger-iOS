@@ -28,7 +28,7 @@
         return nil;
     }
     
-    _textField = [[BLMTextField alloc] initWithHorizontalPadding:5.0 verticalPadding:5.0];
+    _textField = [[BLMTextField alloc] initWithHorizontalPadding:8.0 verticalPadding:5.0];
 
     self.textField.delegate = self;
     self.textField.minimumFontSize = 10.0;
