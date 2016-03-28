@@ -15,6 +15,8 @@
 #import "BLMUtils.h"
 #import "BLMViewUtils.h"
 
+#import "UIResponder+FirstResponder.h"
+
 
 #pragma mark Constants
 
@@ -63,6 +65,7 @@ typedef NS_ENUM(NSUInteger, ActionButton) {
 @interface BLMCreateProjectController () < UICollectionViewDataSource, BLMCollectionViewLayoutDelegate, BLMButtonCellDelegate, BLMTextInputCellDelegate>
 
 @property (nonatomic, copy, readonly) NSArray<NSMutableArray<NSString *> *> *properties;
+@property (nonatomic, assign, getter=shouldAutomaticallyBeginEditingProjectName) BOOL automaticallyBeginEditingProjectName;
 @property (nonatomic, strong, readonly) BLMCollectionView *collectionView;
 
 @end
@@ -78,6 +81,7 @@ typedef NS_ENUM(NSUInteger, ActionButton) {
     }
 
     _delegate = delegate;
+    _automaticallyBeginEditingProjectName = YES;
     _properties = @[[NSMutableArray array], [NSMutableArray array]];
 
     for (ProjectProperty property = 0; property < ProjectPropertyCount; property += 1) {
@@ -115,6 +119,25 @@ typedef NS_ENUM(NSUInteger, ActionButton) {
 
     [self.view addSubview:self.collectionView];
     [self.view addConstraints:[BLMViewUtils constraintsForItem:self.collectionView equalToItem:self.view]];
+}
+
+
+- (void)viewDidLayoutSubviews {
+    [super viewDidLayoutSubviews];
+
+    if (self.shouldAutomaticallyForwardAppearanceMethods) {
+        self.automaticallyBeginEditingProjectName = NO;
+
+        [self.collectionView layoutIfNeeded];
+
+        BLMTextInputCell *projectNameCell = (BLMTextInputCell *)[self.collectionView cellForItemAtIndexPath:[NSIndexPath indexPathForItem:ProjectPropertyName inSection:SectionProjectProperties]];
+
+        assert([projectNameCell isKindOfClass:[BLMTextInputCell class]]);
+        assert(projectNameCell.textField.text.length == 0);
+        assert([UIResponder currentFirstResponder] == nil);
+
+        [projectNameCell.textField becomeFirstResponder];
+    }
 }
 
 #pragma mark Input Validation
