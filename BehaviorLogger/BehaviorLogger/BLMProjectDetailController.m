@@ -1364,9 +1364,21 @@ typedef NS_ENUM(NSUInteger, ActionButton) {
                 case ActionButtonViewSessionHistory:
                     break;
 
-                case ActionButtonDeleteProject:
-                    [[BLMDataManager sharedManager] deleteProjectForUUID:self.projectUUID completion:nil];
+                case ActionButtonDeleteProject: {
+                    UIAlertController *alertController = [UIAlertController alertControllerWithTitle:[NSString stringWithFormat:@"Delete %@?", self.project.name] message:nil preferredStyle:UIAlertControllerStyleAlert];
+
+                    [alertController addAction:[UIAlertAction actionWithTitle:@"Delete" style:UIAlertActionStyleDestructive handler:^(UIAlertAction * _Nonnull action) {
+                        [[BLMDataManager sharedManager] deleteProjectForUUID:self.projectUUID completion:nil];
+                    }]];
+
+                    UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:nil];
+                    [alertController addAction:cancelAction];
+                    alertController.preferredAction = cancelAction;
+
+                    [self presentViewController:alertController animated:YES completion:nil];
+
                     break;
+                }
 
                 case ActionButtonCount: {
                     assert(NO);
