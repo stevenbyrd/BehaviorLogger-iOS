@@ -15,7 +15,7 @@
 #import "BLMViewUtils.h"
 
 
-float const ProjectCellFontSize = 14.0;
+CGFloat const ProjectCellFontSize = 14.0;
 
 
 typedef NS_ENUM(NSInteger, TableSection) {
@@ -71,7 +71,9 @@ typedef NS_ENUM(NSInteger, TableSection) {
     NSMutableParagraphStyle *paragraphStyle = [[NSMutableParagraphStyle alloc] init];
     paragraphStyle.alignment = NSTextAlignmentCenter;
 
-    NSDictionary *textAttributes = @{ NSForegroundColorAttributeName : [UIColor darkTextColor], NSFontAttributeName : [UIFont boldSystemFontOfSize:12.0], NSParagraphStyleAttributeName : paragraphStyle};
+    NSDictionary *textAttributes = @{ NSParagraphStyleAttributeName : paragraphStyle,
+                                      NSForegroundColorAttributeName : [UIColor darkTextColor],
+                                      NSFontAttributeName : [UIFont boldSystemFontOfSize:12.0] };
 
     self.textLabel.attributedText = [[NSAttributedString alloc] initWithString:@"Create New" attributes:textAttributes];
     self.textLabel.numberOfLines = 1;

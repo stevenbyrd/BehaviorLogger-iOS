@@ -40,6 +40,3 @@
 + (NSDictionary *)errorAttributes;
 
 @end
-
-
-
