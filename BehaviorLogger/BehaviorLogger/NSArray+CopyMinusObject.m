@@ -11,7 +11,7 @@
 
 @implementation NSArray (CopyMinusObject)
 
-- (NSArray *)arrayByRemovingObject:(id)object {
+- (nonnull NSArray *)arrayByRemovingObject:(nonnull id)object {
     NSUInteger index = [self indexOfObject:object];
     assert(index != NSNotFound);
 

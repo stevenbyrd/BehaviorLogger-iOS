@@ -10,6 +10,6 @@
 
 @interface NSArray<E> (CopyMinusObject)
 
-- (NSArray<E> *)arrayByRemovingObject:(E)object;
+- (nonnull NSArray<E> *)arrayByRemovingObject:(nonnull E)object;
 
 @end

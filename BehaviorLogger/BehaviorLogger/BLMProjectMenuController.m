@@ -104,7 +104,6 @@ typedef NS_ENUM(NSInteger, TableSection) {
 
 @property (nonatomic, strong) NSUUID *selectedProjectUUID;
 @property (nonatomic, copy, readonly) NSMutableArray<NSUUID *> *projectUUIDs;
-@property (nonatomic, copy, readonly) NSMutableSet<NSString *> *projectNameSet;
 @property (nonatomic, strong, readonly) UITableView *tableView;
 
 @end
@@ -120,7 +119,6 @@ typedef NS_ENUM(NSInteger, TableSection) {
     }
 
     _projectUUIDs = [NSMutableArray array];
-    _projectNameSet = [NSMutableSet set];
 
     return self;
 }
@@ -160,14 +158,10 @@ typedef NS_ENUM(NSInteger, TableSection) {
     assert(![BLMDataManager sharedManager].isRestoringArchive);
 
     [self.projectUUIDs removeAllObjects];
-    [self.projectNameSet removeAllObjects];
 
     for (BLMProject *project in [BLMDataManager sharedManager].projectEnumerator) {
-        [self.projectUUIDs addObject:project.UUID];
-        [self.projectNameSet addObject:project.name];
+        [self.projectUUIDs insertObject:project.UUID atIndex:[self insertionIndexForProjectUUID:project.UUID]];
     }
-
-    [self sortProjectUUIDs];
 
     [self.tableView reloadData];
 
@@ -180,10 +174,23 @@ typedef NS_ENUM(NSInteger, TableSection) {
 }
 
 
-- (void)sortProjectUUIDs {
-    [self.projectUUIDs sortUsingComparator:^NSComparisonResult(NSUUID *leftUUID, NSUUID *rightUUID) {
-        return [[[BLMDataManager sharedManager] projectForUUID:leftUUID].name compare:[[BLMDataManager sharedManager] projectForUUID:rightUUID].name];
-    }];
+- (NSUInteger)insertionIndexForProjectUUID:(NSUUID *)UUID {
+    static NSComparator comparator;
+    static dispatch_once_t onceToken;
+
+    dispatch_once(&onceToken, ^{
+        comparator = ^NSComparisonResult(NSUUID *leftUUID, NSUUID *rightUUID) {
+            NSString *leftName = [[BLMDataManager sharedManager] projectForUUID:leftUUID].name;
+            NSString *rightName = [[BLMDataManager sharedManager] projectForUUID:rightUUID].name;
+
+            assert(leftName != nil);
+            assert(rightName != nil);
+
+            return [leftName compare:rightName];
+        };
+    });
+
+    return [self.projectUUIDs indexOfObject:UUID inSortedRange:NSMakeRange(0, self.projectUUIDs.count) options:NSBinarySearchingInsertionIndex usingComparator:comparator];
 }
 
 
@@ -245,15 +252,11 @@ typedef NS_ENUM(NSInteger, TableSection) {
     [self.tableView beginUpdates];
 
     BLMProject *project = (BLMProject *)notification.object;
+    NSUInteger insertionIndex = [self insertionIndexForProjectUUID:project.UUID];
 
-    [self.projectNameSet addObject:project.name];
-    [self.projectUUIDs addObject:project.UUID];
+    [self.projectUUIDs insertObject:project.UUID atIndex:insertionIndex];
 
-    [self sortProjectUUIDs];
-
-    NSUInteger index = [self.projectUUIDs indexOfObject:project.UUID];
-
-    [self.tableView insertRowsAtIndexPaths:@[[NSIndexPath indexPathForRow:index inSection:TableSectionProjectList]] withRowAnimation:UITableViewRowAnimationNone];
+    [self.tableView insertRowsAtIndexPaths:@[[NSIndexPath indexPathForRow:insertionIndex inSection:TableSectionProjectList]] withRowAnimation:UITableViewRowAnimationNone];
     [self.tableView endUpdates];
 }
 
@@ -267,7 +270,6 @@ typedef NS_ENUM(NSInteger, TableSection) {
     if (index != NSNotFound) {
         [self.tableView beginUpdates];
 
-        [self.projectNameSet removeObject:project.name];
         [self.projectUUIDs removeObjectAtIndex:index];
 
         [self.tableView deleteRowsAtIndexPaths:@[[NSIndexPath indexPathForItem:index inSection:TableSectionProjectList]] withRowAnimation:UITableViewRowAnimationNone];
@@ -288,13 +290,6 @@ typedef NS_ENUM(NSInteger, TableSection) {
     assert([NSThread isMainThread]);
 
     BLMProject *project = (BLMProject *)notification.object;
-    BLMProject *updatedProject = notification.userInfo[BLMProjectNewProjectUserInfoKey];
-
-    if (![BLMUtils isString:project.name equalToString:updatedProject.name]) {
-        [self.projectNameSet removeObject:project.name];
-        [self.projectNameSet addObject:updatedProject.name];
-    }
-
     NSInteger index = [self.projectUUIDs indexOfObject:project.UUID];
 
     if (index != NSNotFound) {
@@ -384,11 +379,6 @@ typedef NS_ENUM(NSInteger, TableSection) {
 }
 
 #pragma mark BLMCreateProjectControllerDelegate
-
-- (BOOL)createProjectController:(BLMCreateProjectController *)controller shouldAcceptProjectName:(NSString *)projectName {
-    return ![self.projectNameSet containsObject:projectName];
-}
-
 
 - (void)createProjectController:(BLMCreateProjectController *)controller didCreateProject:(BLMProject *)project {
     assert([self.projectUUIDs indexOfObject:project.UUID] != NSNotFound);

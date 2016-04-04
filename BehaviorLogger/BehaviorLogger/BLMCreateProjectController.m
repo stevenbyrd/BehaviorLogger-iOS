@@ -176,13 +176,13 @@ typedef NS_ENUM(NSUInteger, ActionButton) {
         case SectionProjectProperties: {
             switch ((ProjectProperty)property) {
                 case ProjectPropertyName: {
-                    if (![self.delegate createProjectController:self shouldAcceptProjectName:textInput]) {
+                    if ([[BLMDataManager sharedManager].projectNameSet containsObject:textInput]) {
                         return NO;
                     }
                 }
 
                 case ProjectPropertyClient:
-                    break;
+                    return (textInput.length >= [self minimumInputLengthForSection:section property:property]);
 
                 case ProjectPropertyCount: {
                     assert(NO);

@@ -11,6 +11,8 @@
 #import "BLMSession.h"
 #import "BLMUtils.h"
 
+#import "NSSet+CopyMinusObject.h"
+
 
 NSString *const BLMDataManagerArchiveRestoredNotification = @"BLMDataManagerArchiveRestoredNotification";
 
@@ -184,6 +186,7 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
 
 @interface BLMDataManager ()
 
+@property (nonatomic, copy, readwrite) NSSet<NSString *> *projectNameSet;
 @property (nonatomic, copy, readonly) NSMutableDictionary<NSUUID*, BLMProject *> *projectByUUID;
 @property (nonatomic, copy, readonly) NSMutableDictionary<NSUUID*, BLMBehavior *> *behaviorByUUID;
 @property (nonatomic, copy, readonly) NSMutableDictionary<NSUUID*, BLMSessionConfiguration *> *sessionConfigurationByUUID;
@@ -238,6 +241,25 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
 
 #pragma mark Project State
 
+- (NSSet<NSString *> *)projectNameSet {
+    assert([NSThread isMainThread]);
+
+    if (_projectNameSet == nil) {
+        NSMutableSet *projectNameSet = [NSMutableSet set];
+
+        for (BLMProject *project in self.projectEnumerator) {
+            [projectNameSet addObject:project.name];
+        }
+
+        self.projectNameSet = projectNameSet;
+    }
+
+    assert(self.projectByUUID.count == _projectNameSet.count);
+    
+    return _projectNameSet;
+}
+
+
 - (BLMProject *)projectForUUID:(NSUUID *)UUID {
     assert([NSThread isMainThread]);
     assert(UUID != nil);
@@ -255,6 +277,9 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
 
 - (void)createProjectWithName:(NSString *)name client:(NSString *)client sessionConfigurationUUID:(NSUUID *)sessionConfigurationUUID completion:(void(^)(BLMProject *project, NSError *error))completion {
     assert([NSThread isMainThread]);
+
+    assert(![self.projectNameSet containsObject:name]);
+    self.projectNameSet = [self.projectNameSet setByAddingObject:name];
 
     BLMProject *project = [[BLMProject alloc] initWithUUID:[NSUUID UUID] name:name client:client sessionConfigurationUUID:sessionConfigurationUUID sessionByUUID:nil];
     self.projectByUUID[project.UUID] = project;
@@ -277,6 +302,17 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
     BLMProject *updatedProject = [originalProject copyWithUpdatedValuesByProperty:@{ @(property):(value ?: [NSNull null]) }];
 
     if (![BLMUtils isObject:originalProject equalToObject:updatedProject]) {
+        if (property == BLMProjectPropertyName) {
+            assert([self.projectNameSet containsObject:originalProject.name]);
+            assert(![self.projectNameSet containsObject:updatedProject.name]);
+
+            NSMutableSet *projectNameSet = [self.projectNameSet mutableCopy];
+            [projectNameSet removeObject:originalProject.name];
+            [projectNameSet addObject:updatedProject.name];
+
+            self.projectNameSet = projectNameSet;
+        }
+
         self.projectByUUID[UUID] = updatedProject;
 
         [self archiveCurrentState];
@@ -297,6 +333,7 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
     BLMProject *project = self.projectByUUID[UUID];
     assert(project != nil);
 
+    self.projectNameSet = [self.projectNameSet setByRemovingObject:project.name];
     [self.projectByUUID removeObjectForKey:UUID];
 
     [self archiveCurrentState];

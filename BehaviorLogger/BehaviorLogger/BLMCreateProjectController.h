@@ -15,7 +15,6 @@
 
 @protocol BLMCreateProjectControllerDelegate <NSObject>
 
-- (BOOL)createProjectController:(BLMCreateProjectController *)controller shouldAcceptProjectName:(NSString *)projectName;
 - (void)createProjectController:(BLMCreateProjectController *)controller didCreateProject:(BLMProject *)project;
 - (void)createProjectControllerDidCancel:(BLMCreateProjectController *)controller;
 

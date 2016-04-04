@@ -1096,8 +1096,23 @@ typedef NS_ENUM(NSUInteger, ActionButton) {
 
 - (BOOL)shouldAcceptInputForTextInputCell:(BLMTextInputCell *)cell {
     switch ((Section)cell.section) {
-        case SectionBasicProperties:
-            return (cell.textField.text.length >= [self minimumInputLengthForTextInputCell:cell]);
+        case SectionBasicProperties: {
+            switch ((BasicInfo)cell.item) {
+                case BasicInfoProjectName: {
+                    if ([[BLMDataManager sharedManager].projectNameSet containsObject:cell.textField.text] && ![BLMUtils isString:cell.textField.text equalToString:self.project.name]) {
+                        return NO;
+                    }
+                }
+
+                case BasicInfoClientName:
+                    return (cell.textField.text.length >= [self minimumInputLengthForTextInputCell:cell]);
+
+                case BasicInfoCount: {
+                    assert(NO);
+                    return NO;
+                }
+            }
+        }
 
         case SectionSessionProperties:
             return YES;
@@ -1110,7 +1125,7 @@ typedef NS_ENUM(NSUInteger, ActionButton) {
         case SectionActionButtons:
         case SectionCount: {
             assert(NO);
-            break;
+            return NO;
         }
     }
 }

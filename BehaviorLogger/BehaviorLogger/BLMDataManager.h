@@ -70,6 +70,8 @@ extern NSString *const BLMDataManagerBehaviorErrorDomain;
 
 #pragma Project State
 
+@property (nonatomic, copy, readonly) NSSet<NSString *> *projectNameSet;
+
 - (BLMProject *)projectForUUID:(NSUUID *)UUID;
 - (BLMProjectEnumerator *)projectEnumerator;
 - (void)createProjectWithName:(NSString *)name client:(NSString *)client sessionConfigurationUUID:(NSUUID *)sessionConfigurationUUID completion:(void(^)(BLMProject *project, NSError *error))completion;
