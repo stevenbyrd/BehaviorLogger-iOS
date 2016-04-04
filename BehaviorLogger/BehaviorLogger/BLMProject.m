@@ -95,7 +95,7 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
             && [BLMUtils isString:self.name equalToString:other.name]
             && [BLMUtils isString:self.client equalToString:other.client]
             && [BLMUtils isObject:self.sessionConfigurationUUID equalToObject:other.sessionConfigurationUUID]
-            && [self.sessionByUUID isEqualToDictionary:other.sessionByUUID]);
+            && [BLMUtils isDictionary:self.sessionByUUID equalToDictionary:other.sessionByUUID]);
 }
 
 
