@@ -15,7 +15,9 @@
 #import "BLMViewUtils.h"
 
 
-CGFloat const ProjectCellFontSize = 14.0;
+BLMColorHexCode const BLMCreateProjectCellTextColor = BLMColorHexCodeBlue;
+
+static CGFloat const ProjectCellFontSize = 14.0;
 
 
 typedef NS_ENUM(NSInteger, TableSection) {
@@ -41,7 +43,7 @@ typedef NS_ENUM(NSInteger, TableSection) {
         return nil;
     }
 
-    self.contentView.backgroundColor = [UIColor colorWithWhite:1.0 alpha:1.0];
+    self.contentView.backgroundColor = [BLMViewUtils colorForHexCode:BLMColorHexCodeWhite];
     self.textLabel.font = [UIFont systemFontOfSize:ProjectCellFontSize];
 
     return self;
@@ -68,19 +70,18 @@ typedef NS_ENUM(NSInteger, TableSection) {
         return nil;
     }
 
-    NSMutableParagraphStyle *paragraphStyle = [[NSMutableParagraphStyle alloc] init];
-    paragraphStyle.alignment = NSTextAlignmentCenter;
+    UIColor *contentColor = [BLMViewUtils colorForHexCode:BLMCreateProjectCellTextColor];
 
-    NSDictionary *textAttributes = @{ NSParagraphStyleAttributeName : paragraphStyle,
-                                      NSForegroundColorAttributeName : [UIColor darkTextColor],
-                                      NSFontAttributeName : [UIFont boldSystemFontOfSize:12.0] };
+    NSDictionary *textAttributes = @{ NSFontAttributeName : [UIFont boldSystemFontOfSize:12.0],
+                                      NSParagraphStyleAttributeName : [BLMViewUtils centerAlignedParagraphStyle],
+                                      NSForegroundColorAttributeName : contentColor };
 
     self.textLabel.attributedText = [[NSAttributedString alloc] initWithString:@"Create New" attributes:textAttributes];
     self.textLabel.numberOfLines = 1;
 
     _separatorView = [[UIView alloc] initWithFrame:CGRectZero];
 
-    self.separatorView.backgroundColor = [UIColor blueColor];
+    self.separatorView.backgroundColor = contentColor;
     self.separatorView.translatesAutoresizingMaskIntoConstraints = NO;
 
     [self.contentView addSubview:self.separatorView];
@@ -89,7 +90,7 @@ typedef NS_ENUM(NSInteger, TableSection) {
     [self.contentView addConstraint:[BLMViewUtils constraintWithItem:self.separatorView attribute:NSLayoutAttributeCenterX equalToItem:self.contentView constant:0.0]];
     [self.contentView addConstraint:[BLMViewUtils constraintWithItem:self.separatorView attribute:NSLayoutAttributeTop equalToItem:self.contentView constant:0.0]];
 
-    self.contentView.backgroundColor = [UIColor colorWithWhite:1.0 alpha:1.0];
+    self.contentView.backgroundColor = [BLMViewUtils colorForHexCode:BLMColorHexCodeWhite];
 
     return self;
 }

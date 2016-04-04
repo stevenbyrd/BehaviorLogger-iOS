@@ -29,12 +29,25 @@ CGRect CGRectPixelAlign(CGRect rect) {
 
 #pragma mark Colors
 
-+ (UIColor *)colorWithHexValue:(uint32_t)hexValue alpha:(CGFloat)alpha {
-    CGFloat red = ((hexValue & 0xFF0000) >> 16) / 255.0;
-    CGFloat green = ((hexValue & 0x00FF00) >> 8) / 255.0;
-    CGFloat blue = (hexValue & 0x0000FF) / 255.0;
++ (UIColor *)colorForHexCode:(BLMColorHexCode)hexCode {
+    return [self colorForHexCode:hexCode alpha:1.0];
+}
+
++ (UIColor *)colorForHexCode:(BLMColorHexCode)hexCode alpha:(CGFloat)alpha {
+    CGFloat red = ((hexCode & 0xFF0000) >> 16) / 255.0;
+    CGFloat green = ((hexCode & 0x00FF00) >> 8) / 255.0;
+    CGFloat blue = (hexCode & 0x0000FF) / 255.0;
 
     return [UIColor colorWithRed:red green:green blue:blue alpha:alpha];
+}
+
+#pragma mark String Attributes
+
++ (NSParagraphStyle *)centerAlignedParagraphStyle {
+    NSMutableParagraphStyle *paragraphStyle = [[NSMutableParagraphStyle alloc] init];
+    paragraphStyle.alignment = NSTextAlignmentCenter;
+
+    return paragraphStyle;
 }
 
 #pragma mark Images
@@ -78,10 +91,7 @@ CGRect CGRectPixelAlign(CGRect rect) {
     [color setStroke];
     [path stroke];
 
-    NSMutableParagraphStyle *paragraphStyle = [[NSParagraphStyle defaultParagraphStyle] mutableCopy];
-    paragraphStyle.alignment = NSTextAlignmentCenter;
-
-    NSDictionary *attributes = @{ NSFontAttributeName : [UIFont systemFontOfSize:20.0], NSParagraphStyleAttributeName : paragraphStyle, NSForegroundColorAttributeName : color};
+    NSDictionary *attributes = @{ NSFontAttributeName : [UIFont systemFontOfSize:20.0], NSParagraphStyleAttributeName : [BLMViewUtils centerAlignedParagraphStyle], NSForegroundColorAttributeName : color};
     NSAttributedString *styledText = [[NSAttributedString alloc] initWithString:@"i" attributes:attributes];
 
     circleRect.origin.y = 1.0 + round(circleRect.size.height - styledText.size.height) / 2.0;
@@ -189,7 +199,7 @@ CGRect CGRectPixelAlign(CGRect rect) {
     UIGraphicsBeginImageContextWithOptions(canvasSize, NO, [UIScreen mainScreen].scale);
 
     [backgroundColor setFill];
-    [[UIColor whiteColor] setStroke];
+    [[self colorForHexCode:BLMColorHexCodeWhite] setStroke];
 
     UIBezierPath *path = [UIBezierPath bezierPath];
 

@@ -35,7 +35,7 @@
     self.textField.adjustsFontSizeToFitWidth = YES;
     self.textField.returnKeyType = UIReturnKeyDone;
     self.textField.borderStyle = UITextBorderStyleLine;
-    self.textField.backgroundColor = [UIColor whiteColor];
+    self.textField.backgroundColor = [BLMViewUtils colorForHexCode:BLMColorHexCodeWhite];
     self.textField.clearButtonMode = UITextFieldViewModeWhileEditing;
     self.textField.autocapitalizationType = UITextAutocapitalizationTypeWords;
     self.textField.autocorrectionType = UITextAutocorrectionTypeNo;
@@ -64,7 +64,7 @@
 
     if ([self.delegate shouldAcceptInputForTextInputCell:self]) {
         self.textField.layer.borderWidth = 0.0;
-        self.textField.layer.borderColor = [BLMViewUtils colorWithHexValue:BLMColorHexCodeBlack alpha:1.0].CGColor;
+        self.textField.layer.borderColor = [BLMViewUtils colorForHexCode:BLMColorHexCodeBlack].CGColor;
     } else {
         attributes = [BLMTextInputCell errorAttributes];
 

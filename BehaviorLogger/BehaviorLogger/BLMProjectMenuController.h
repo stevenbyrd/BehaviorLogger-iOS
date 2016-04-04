@@ -9,6 +9,13 @@
 #import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
 
+#import "BLMViewUtils.h"
+
+
+extern BLMColorHexCode const BLMCreateProjectCellTextColor;
+
+
+#pragma mark
 
 @interface BLMProjectMenuController : UIViewController
 

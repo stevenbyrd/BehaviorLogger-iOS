@@ -10,7 +10,7 @@
 #import <UIKit/UIKit.h>
 
 
-typedef NS_ENUM(NSUInteger, BLMColorHexCode) {
+typedef NS_ENUM(uint32_t, BLMColorHexCode) {
     BLMColorHexCodeDefaultBackground = 0xe4e4e6,
     BLMColorHexCodeDarkBackground = 0xb4b4b4,
     BLMColorHexCodeDarkBorder = 0x0d0d0d,
@@ -19,7 +19,8 @@ typedef NS_ENUM(NSUInteger, BLMColorHexCode) {
     BLMColorHexCodeGreen = 0x007400,
     BLMColorHexCodeRed = 0xc41a16,
     BLMColorHexCodePurple = 0x9529f7,
-    BLMColorHexCodeBlack = 0x000000
+    BLMColorHexCodeBlack = 0x000000,
+    BLMColorHexCodeWhite = 0xffffff
 };
 
 
@@ -34,7 +35,12 @@ extern CGRect CGRectPixelAlign(CGRect rect);
 
 #pragma mark Colors
 
-+ (UIColor *)colorWithHexValue:(uint32_t)hexValue alpha:(CGFloat)alpha;
++ (UIColor *)colorForHexCode:(BLMColorHexCode)hexCode;
++ (UIColor *)colorForHexCode:(BLMColorHexCode)hexCode alpha:(CGFloat)alpha;
+
+#pragma mark String Attributes
+
++ (NSParagraphStyle *)centerAlignedParagraphStyle;
 
 #pragma mark Images
 

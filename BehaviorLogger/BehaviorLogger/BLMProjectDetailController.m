@@ -85,9 +85,9 @@ typedef NS_ENUM(NSUInteger, ActionButton) {
         return nil;
     }
 
-    self.backgroundColor = [UIColor clearColor];
+    self.backgroundColor = [BLMViewUtils colorForHexCode:BLMColorHexCodeDarkBackground];
 
-    _borderColor = [BLMViewUtils colorWithHexValue:BLMColorHexCodeBlue alpha:1.0];
+    _borderColor = [BLMViewUtils colorForHexCode:BLMColorHexCodeBlue];
 
     return self;
 }
@@ -219,7 +219,7 @@ typedef NS_ENUM(NSUInteger, ActionButton) {
     self.backgroundView = [[BehaviorCellBackgroundView alloc] init];
 
     self.contentView.clipsToBounds = NO;
-    self.contentView.backgroundColor = [UIColor clearColor];
+    self.contentView.backgroundColor = [self.backgroundView.backgroundColor colorWithAlphaComponent:0.0];
 
     // Delete Button
 
@@ -228,8 +228,8 @@ typedef NS_ENUM(NSUInteger, ActionButton) {
     static dispatch_once_t onceToken = 0;
 
     dispatch_once(&onceToken, ^{
-        deleteButtonDefaultImage = [BLMViewUtils deleteItemImageWithBackgroundColor:[BLMViewUtils colorWithHexValue:0x000000 alpha:0.6] diameter:(BehaviorCellDeleteButtonImageRadius * 2.0)];
-        deleteButtonSelectedImage = [BLMViewUtils deleteItemImageWithBackgroundColor:[BLMViewUtils colorWithHexValue:0xB83020 alpha:0.8] diameter:(BehaviorCellDeleteButtonImageRadius * 2.0)];
+        deleteButtonDefaultImage = [BLMViewUtils deleteItemImageWithBackgroundColor:[BLMViewUtils colorForHexCode:0x000000 alpha:0.6] diameter:(BehaviorCellDeleteButtonImageRadius * 2.0)];
+        deleteButtonSelectedImage = [BLMViewUtils deleteItemImageWithBackgroundColor:[BLMViewUtils colorForHexCode:0xB83020 alpha:0.8] diameter:(BehaviorCellDeleteButtonImageRadius * 2.0)];
     });
 
     _deleteButton = [UIButton buttonWithType:UIButtonTypeCustom];
@@ -240,7 +240,6 @@ typedef NS_ENUM(NSUInteger, ActionButton) {
 
     [self.deleteButton addTarget:self action:@selector(handleActionForDeleteButton:forEvent:) forControlEvents:UIControlEventTouchUpInside];
 
-    self.deleteButton.backgroundColor = [UIColor clearColor];
     self.deleteButton.translatesAutoresizingMaskIntoConstraints = NO;
 
     [self.contentView addSubview:self.deleteButton];
@@ -313,7 +312,7 @@ typedef NS_ENUM(NSUInteger, ActionButton) {
 
 - (void)updateBorderColor {
     BehaviorCellBackgroundView *backgroundView = (BehaviorCellBackgroundView *)self.backgroundView;
-    backgroundView.borderColor = ([self.delegate shouldAcceptInputForTextInputCell:self] ? [BLMViewUtils colorWithHexValue:BLMColorHexCodeBlue alpha:1.0] : [BLMCollectionViewCell errorColor]);
+    backgroundView.borderColor = ([self.delegate shouldAcceptInputForTextInputCell:self] ? [BLMViewUtils colorForHexCode:BLMColorHexCodeBlue] : [BLMCollectionViewCell errorColor]);
 }
 
 
@@ -418,6 +417,7 @@ typedef NS_ENUM(NSUInteger, ActionButton) {
 
     self.navigationItem.title = @"Project Details";
     self.edgesForExtendedLayout = UIRectEdgeNone;
+    self.view.backgroundColor = [BLMViewUtils colorForHexCode:BLMColorHexCodeDefaultBackground];
 
     _collectionView = [[BLMCollectionView alloc] initWithFrame:CGRectZero];
 
@@ -433,7 +433,7 @@ typedef NS_ENUM(NSUInteger, ActionButton) {
     self.collectionView.dataSource = self;
     self.collectionView.scrollEnabled = YES;
     self.collectionView.bounces = YES;
-    self.collectionView.backgroundColor = [BLMViewUtils colorWithHexValue:BLMColorHexCodeDefaultBackground alpha:1.0];
+    self.collectionView.backgroundColor = self.view.backgroundColor;
     self.collectionView.translatesAutoresizingMaskIntoConstraints = NO;
 
     [self.view addSubview:self.collectionView];
@@ -1248,8 +1248,8 @@ typedef NS_ENUM(NSUInteger, ActionButton) {
             static dispatch_once_t onceToken = 0;
 
             dispatch_once(&onceToken, ^{
-                highlightedPlusSignImage = [BLMViewUtils plusSignImageWithColor:[BLMViewUtils colorWithHexValue:BLMColorHexCodePurple alpha:1.0]];
-                normalPlusSignImage = [BLMViewUtils plusSignImageWithColor:[BLMViewUtils colorWithHexValue:BLMColorHexCodeGreen alpha:1.0]];
+                highlightedPlusSignImage = [BLMViewUtils plusSignImageWithColor:[BLMViewUtils colorForHexCode:BLMColorHexCodePurple]];
+                normalPlusSignImage = [BLMViewUtils plusSignImageWithColor:[BLMViewUtils colorForHexCode:BLMColorHexCodeGreen]];
             });
 
             return ((state == UIControlStateNormal) ? normalPlusSignImage : highlightedPlusSignImage);
@@ -1274,14 +1274,14 @@ typedef NS_ENUM(NSUInteger, ActionButton) {
             assert(cell.item == self.indexPathForAddBehaviorButtonCell.item);
 
             BLMColorHexCode colorHexValue = ((state == UIControlStateNormal) ? BLMColorHexCodeGreen : BLMColorHexCodePurple);
-            NSDictionary *attributes = @{ NSForegroundColorAttributeName:[BLMViewUtils colorWithHexValue:colorHexValue alpha:1.0], NSFontAttributeName:[UIFont boldSystemFontOfSize:20.0] };
+            NSDictionary *attributes = @{ NSForegroundColorAttributeName:[BLMViewUtils colorForHexCode:colorHexValue], NSFontAttributeName:[UIFont boldSystemFontOfSize:20.0] };
 
             return [[NSAttributedString alloc] initWithString:@"Add Behavior" attributes:attributes];
         }
 
         case SectionActionButtons: {
             BLMColorHexCode colorHexValue = ((state == UIControlStateNormal) ? BLMColorHexCodeBlue : BLMColorHexCodePurple);
-            NSDictionary *attributes = @{ NSForegroundColorAttributeName:[BLMViewUtils colorWithHexValue:colorHexValue alpha:1.0] };
+            NSDictionary *attributes = @{ NSForegroundColorAttributeName:[BLMViewUtils colorForHexCode:colorHexValue] };
 
             switch ((ActionButton)cell.item) {
                 case ActionButtonCreateSession:

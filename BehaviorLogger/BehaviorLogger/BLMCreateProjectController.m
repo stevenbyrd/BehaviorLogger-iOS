@@ -114,7 +114,7 @@ typedef NS_ENUM(NSUInteger, ActionButton) {
     self.collectionView.dataSource = self;
     self.collectionView.scrollEnabled = YES;
     self.collectionView.bounces = YES;
-    self.collectionView.backgroundColor = [BLMViewUtils colorWithHexValue:BLMColorHexCodeDefaultBackground alpha:1.0];
+    self.collectionView.backgroundColor = [BLMViewUtils colorForHexCode:BLMColorHexCodeDefaultBackground];
     self.collectionView.translatesAutoresizingMaskIntoConstraints = NO;
 
     [self.view addSubview:self.collectionView];
@@ -561,7 +561,7 @@ typedef NS_ENUM(NSUInteger, ActionButton) {
 
 - (NSAttributedString *)attributedTitleForButtonCell:(BLMButtonCell *)cell forState:(UIControlState)state {
     BLMColorHexCode colorHexValue = ((state == UIControlStateNormal) ? BLMColorHexCodeBlue : BLMColorHexCodePurple);
-    NSDictionary *attributes = @{ NSForegroundColorAttributeName:[BLMViewUtils colorWithHexValue:colorHexValue alpha:1.0] };
+    NSDictionary *attributes = @{ NSForegroundColorAttributeName:[BLMViewUtils colorForHexCode:colorHexValue] };
 
     switch ((ActionButton)cell.item) {
         case ActionButtonCreateProject:

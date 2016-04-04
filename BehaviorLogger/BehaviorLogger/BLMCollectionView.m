@@ -39,7 +39,7 @@ static CGFloat const HeaderFontSize = 18.0;
         return nil;
     }
 
-    self.layer.backgroundColor = [BLMViewUtils colorWithHexValue:BLMColorHexCodeDarkBackground alpha:1.0].CGColor;
+    self.layer.backgroundColor = [BLMViewUtils colorForHexCode:BLMColorHexCodeDarkBackground].CGColor;
     self.layer.cornerRadius = BLMCollectionViewRoundedCornerRadius;
 
     return self;
@@ -69,7 +69,7 @@ static CGFloat const HeaderFontSize = 18.0;
     [self.label setContentCompressionResistancePriority:UILayoutPriorityRequired forAxis:UILayoutConstraintAxisVertical];
     [self.label setContentCompressionResistancePriority:UILayoutPriorityRequired forAxis:UILayoutConstraintAxisHorizontal];
 
-    self.label.textColor = [UIColor darkTextColor];
+    self.label.textColor = [BLMViewUtils colorForHexCode:BLMColorHexCodeBlack];
     self.label.font = [UIFont boldSystemFontOfSize:HeaderFontSize];
     self.label.translatesAutoresizingMaskIntoConstraints = NO;
 
@@ -103,7 +103,7 @@ static CGFloat const HeaderFontSize = 18.0;
         return nil;
     }
 
-    self.backgroundColor = [BLMViewUtils colorWithHexValue:BLMColorHexCodeDarkBorder alpha:0.5];
+    self.backgroundColor = [BLMViewUtils colorForHexCode:BLMColorHexCodeDarkBorder alpha:0.5];
 
     return self;
 }
@@ -177,7 +177,7 @@ static CGFloat const HeaderFontSize = 18.0;
 
 
 + (UIColor *)errorColor {
-    return [BLMViewUtils colorWithHexValue:BLMColorHexCodeRed alpha:1.0];
+    return [BLMViewUtils colorForHexCode:BLMColorHexCodeRed];
 }
 
 #pragma mark BLMCollectionViewCellLayoutDelegate
