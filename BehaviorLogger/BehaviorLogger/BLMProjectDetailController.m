@@ -60,9 +60,9 @@ typedef NS_ENUM(NSUInteger, SessionConfigurationInfo) {
 
 
 typedef NS_ENUM(NSUInteger, ActionButton) {
-    ActionButtonCreateSession,
-    ActionButtonViewSessionHistory,
     ActionButtonDeleteProject,
+    ActionButtonViewSessionHistory,
+    ActionButtonCreateSession,
     ActionButtonCount
 };
 
@@ -1362,31 +1362,42 @@ typedef NS_ENUM(NSUInteger, ActionButton) {
         case SectionBehaviors: {
             assert(cell.item == self.indexPathForAddBehaviorButtonCell.item);
 
-            BLMColorHexCode colorHexValue = ((state == UIControlStateNormal) ? BLMColorHexCodeGreen : BLMColorHexCodePurple);
-            NSDictionary *attributes = @{ NSForegroundColorAttributeName:[BLMViewUtils colorForHexCode:colorHexValue], NSFontAttributeName:[UIFont boldSystemFontOfSize:20.0] };
+            BLMColorHexCode colorHex = ((state == UIControlStateNormal) ? BLMColorHexCodeGreen : BLMColorHexCodePurple);
+            NSDictionary *attributes = @{ NSForegroundColorAttributeName:[BLMViewUtils colorForHexCode:colorHex], NSFontAttributeName:[UIFont boldSystemFontOfSize:20.0] };
 
             return [[NSAttributedString alloc] initWithString:@"Add Behavior" attributes:attributes];
         }
 
         case SectionActionButtons: {
-            BLMColorHexCode colorHexValue = ((state == UIControlStateNormal) ? BLMColorHexCodeBlue : BLMColorHexCodePurple);
-            NSDictionary *attributes = @{ NSForegroundColorAttributeName:[BLMViewUtils colorForHexCode:colorHexValue] };
+            NSString *title;
+            BLMColorHexCode colorHex;
 
             switch ((ActionButton)cell.item) {
-                case ActionButtonCreateSession:
-                    return [[NSAttributedString alloc] initWithString:@"Create Session" attributes:attributes];
+                case ActionButtonDeleteProject:
+                    title = @"Delete Project";
+                    colorHex = BLMColorHexCodeRed;
+                    break;
 
                 case ActionButtonViewSessionHistory:
-                    return [[NSAttributedString alloc] initWithString:@"View Session History" attributes:attributes];
+                    title = @"View Past Sessions";
+                    colorHex = BLMColorHexCodeBlue;
+                    break;
 
-                case ActionButtonDeleteProject:
-                    return [[NSAttributedString alloc] initWithString:@"Delete Project" attributes:attributes];
+                case ActionButtonCreateSession:
+                    title = @"Begin New Session";
+                    colorHex = BLMColorHexCodeBlue;
+                    break;
 
                 case ActionButtonCount: {
                     assert(NO);
                     return nil;
                 }
             }
+
+            UIColor *titleColor = [BLMViewUtils colorForHexCode:((state == UIControlStateNormal) ? colorHex : BLMColorHexCodePurple)];
+            NSDictionary *attributes = @{ NSForegroundColorAttributeName:titleColor, NSFontAttributeName:[UIFont systemFontOfSize:18.0] };
+
+            return [[NSAttributedString alloc] initWithString:title attributes:attributes];
         }
 
         case SectionBasicProperties:
@@ -1451,12 +1462,6 @@ typedef NS_ENUM(NSUInteger, ActionButton) {
 
         case SectionActionButtons: {
             switch ((ActionButton)cell.item) {
-                case ActionButtonCreateSession:
-                    break;
-
-                case ActionButtonViewSessionHistory:
-                    break;
-
                 case ActionButtonDeleteProject: {
                     UIAlertController *alertController = [UIAlertController alertControllerWithTitle:[NSString stringWithFormat:@"Delete %@?", self.project.name] message:nil preferredStyle:UIAlertControllerStyleAlert];
 
@@ -1472,6 +1477,10 @@ typedef NS_ENUM(NSUInteger, ActionButton) {
 
                     break;
                 }
+
+                case ActionButtonViewSessionHistory:
+                case ActionButtonCreateSession:
+                    break;
 
                 case ActionButtonCount: {
                     assert(NO);
