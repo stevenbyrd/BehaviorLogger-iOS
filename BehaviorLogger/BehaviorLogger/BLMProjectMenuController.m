@@ -102,7 +102,9 @@ typedef NS_ENUM(NSInteger, TableSection) {
 
 @interface BLMProjectMenuController () <UITableViewDelegate, UITableViewDataSource, BLMCreateProjectControllerDelegate>
 
-@property (nonatomic, strong) NSUUID *selectedProjectUUID;
+@property (nonatomic, assign, getter=isShowingProjectCreationController) BOOL showingProjectCreationController;
+@property (nonatomic, assign, getter=isShowingProjectDetailController) BOOL showingProjectDetailController;
+@property (nonatomic, strong) NSUUID *lastShownProjectUUID;
 @property (nonatomic, copy, readonly) NSMutableArray<NSUUID *> *projectUUIDs;
 @property (nonatomic, strong, readonly) UITableView *tableView;
 
@@ -122,6 +124,7 @@ typedef NS_ENUM(NSInteger, TableSection) {
 
     return self;
 }
+
 
 - (void)dealloc {
     [[NSNotificationCenter defaultCenter] removeObserver:self];
@@ -153,27 +156,6 @@ typedef NS_ENUM(NSInteger, TableSection) {
 
 #pragma mark Internal State
 
-- (void)refreshProjectList {
-    assert([NSThread isMainThread]);
-    assert(![BLMDataManager sharedManager].isRestoringArchive);
-
-    [self.projectUUIDs removeAllObjects];
-
-    for (BLMProject *project in [BLMDataManager sharedManager].projectEnumerator) {
-        [self.projectUUIDs insertObject:project.UUID atIndex:[self insertionIndexForProjectUUID:project.UUID]];
-    }
-
-    [self.tableView reloadData];
-
-    if (self.projectUUIDs.count == 0) {
-        assert(self.selectedProjectUUID == nil);
-        [self showCreateProjectController];
-    } else if (self.selectedProjectUUID == nil) {
-        [self selectProjectWithUUID:self.projectUUIDs.lastObject];
-    }
-}
-
-
 - (NSUInteger)insertionIndexForProjectUUID:(NSUUID *)UUID {
     static NSComparator comparator;
     static dispatch_once_t onceToken;
@@ -197,91 +179,88 @@ typedef NS_ENUM(NSInteger, TableSection) {
 - (void)showCreateProjectController {
     assert([NSThread isMainThread]);
 
-    UINavigationController *detailController = self.splitViewController.viewControllers.lastObject;
-
-    if ([detailController.viewControllers.firstObject isKindOfClass:[BLMCreateProjectController class]]) {
-        assert(detailController.viewControllers.count == 1);
-        assert(self.selectedProjectUUID == nil);
+    if (self.isShowingProjectCreationController) {
+        assert(!self.isShowingProjectDetailController);
         return;
     }
 
-    if (self.selectedProjectUUID != nil) {
-        assert(detailController.viewControllers.count > 0);
-        self.selectedProjectUUID = nil;
-    }
+    UINavigationController *splitViewDetailController = self.splitViewController.viewControllers.lastObject;
+    splitViewDetailController.viewControllers = @[[[BLMCreateProjectController alloc] initWithDelegate:self]];
 
-    detailController.viewControllers = @[[[BLMCreateProjectController alloc] initWithDelegate:self]];
+    self.showingProjectCreationController = YES;
+    self.showingProjectDetailController = NO;
 }
 
 
-- (void)selectProjectWithUUID:(NSUUID *)UUID {
+- (void)showDetailsForProjectUUID:(NSUUID *)UUID {
     assert([NSThread isMainThread]);
-    assert(UUID != nil);
+    assert((UUID == nil) || [self.projectUUIDs containsObject:UUID]);
 
-    if ([BLMUtils isObject:self.selectedProjectUUID equalToObject:UUID]) {
+    if ([BLMUtils isObject:UUID equalToObject:self.lastShownProjectUUID] && self.isShowingProjectDetailController) { // Already being shown
+        assert(!self.isShowingProjectCreationController);
         return;
     }
 
-    UINavigationController *detailController = self.splitViewController.viewControllers.lastObject;
-    assert(detailController.viewControllers.count <= 1);
+    if (UUID != nil) {
+        NSUInteger UUIDIndex = [self.projectUUIDs indexOfObject:UUID];
+        NSIndexPath *indexPath = [NSIndexPath indexPathForRow:UUIDIndex inSection:TableSectionProjectList];
+        UITableViewScrollPosition scrollPosition = ((self.lastShownProjectUUID == nil) ? UITableViewScrollPositionBottom : UITableViewScrollPositionNone);
+        [self.tableView selectRowAtIndexPath:indexPath animated:NO scrollPosition:scrollPosition];
+    } else if (self.tableView.indexPathForSelectedRow != nil) {
+        [self.tableView deselectRowAtIndexPath:self.tableView.indexPathForSelectedRow animated:NO];
+    }
 
-    BLMProject *project = [[BLMDataManager sharedManager] projectForUUID:UUID];
-    detailController.viewControllers = @[[[BLMProjectDetailController alloc] initWithProject:project]];
+    UINavigationController *splitViewDetailController = self.splitViewController.viewControllers.lastObject;
+    splitViewDetailController.viewControllers = @[[[BLMProjectDetailController alloc] initWithProjectUUID:UUID delegate:self]];
 
-    NSInteger selectedIndex = [self.projectUUIDs indexOfObject:UUID];
-    assert(selectedIndex != NSNotFound);
-
-    NSIndexPath *indexPath = [NSIndexPath indexPathForRow:selectedIndex inSection:TableSectionProjectList];
-    UITableViewScrollPosition scrollPosition = ((self.selectedProjectUUID == nil) ? UITableViewScrollPositionBottom : UITableViewScrollPositionNone);
-
-    [self.tableView selectRowAtIndexPath:indexPath animated:NO scrollPosition:scrollPosition];
-
-    self.selectedProjectUUID = UUID;
+    self.showingProjectCreationController = NO;
+    self.showingProjectDetailController = YES;
+    self.lastShownProjectUUID = UUID;
 }
 
 #pragma mark Event Handling
 
 - (void)handleDataModelArchiveRestored:(NSNotification *)notification {
-    [self refreshProjectList];
+    assert(self.projectUUIDs.count == 0);
+    assert(self.lastShownProjectUUID == nil);
+    assert(![BLMDataManager sharedManager].isRestoringArchive);
+
+    for (BLMProject *project in [BLMDataManager sharedManager].projectEnumerator) {
+        [self.projectUUIDs insertObject:project.UUID atIndex:[self insertionIndexForProjectUUID:project.UUID]];
+    }
+
+    [self.tableView reloadData];
+
+    [self showDetailsForProjectUUID:self.projectUUIDs.firstObject];
 }
 
 
 - (void)handleDataModelProjectCreated:(NSNotification *)notification {
-    assert([NSThread isMainThread]);
-
     [self.tableView beginUpdates];
 
     BLMProject *project = (BLMProject *)notification.object;
-    NSUInteger insertionIndex = [self insertionIndexForProjectUUID:project.UUID];
+    NSUInteger UUIDIndex = [self insertionIndexForProjectUUID:project.UUID];
 
-    [self.projectUUIDs insertObject:project.UUID atIndex:insertionIndex];
+    [self.projectUUIDs insertObject:project.UUID atIndex:UUIDIndex];
 
-    [self.tableView insertRowsAtIndexPaths:@[[NSIndexPath indexPathForRow:insertionIndex inSection:TableSectionProjectList]] withRowAnimation:UITableViewRowAnimationNone];
+    [self.tableView insertRowsAtIndexPaths:@[[NSIndexPath indexPathForRow:UUIDIndex inSection:TableSectionProjectList]] withRowAnimation:UITableViewRowAnimationNone];
     [self.tableView endUpdates];
 }
 
 
 - (void)handleDataModelProjectDeleted:(NSNotification *)notification {
-    assert([NSThread isMainThread]);
+    [self.tableView beginUpdates];
 
     BLMProject *project = (BLMProject *)notification.object;
-    NSUInteger index = [self.projectUUIDs indexOfObject:project.UUID];
+    NSUInteger UUIDIndex = [self.projectUUIDs indexOfObject:project.UUID];
 
-    if (index != NSNotFound) {
-        [self.tableView beginUpdates];
+    [self.projectUUIDs removeObjectAtIndex:UUIDIndex];
 
-        [self.projectUUIDs removeObjectAtIndex:index];
+    [self.tableView deleteRowsAtIndexPaths:@[[NSIndexPath indexPathForItem:UUIDIndex inSection:TableSectionProjectList]] withRowAnimation:UITableViewRowAnimationNone];
+    [self.tableView endUpdates];
 
-        [self.tableView deleteRowsAtIndexPaths:@[[NSIndexPath indexPathForItem:index inSection:TableSectionProjectList]] withRowAnimation:UITableViewRowAnimationNone];
-        [self.tableView endUpdates];
-    }
-
-    if ([BLMUtils isObject:self.selectedProjectUUID equalToObject:project.UUID]) {
-        if (self.projectUUIDs.count == 0) {
-            [self showCreateProjectController];
-        } else {
-            [self selectProjectWithUUID:self.projectUUIDs.lastObject];
-        }
+    if ([BLMUtils isObject:project.UUID equalToObject:self.lastShownProjectUUID]) {
+        [self showDetailsForProjectUUID:self.projectUUIDs.firstObject];
     }
 }
 
@@ -292,9 +271,7 @@ typedef NS_ENUM(NSInteger, TableSection) {
     BLMProject *project = (BLMProject *)notification.object;
     NSInteger index = [self.projectUUIDs indexOfObject:project.UUID];
 
-    if (index != NSNotFound) {
-        [self.tableView reloadRowsAtIndexPaths:@[[NSIndexPath indexPathForItem:index inSection:TableSectionProjectList]] withRowAnimation:UITableViewRowAnimationNone];
-    }
+    [self.tableView reloadRowsAtIndexPaths:@[[NSIndexPath indexPathForItem:index inSection:TableSectionProjectList]] withRowAnimation:UITableViewRowAnimationNone];
 }
 
 #pragma mark UITableViewDataSource
@@ -363,8 +340,7 @@ typedef NS_ENUM(NSInteger, TableSection) {
 
     switch ((TableSection)indexPath.section) {
         case TableSectionProjectList:
-            assert(indexPath.row < self.projectUUIDs.count);
-            [self selectProjectWithUUID:self.projectUUIDs[indexPath.row]];
+            [self showDetailsForProjectUUID:self.projectUUIDs[indexPath.row]];
             break;
 
         case TableSectionCreateProject:
@@ -382,12 +358,12 @@ typedef NS_ENUM(NSInteger, TableSection) {
 
 - (void)createProjectController:(BLMCreateProjectController *)controller didCreateProject:(BLMProject *)project {
     assert([self.projectUUIDs indexOfObject:project.UUID] != NSNotFound);
-    [self selectProjectWithUUID:project.UUID];
+    [self showDetailsForProjectUUID:project.UUID];
 }
 
 
 - (void)createProjectControllerDidCancel:(BLMCreateProjectController *)controller {
-    [self selectProjectWithUUID:self.projectUUIDs.lastObject];
+    [self showDetailsForProjectUUID:self.lastShownProjectUUID];
 }
 
 @end
