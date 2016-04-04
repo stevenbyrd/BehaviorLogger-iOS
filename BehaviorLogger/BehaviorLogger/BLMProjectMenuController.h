@@ -12,7 +12,15 @@
 #import "BLMViewUtils.h"
 
 
+extern NSString *const BLMCreateProjectCellText;
 extern BLMColorHexCode const BLMCreateProjectCellTextColor;
+
+
+#pragma mark
+
+@interface BLMCreateProjectCell : UITableViewCell
+
+@end
 
 
 #pragma mark

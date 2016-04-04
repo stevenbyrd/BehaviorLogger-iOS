@@ -544,7 +544,7 @@ typedef NS_ENUM(NSUInteger, ActionButton) {
             return self.isAllTextInputValid;
 
         case ActionButtonCancel:
-            return ([BLMDataManager sharedManager].projectEnumerator.nextObject != nil); // Enabled if at least one project exists in the data model
+            return YES;
 
         case ActionButtonCount: {
             assert(NO);

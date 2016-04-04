@@ -15,6 +15,7 @@
 #import "BLMViewUtils.h"
 
 
+NSString *const BLMCreateProjectCellText = @"Create Project";
 BLMColorHexCode const BLMCreateProjectCellTextColor = BLMColorHexCodeBlue;
 
 static CGFloat const ProjectCellFontSize = 14.0;
@@ -54,14 +55,14 @@ typedef NS_ENUM(NSInteger, TableSection) {
 
 #pragma mark
 
-@interface CreateProjectCell : UITableViewCell
+@interface BLMCreateProjectCell ()
 
 @property (nonatomic, strong, readonly) UIView *separatorView;
 
 @end
 
 
-@implementation CreateProjectCell
+@implementation BLMCreateProjectCell
 
 - (instancetype)initWithStyle:(UITableViewCellStyle)style reuseIdentifier:(NSString *)reuseIdentifier {
     self = [super initWithStyle:style reuseIdentifier:reuseIdentifier];
@@ -76,7 +77,7 @@ typedef NS_ENUM(NSInteger, TableSection) {
                                       NSParagraphStyleAttributeName : [BLMViewUtils centerAlignedParagraphStyle],
                                       NSForegroundColorAttributeName : contentColor };
 
-    self.textLabel.attributedText = [[NSAttributedString alloc] initWithString:@"Create New" attributes:textAttributes];
+    self.textLabel.attributedText = [[NSAttributedString alloc] initWithString:BLMCreateProjectCellText attributes:textAttributes];
     self.textLabel.numberOfLines = 1;
 
     _separatorView = [[UIView alloc] initWithFrame:CGRectZero];
@@ -100,7 +101,7 @@ typedef NS_ENUM(NSInteger, TableSection) {
 
 #pragma mark
 
-@interface BLMProjectMenuController () <UITableViewDelegate, UITableViewDataSource, BLMCreateProjectControllerDelegate>
+@interface BLMProjectMenuController () <UITableViewDelegate, UITableViewDataSource, BLMCreateProjectControllerDelegate, BLMProjectDetailControllerDelegate>
 
 @property (nonatomic, assign, getter=isShowingProjectCreationController) BOOL showingProjectCreationController;
 @property (nonatomic, assign, getter=isShowingProjectDetailController) BOOL showingProjectDetailController;
@@ -138,8 +139,8 @@ typedef NS_ENUM(NSInteger, TableSection) {
 
     _tableView = [[UITableView alloc] initWithFrame:CGRectZero];
 
-    [self.tableView registerClass:[ProjectCell class] forCellReuseIdentifier:@"ProjectCell"];
-    [self.tableView registerClass:[CreateProjectCell class] forCellReuseIdentifier:@"CreateProjectCell"];
+    [self.tableView registerClass:[ProjectCell class] forCellReuseIdentifier:NSStringFromClass([ProjectCell class])];
+    [self.tableView registerClass:[BLMCreateProjectCell class] forCellReuseIdentifier:NSStringFromClass([BLMCreateProjectCell class])];
 
     self.tableView.delegate = self;
     self.tableView.dataSource = self;
@@ -308,10 +309,9 @@ typedef NS_ENUM(NSInteger, TableSection) {
 
     switch ((TableSection)indexPath.section) {
         case TableSectionProjectList: {
-            ProjectCell *projectCell = [tableView dequeueReusableCellWithIdentifier:@"ProjectCell"];
+            ProjectCell *projectCell = [tableView dequeueReusableCellWithIdentifier:NSStringFromClass([ProjectCell class])];
+            BLMProject *project = [[BLMDataManager sharedManager] projectForUUID:self.projectUUIDs[indexPath.row]];
 
-            NSUUID *UUID = self.projectUUIDs[indexPath.row];
-            BLMProject *project = [[BLMDataManager sharedManager] projectForUUID:UUID];
             projectCell.textLabel.text = project.name;
 
             cell = projectCell;
@@ -319,7 +319,7 @@ typedef NS_ENUM(NSInteger, TableSection) {
         }
 
         case TableSectionCreateProject: {
-            CreateProjectCell *createProjectCell = [tableView dequeueReusableCellWithIdentifier:@"CreateProjectCell"];
+            BLMCreateProjectCell *createProjectCell = [tableView dequeueReusableCellWithIdentifier:NSStringFromClass([BLMCreateProjectCell class])];
             cell = createProjectCell;
             break;
         }
@@ -364,6 +364,15 @@ typedef NS_ENUM(NSInteger, TableSection) {
 
 - (void)createProjectControllerDidCancel:(BLMCreateProjectController *)controller {
     [self showDetailsForProjectUUID:self.lastShownProjectUUID];
+}
+
+#pragma mark BLMProjectDetailControllerDelegate
+
+- (void)projectDetailControllerDidInitiateProjectCreation:(BLMProjectDetailController *)controller {
+    assert(self.tableView.indexPathForSelectedRow == nil);
+    [self.tableView selectRowAtIndexPath:[NSIndexPath indexPathForRow:0 inSection:TableSectionCreateProject] animated:NO scrollPosition:UITableViewScrollPositionNone];
+
+    [self showCreateProjectController];
 }
 
 @end

@@ -9,11 +9,23 @@
 #import <UIKit/UIKit.h>
 
 
-@class BLMProject;
+@class BLMProjectDetailController;
 
+
+@protocol BLMProjectDetailControllerDelegate <NSObject>
+
+- (void)projectDetailControllerDidInitiateProjectCreation:(BLMProjectDetailController *)controller;
+
+@end
+
+
+#pragma mark
 
 @interface BLMProjectDetailController : UIViewController
 
-- (instancetype)initWithProject:(BLMProject *)project;
+@property (nonatomic, strong, readonly) NSUUID *projectUUID;
+@property (nonatomic, weak, readonly) id<BLMProjectDetailControllerDelegate> delegate;
+
+- (instancetype)initWithProjectUUID:(NSUUID *)projectUUID delegate:(id<BLMProjectDetailControllerDelegate>)delegate;
 
 @end

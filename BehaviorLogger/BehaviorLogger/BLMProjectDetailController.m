@@ -383,8 +383,9 @@ typedef NS_ENUM(NSUInteger, ActionButton) {
 
 @interface BLMProjectDetailController () <UICollectionViewDataSource, BLMCollectionViewLayoutDelegate, BehaviorCellDelegate, BLMButtonCellDelegate>
 
-@property (nonatomic, strong, readonly) NSUUID *projectUUID;
 @property (nonatomic, strong, readonly) BLMCollectionView *collectionView;
+@property (nonatomic, strong, readonly) UILabel *instructionsLabel;
+@property (nonatomic, assign, readonly) NSRange instructionsLabelClickableRange;
 @property (nonatomic, strong) NSUUID *addedBehaviorUUID;
 
 @end
@@ -392,8 +393,8 @@ typedef NS_ENUM(NSUInteger, ActionButton) {
 
 @implementation BLMProjectDetailController
 
-- (instancetype)initWithProject:(BLMProject *)project {
-    assert(project != nil);
+- (instancetype)initWithProjectUUID:(NSUUID *)projectUUID delegate:(id<BLMProjectDetailControllerDelegate>)delegate {
+    assert(delegate != nil);
 
     self = [super init];
 
@@ -401,7 +402,8 @@ typedef NS_ENUM(NSUInteger, ActionButton) {
         return nil;
     }
 
-    _projectUUID = project.UUID;
+    _projectUUID = projectUUID;
+    _delegate = delegate;
 
     return self;
 }
@@ -419,30 +421,67 @@ typedef NS_ENUM(NSUInteger, ActionButton) {
     self.edgesForExtendedLayout = UIRectEdgeNone;
     self.view.backgroundColor = [BLMViewUtils colorForHexCode:BLMColorHexCodeDefaultBackground];
 
-    _collectionView = [[BLMCollectionView alloc] initWithFrame:CGRectZero];
+    if (self.projectUUID == nil) {
+        _instructionsLabel = [[UILabel alloc] init];
 
-    [self.collectionView registerClass:[BLMSectionHeaderView class] forSupplementaryViewOfKind:BLMCollectionViewKindHeader withReuseIdentifier:NSStringFromClass([BLMSectionHeaderView class])];
-    [self.collectionView registerClass:[BLMSectionSeparatorFooterView class] forSupplementaryViewOfKind:BLMCollectionViewKindFooter withReuseIdentifier:NSStringFromClass([BLMSectionSeparatorFooterView class])];
-    [self.collectionView registerClass:[BLMItemAreaBackgroundView class] forSupplementaryViewOfKind:BLMCollectionViewKindItemAreaBackground withReuseIdentifier:NSStringFromClass([BLMItemAreaBackgroundView class])];
+        [self.instructionsLabel setContentHuggingPriority:UILayoutPriorityRequired forAxis:UILayoutConstraintAxisVertical];
+        [self.instructionsLabel setContentHuggingPriority:UILayoutPriorityRequired forAxis:UILayoutConstraintAxisHorizontal];
 
-    [self.collectionView registerClass:[BehaviorCell class] forCellWithReuseIdentifier:NSStringFromClass([BehaviorCell class])];
-    [self.collectionView registerClass:[BLMTextInputCell class] forCellWithReuseIdentifier:NSStringFromClass([BLMTextInputCell class])];
-    [self.collectionView registerClass:[BLMButtonCell class] forCellWithReuseIdentifier:NSStringFromClass([BLMButtonCell class])];
+        [self.instructionsLabel setContentCompressionResistancePriority:UILayoutPriorityRequired forAxis:UILayoutConstraintAxisVertical];
+        [self.instructionsLabel setContentCompressionResistancePriority:UILayoutPriorityRequired forAxis:UILayoutConstraintAxisHorizontal];
 
-    self.collectionView.delegate = self;
-    self.collectionView.dataSource = self;
-    self.collectionView.scrollEnabled = YES;
-    self.collectionView.bounces = YES;
-    self.collectionView.backgroundColor = self.view.backgroundColor;
-    self.collectionView.translatesAutoresizingMaskIntoConstraints = NO;
+        [self.instructionsLabel addGestureRecognizer:[[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(handleInstructionsLabelTapGestureRecognizer:)]];
 
-    [self.view addSubview:self.collectionView];
-    [self.view addConstraints:[BLMViewUtils constraintsForItem:self.collectionView equalToItem:self.view]];
+        NSString *unclickablePrefix = @"Select an existing project to view details about it, or\nstart a new one with the \"";
+        NSString *unclickableSuffix = @"\" menu item.";
+        NSString *instructions = [NSString stringWithFormat:@"%@%@%@", unclickablePrefix, BLMCreateProjectCellText, unclickableSuffix];
 
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleProjectUpdated:) name:BLMProjectUpdatedNotification object:self.project];
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleSessionConfigurationUpdated:) name:BLMSessionConfigurationUpdatedNotification object:self.projectSessionConfiguration];
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleBehaviorUpdated:) name:BLMBehaviorUpdatedNotification object:nil];
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleBehaviorDeleted:) name:BLMBehaviorDeletedNotification object:nil];
+        _instructionsLabelClickableRange = (NSRange){
+            .location = unclickablePrefix.length,
+            .length = (instructions.length - unclickablePrefix.length - unclickableSuffix.length)
+        };
+
+        assert(self.instructionsLabelClickableRange.length == BLMCreateProjectCellText.length);
+        assert(NSEqualRanges(self.instructionsLabelClickableRange, [instructions rangeOfString:BLMCreateProjectCellText]));
+
+        NSDictionary *defaultAttributes = @{ NSFontAttributeName:[UIFont systemFontOfSize:30.0], NSParagraphStyleAttributeName:[BLMViewUtils centerAlignedParagraphStyle] };
+        NSMutableAttributedString *labelText = [[NSMutableAttributedString alloc] initWithString:instructions attributes:defaultAttributes];
+
+        [labelText addAttributes:@{ NSForegroundColorAttributeName:[BLMViewUtils colorForHexCode:BLMCreateProjectCellTextColor], NSUnderlineStyleAttributeName:@YES } range:self.instructionsLabelClickableRange];
+
+        self.instructionsLabel.attributedText = labelText;
+        self.instructionsLabel.numberOfLines = 0;
+        self.instructionsLabel.userInteractionEnabled = YES;
+        self.instructionsLabel.translatesAutoresizingMaskIntoConstraints = NO;
+
+        [self.view addSubview:self.instructionsLabel];
+        [self.view addConstraints:[BLMViewUtils constraintsForItem:self.instructionsLabel centeredOnItem:self.view]];
+    } else {
+        _collectionView = [[BLMCollectionView alloc] initWithFrame:CGRectZero];
+
+        [self.collectionView registerClass:[BLMSectionHeaderView class] forSupplementaryViewOfKind:BLMCollectionViewKindHeader withReuseIdentifier:NSStringFromClass([BLMSectionHeaderView class])];
+        [self.collectionView registerClass:[BLMSectionSeparatorFooterView class] forSupplementaryViewOfKind:BLMCollectionViewKindFooter withReuseIdentifier:NSStringFromClass([BLMSectionSeparatorFooterView class])];
+        [self.collectionView registerClass:[BLMItemAreaBackgroundView class] forSupplementaryViewOfKind:BLMCollectionViewKindItemAreaBackground withReuseIdentifier:NSStringFromClass([BLMItemAreaBackgroundView class])];
+
+        [self.collectionView registerClass:[BehaviorCell class] forCellWithReuseIdentifier:NSStringFromClass([BehaviorCell class])];
+        [self.collectionView registerClass:[BLMTextInputCell class] forCellWithReuseIdentifier:NSStringFromClass([BLMTextInputCell class])];
+        [self.collectionView registerClass:[BLMButtonCell class] forCellWithReuseIdentifier:NSStringFromClass([BLMButtonCell class])];
+
+        self.collectionView.delegate = self;
+        self.collectionView.dataSource = self;
+        self.collectionView.scrollEnabled = YES;
+        self.collectionView.bounces = YES;
+        self.collectionView.backgroundColor = self.view.backgroundColor;
+        self.collectionView.translatesAutoresizingMaskIntoConstraints = NO;
+
+        [self.view addSubview:self.collectionView];
+        [self.view addConstraints:[BLMViewUtils constraintsForItem:self.collectionView equalToItem:self.view]];
+
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleProjectUpdated:) name:BLMProjectUpdatedNotification object:self.project];
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleSessionConfigurationUpdated:) name:BLMSessionConfigurationUpdatedNotification object:self.projectSessionConfiguration];
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleBehaviorUpdated:) name:BLMBehaviorUpdatedNotification object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleBehaviorDeleted:) name:BLMBehaviorDeletedNotification object:nil];
+    }
 }
 
 
@@ -457,6 +496,19 @@ typedef NS_ENUM(NSUInteger, ActionButton) {
         } else {
             [[BLMDataManager sharedManager] deleteBehaviorForUUID:self.addedBehaviorUUID completion:nil];
         }
+    }
+}
+
+
+- (void)viewDidLayoutSubviews {
+    [super viewDidLayoutSubviews];
+
+    if (self.instructionsLabel != nil) {
+        assert(self.projectUUID == nil);
+
+        self.instructionsLabel.preferredMaxLayoutWidth = CGRectGetWidth([self.instructionsLabel alignmentRectForFrame:self.instructionsLabel.frame]);
+
+        [self.view layoutIfNeeded];
     }
 }
 
@@ -627,6 +679,28 @@ typedef NS_ENUM(NSUInteger, ActionButton) {
     } else if ([behaviorUUIDs containsObject:behavior.UUID]) {
         NSArray *updatedBehaviorUUIDs = [behaviorUUIDs arrayByRemovingObject:behavior.UUID];
         [[BLMDataManager sharedManager] updateSessionConfigurationForUUID:sessionConfiguration.UUID property:BLMSessionConfigurationPropertyBehaviorUUIDs value:updatedBehaviorUUIDs completion:nil];
+    }
+}
+
+
+- (void)handleInstructionsLabelTapGestureRecognizer:(UITapGestureRecognizer *)tapGestureRecognizer {
+    NSTextContainer *textContainer = [[NSTextContainer alloc] initWithSize:self.instructionsLabel.bounds.size];
+    textContainer.lineBreakMode = self.instructionsLabel.lineBreakMode;
+    textContainer.lineFragmentPadding = 0;
+
+    NSLayoutManager *layoutManager = [[NSLayoutManager alloc] init];
+    [layoutManager addTextContainer:textContainer];
+
+    NSTextStorage *textStorage = [[NSTextStorage alloc] initWithAttributedString:self.instructionsLabel.attributedText];
+    [textStorage addLayoutManager:layoutManager]; // Sends -[NSLayoutManager setTextStorage:] to aLayoutManager with the receiver.
+
+    NSRange glyphRange;
+    [layoutManager characterRangeForGlyphRange:self.instructionsLabelClickableRange actualGlyphRange:&glyphRange]; // Convert the range for glyphs.
+
+    CGRect clickableTextFrame = [layoutManager boundingRectForGlyphRange:glyphRange inTextContainer:textContainer];
+
+    if (CGRectContainsPoint(clickableTextFrame, [tapGestureRecognizer locationInView:self.instructionsLabel])) {
+        [self.delegate projectDetailControllerDidInitiateProjectCreation:self];
     }
 }
 
