@@ -8,7 +8,8 @@
 
 #import <UIKit/UIKit.h>
 
-@interface UIResponder (FirstResponder)
+
+@interface UIResponder (BLMAdditions)
 
 + (UIResponder *)currentFirstResponder;
 

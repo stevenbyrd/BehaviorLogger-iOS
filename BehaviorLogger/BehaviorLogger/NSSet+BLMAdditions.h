@@ -1,5 +1,5 @@
 //
-//  NSSet+CopyMinusObject.h
+//  NSSet+BLMAdditions.h
 //  BehaviorLogger
 //
 //  Created by Steven Byrd on 4/3/16.
@@ -8,7 +8,8 @@
 
 #import <Foundation/Foundation.h>
 
-@interface NSSet<E> (CopyMinusObject)
+
+@interface NSSet<E> (BLMAdditions)
 
 - (nonnull NSSet<E> *)setByRemovingObject:(nonnull E)object;
 

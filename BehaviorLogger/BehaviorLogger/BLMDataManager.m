@@ -11,7 +11,7 @@
 #import "BLMSession.h"
 #import "BLMUtils.h"
 
-#import "NSSet+CopyMinusObject.h"
+#import "NSSet+BLMAdditions.h"
 
 
 NSString *const BLMDataManagerArchiveRestoredNotification = @"BLMDataManagerArchiveRestoredNotification";

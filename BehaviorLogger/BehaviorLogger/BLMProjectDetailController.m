@@ -17,7 +17,7 @@
 #import "BLMUtils.h"
 #import "BLMViewUtils.h"
 
-#import "NSArray+CopyMinusObject.h"
+#import "NSArray+BLMAdditions.h"
 
 
 #pragma mark Constants

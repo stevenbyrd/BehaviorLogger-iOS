@@ -15,7 +15,7 @@
 #import "BLMUtils.h"
 #import "BLMViewUtils.h"
 
-#import "UIResponder+FirstResponder.h"
+#import "UIResponder+BLMAdditions.h"
 
 
 #pragma mark Constants

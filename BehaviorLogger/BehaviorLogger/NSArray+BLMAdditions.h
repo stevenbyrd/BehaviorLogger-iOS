@@ -1,5 +1,5 @@
 //
-//  NSArray+CopyMinusObject.h
+//  NSArray+BLMAdditions.h
 //  BehaviorLogger
 //
 //  Created by Steven Byrd on 3/8/16.
@@ -8,7 +8,8 @@
 
 #import <Foundation/Foundation.h>
 
-@interface NSArray<E> (CopyMinusObject)
+
+@interface NSArray<E> (BLMAdditions)
 
 - (nonnull NSArray<E> *)arrayByRemovingObject:(nonnull E)object;
 

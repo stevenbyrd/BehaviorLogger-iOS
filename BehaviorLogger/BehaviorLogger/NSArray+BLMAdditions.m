@@ -1,15 +1,15 @@
 //
-//  NSArray+CopyMinusObject.m
+//  NSArray+BLMAdditions.m
 //  BehaviorLogger
 //
 //  Created by Steven Byrd on 3/8/16.
 //  Copyright © 2016 3Bird. All rights reserved.
 //
 
-#import "NSArray+CopyMinusObject.h"
+#import "NSArray+BLMAdditions.h"
 
 
-@implementation NSArray (CopyMinusObject)
+@implementation NSArray (BLMAdditions)
 
 - (nonnull NSArray *)arrayByRemovingObject:(nonnull id)object {
     NSUInteger index = [self indexOfObject:object];

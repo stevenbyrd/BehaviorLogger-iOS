@@ -6,13 +6,13 @@
 //  Copyright © 2016 3Bird. All rights reserved.
 //
 
-#import "UIResponder+FirstResponder.h"
+#import "UIResponder+BLMAdditions.h"
 
 
 static __weak id __firstResponder;
 
 
-@implementation UIResponder (FirstResponder)
+@implementation UIResponder (BLMAdditions)
 
 + (UIResponder *)currentFirstResponder {
     __firstResponder = nil;

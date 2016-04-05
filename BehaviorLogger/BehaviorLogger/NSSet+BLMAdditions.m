@@ -1,15 +1,16 @@
 //
-//  NSSet+CopyMinusObject.m
+//  NSSet+BLMAdditions.m
 //  BehaviorLogger
 //
 //  Created by Steven Byrd on 4/3/16.
 //  Copyright © 2016 3Bird. All rights reserved.
 //
 
-#import "NSSet+CopyMinusObject.h"
+#import "NSSet+BLMAdditions.h"
 #import "BLMUtils.h"
 
-@implementation NSSet (CopyMinusObject)
+
+@implementation NSSet (BLMAdditions)
 
 - (nonnull NSSet *)setByRemovingObject:(nonnull id)object {
     assert(object != nil);
