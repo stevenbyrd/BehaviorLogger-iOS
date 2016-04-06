@@ -14,10 +14,13 @@
 #import "BLMSessionConfiguration.h"
 
 
-extern NSString *__nonnull const BLMDataManagerArchiveRestoredNotification;
+NS_ASSUME_NONNULL_BEGIN
 
-extern NSString *__nonnull const BLMDataManagerProjectErrorDomain;
-extern NSString *__nonnull const BLMDataManagerBehaviorErrorDomain;
+
+extern NSString *const BLMDataManagerArchiveRestoredNotification;
+
+extern NSString *const BLMDataManagerProjectErrorDomain;
+extern NSString *const BLMDataManagerBehaviorErrorDomain;
 
 
 #pragma mark
@@ -27,7 +30,7 @@ extern NSString *__nonnull const BLMDataManagerBehaviorErrorDomain;
 @property (nonatomic, assign, readonly, getter=isRestoringArchive) BOOL restoringArchive;
 
 + (void)initializeWithCompletion:(nullable dispatch_block_t)completion;
-+ (nonnull instancetype)sharedManager;
++ (instancetype)sharedManager;
 
 @end
 
@@ -36,14 +39,14 @@ extern NSString *__nonnull const BLMDataManagerBehaviorErrorDomain;
 
 @interface BLMDataManager (BLMProject)
 
-@property (nonnull, nonatomic, copy, readonly) NSSet<NSString *> *projectNameSet;
+@property (nonatomic, copy, readonly) NSSet<NSString *> *projectNameSet;
 
-- (nonnull BLMProject *)projectForUUID:(nonnull NSUUID *)UUID;
-- (nonnull NSEnumerator<BLMProject *> *)projectEnumerator;
-- (nonnull NSEnumerator<BLMProject *> *)projectEnumeratorByWrappingUUIDEnumerator:(nonnull NSEnumerator<NSUUID *> *)UUIDEnumerator;
-- (void)createProjectWithName:(nonnull NSString *)name client:(nonnull NSString *)client sessionConfigurationUUID:(nonnull NSUUID *)sessionConfigurationUUID completion:(nullable void(^)(BLMProject *__nullable project, NSError *__nullable error))completion;
-- (void)updateProjectForUUID:(nonnull NSUUID *)UUID property:(BLMProjectProperty)property value:(nullable id)value completion:(nullable void(^)(BLMProject *__nullable updatedProject, NSError *__nullable error))completion;
-- (void)deleteProjectForUUID:(nonnull NSUUID *)UUID completion:(nullable void(^)(NSError *__nullable error))completion;
+- (BLMProject *)projectForUUID:(NSUUID *)UUID;
+- (NSEnumerator<BLMProject *> *)projectEnumerator;
+- (NSEnumerator<BLMProject *> *)projectEnumeratorByWrappingUUIDEnumerator:(NSEnumerator<NSUUID *> *)UUIDEnumerator;
+- (void)createProjectWithName:(NSString *)name client:(NSString *)client sessionConfigurationUUID:(NSUUID *)sessionConfigurationUUID completion:(nullable void(^)(BLMProject *__nullable project, NSError *__nullable error))completion;
+- (void)updateProjectForUUID:(NSUUID *)UUID property:(BLMProjectProperty)property value:(nullable id)value completion:(nullable void(^)(BLMProject *__nullable updatedProject, NSError *__nullable error))completion;
+- (void)deleteProjectForUUID:(NSUUID *)UUID completion:(nullable void(^)(NSError *__nullable error))completion;
 
 @end
 
@@ -52,12 +55,12 @@ extern NSString *__nonnull const BLMDataManagerBehaviorErrorDomain;
 
 @interface BLMDataManager (BLMBehavior)
 
-- (nonnull BLMBehavior *)behaviorForUUID:(nonnull NSUUID *)UUID;
-- (nonnull NSEnumerator<BLMBehavior *> *)behaviorEnumerator;
-- (nonnull NSEnumerator<BLMBehavior *> *)behaviorEnumeratorByWrappingUUIDEnumerator:(nonnull NSEnumerator<NSUUID *> *)UUIDEnumerator;
-- (void)createBehaviorWithName:(nonnull NSString *)name continuous:(BOOL)continuous completion:(nullable void(^)(BLMBehavior *__nullable behavior, NSError *__nullable error))completion;
-- (void)updateBehaviorForUUID:(nonnull NSUUID *)UUID property:(BLMBehaviorProperty)property value:(nullable id)value completion:(nullable void(^)(BLMBehavior *__nullable updatedBehavior, NSError *__nullable error))completion;
-- (void)deleteBehaviorForUUID:(nonnull NSUUID *)UUID completion:(void(^__nullable)(NSError *__nullable error))completion;
+- (BLMBehavior *)behaviorForUUID:(NSUUID *)UUID;
+- (NSEnumerator<BLMBehavior *> *)behaviorEnumerator;
+- (NSEnumerator<BLMBehavior *> *)behaviorEnumeratorByWrappingUUIDEnumerator:(NSEnumerator<NSUUID *> *)UUIDEnumerator;
+- (void)createBehaviorWithName:(NSString *)name continuous:(BOOL)continuous completion:(nullable void(^)(BLMBehavior *__nullable behavior, NSError *__nullable error))completion;
+- (void)updateBehaviorForUUID:(NSUUID *)UUID property:(BLMBehaviorProperty)property value:(nullable id)value completion:(nullable void(^)(BLMBehavior *__nullable updatedBehavior, NSError *__nullable error))completion;
+- (void)deleteBehaviorForUUID:(NSUUID *)UUID completion:(void(^__nullable)(NSError *__nullable error))completion;
 
 @end
 
@@ -66,11 +69,14 @@ extern NSString *__nonnull const BLMDataManagerBehaviorErrorDomain;
 
 @interface BLMDataManager (BLMSessionConfiguration)
 
-- (nonnull BLMSessionConfiguration *)sessionConfigurationForUUID:(nonnull NSUUID *)UUID;
-- (nonnull NSEnumerator<BLMSessionConfiguration *> *)sessionConfigurationEnumerator;
-- (nonnull NSEnumerator<BLMSessionConfiguration *> *)sessionConfigurationEnumeratorByWrappingUUIDEnumerator:(nonnull NSEnumerator<NSUUID *> *)UUIDEnumerator;
-- (void)createSessionConfigurationWithCondition:(nullable NSString *)condition location:(nullable NSString *)location therapist:(nullable NSString *)therapist observer:(nullable NSString *)observer timeLimit:(BLMTimeInterval)timeLimit timeLimitOptions:(BLMTimeLimitOptions)timeLimitOptions behaviorUUIDs:(nonnull NSArray<NSUUID *> *)behaviorUUIDs completion:(nullable void(^)(BLMSessionConfiguration *__nullable sessionConfiguration, NSError *__nullable error))completion;
-- (void)updateSessionConfigurationForUUID:(nonnull NSUUID *)UUID property:(BLMSessionConfigurationProperty)property value:(nullable id)value completion:(nullable void(^)(BLMSessionConfiguration *__nullable updatedSessionConfiguration, NSError *__nullable error))completion;
-- (void)deleteSessionConfigurationForUUID:(nonnull NSUUID *)UUID completion:(nullable void(^)(NSError *__nullable error))completion;
+- (BLMSessionConfiguration *)sessionConfigurationForUUID:(NSUUID *)UUID;
+- (NSEnumerator<BLMSessionConfiguration *> *)sessionConfigurationEnumerator;
+- (NSEnumerator<BLMSessionConfiguration *> *)sessionConfigurationEnumeratorByWrappingUUIDEnumerator:(NSEnumerator<NSUUID *> *)UUIDEnumerator;
+- (void)createSessionConfigurationWithCondition:(nullable NSString *)condition location:(nullable NSString *)location therapist:(nullable NSString *)therapist observer:(nullable NSString *)observer timeLimit:(BLMTimeInterval)timeLimit timeLimitOptions:(BLMTimeLimitOptions)timeLimitOptions behaviorUUIDs:(NSArray<NSUUID *> *)behaviorUUIDs completion:(nullable void(^)(BLMSessionConfiguration *__nullable sessionConfiguration, NSError *__nullable error))completion;
+- (void)updateSessionConfigurationForUUID:(NSUUID *)UUID property:(BLMSessionConfigurationProperty)property value:(nullable id)value completion:(nullable void(^)(BLMSessionConfiguration *__nullable updatedSessionConfiguration, NSError *__nullable error))completion;
+- (void)deleteSessionConfigurationForUUID:(NSUUID *)UUID completion:(nullable void(^)(NSError *__nullable error))completion;
 
 @end
+
+
+NS_ASSUME_NONNULL_END
