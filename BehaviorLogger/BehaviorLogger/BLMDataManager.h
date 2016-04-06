@@ -33,14 +33,17 @@ extern NSString *__nonnull const BLMDataManagerBehaviorErrorDomain;
 
 @interface BLMDataManager : NSObject
 
-#pragma Lifecycle
-
 @property (nonatomic, assign, readonly, getter=isRestoringArchive) BOOL restoringArchive;
 
 + (void)initializeWithCompletion:(nullable dispatch_block_t)completion;
 + (nonnull instancetype)sharedManager;
 
-#pragma Project State
+@end
+
+
+#pragma mark
+
+@interface BLMDataManager (BLMProject)
 
 @property (nonnull, nonatomic, copy, readonly) NSSet<NSString *> *projectNameSet;
 
@@ -50,7 +53,12 @@ extern NSString *__nonnull const BLMDataManagerBehaviorErrorDomain;
 - (void)updateProjectForUUID:(nonnull NSUUID *)UUID property:(BLMProjectProperty)property value:(nullable id)value completion:(nullable void(^)(BLMProject *__nullable updatedProject, NSError *__nullable error))completion;
 - (void)deleteProjectForUUID:(nonnull NSUUID *)UUID completion:(nullable void(^)(NSError *__nullable error))completion;
 
-#pragma Behavior State
+@end
+
+
+#pragma mark
+
+@interface BLMDataManager (BLMBehavior)
 
 - (nonnull BLMBehavior *)behaviorForUUID:(nonnull NSUUID *)UUID;
 - (nonnull NSEnumerator<BLMBehavior *> *)behaviorEnumerator;
@@ -58,7 +66,12 @@ extern NSString *__nonnull const BLMDataManagerBehaviorErrorDomain;
 - (void)updateBehaviorForUUID:(nonnull NSUUID *)UUID property:(BLMBehaviorProperty)property value:(nullable id)value completion:(nullable void(^)(BLMBehavior *__nullable updatedBehavior, NSError *__nullable error))completion;
 - (void)deleteBehaviorForUUID:(nonnull NSUUID *)UUID completion:(void(^__nullable)(NSError *__nullable error))completion;
 
-#pragma mark Session Configuration State
+@end
+
+
+#pragma mark
+
+@interface BLMDataManager (BLMSessionConfiguration)
 
 - (nonnull BLMSessionConfiguration *)sessionConfigurationForUUID:(nonnull NSUUID *)UUID;
 - (nonnull NSEnumerator<BLMSessionConfiguration *> *)sessionConfigurationEnumerator;
