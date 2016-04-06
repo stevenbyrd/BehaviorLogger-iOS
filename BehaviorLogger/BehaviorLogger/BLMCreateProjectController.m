@@ -62,7 +62,7 @@ typedef NS_ENUM(NSUInteger, ActionButton) {
 
 #pragma mark
 
-@interface BLMCreateProjectController () < UICollectionViewDataSource, BLMCollectionViewLayoutDelegate, BLMButtonCellDelegate, BLMTextInputCellDelegate>
+@interface BLMCreateProjectController () < UICollectionViewDataSource, BLMCollectionViewLayoutDelegate, BLMButtonCellDataSource, BLMButtonCellDelegate, BLMTextInputCellDataSource, BLMTextInputCellDelegate>
 
 @property (nonatomic, copy, readonly) NSArray<NSMutableArray<NSString *> *> *properties;
 @property (nonatomic, assign, getter=shouldAutomaticallyBeginEditingProjectName) BOOL automaticallyBeginEditingProjectName;
@@ -258,6 +258,7 @@ typedef NS_ENUM(NSUInteger, ActionButton) {
         case SectionProjectProperties:
         case SectionSessionConfigurationProperties: {
             BLMTextInputCell *textInputCell = (BLMTextInputCell *)[collectionView dequeueReusableCellWithReuseIdentifier:NSStringFromClass([BLMTextInputCell class]) forIndexPath:indexPath];
+            textInputCell.dataSource = self;
             textInputCell.delegate = self;
 
             cell = textInputCell;
@@ -266,6 +267,7 @@ typedef NS_ENUM(NSUInteger, ActionButton) {
 
         case SectionActionButtons: {
             BLMButtonCell *buttonCell = [collectionView dequeueReusableCellWithReuseIdentifier:NSStringFromClass([BLMButtonCell class]) forIndexPath:indexPath];
+            buttonCell.dataSource = self;
             buttonCell.delegate = self;
 
             cell = buttonCell;
@@ -402,7 +404,7 @@ typedef NS_ENUM(NSUInteger, ActionButton) {
     }
 }
 
-#pragma mark BLMTextInputCellDelegate
+#pragma mark BLMTextInputCellDataSource
 
 - (NSString *)labelForTextInputCell:(BLMTextInputCell *)cell {
     switch ((Section)cell.section) {
@@ -490,6 +492,7 @@ typedef NS_ENUM(NSUInteger, ActionButton) {
     return [self minimumInputLengthForSection:cell.section property:cell.item];
 }
 
+#pragma mark BLMTextInputCellDelegate
 
 - (void)didChangeInputForTextInputCell:(BLMTextInputCell *)cell {
     switch ((Section)cell.section) {
@@ -536,7 +539,7 @@ typedef NS_ENUM(NSUInteger, ActionButton) {
     assert([self isTextInput:self.properties[cell.section][cell.item] validForSection:cell.section property:cell.item]);
 }
 
-#pragma mark BLMButtonCellDelegate
+#pragma mark BLMButtonCellDataSource
 
 - (BOOL)isButtonEnabledForButtonCell:(BLMButtonCell *)cell {
     switch ((ActionButton)cell.item) {
@@ -577,6 +580,7 @@ typedef NS_ENUM(NSUInteger, ActionButton) {
     }
 }
 
+#pragma mark BLMButtonCellDelegate
 
 - (void)didFireActionForButtonCell:(BLMButtonCell *)cell {
     switch ((ActionButton)cell.item) {

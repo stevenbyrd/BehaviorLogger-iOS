@@ -12,6 +12,7 @@
 
 static CGFloat ButtonTitleTopPadding = 5.0;
 
+#pragma mark
 
 @implementation BLMButtonCell
 
@@ -54,15 +55,15 @@ static CGFloat ButtonTitleTopPadding = 5.0;
 - (void)updateContent {
     [super updateContent];
 
-    self.button.enabled = [self.delegate isButtonEnabledForButtonCell:self];
+    self.button.enabled = [self.dataSource isButtonEnabledForButtonCell:self];
     self.button.alpha = (self.button.isEnabled ? 1.0 : 0.5);
 
-    [self.button setAttributedTitle:[self.delegate attributedTitleForButtonCell:self forState:UIControlStateNormal] forState:UIControlStateNormal];
-    [self.button setAttributedTitle:[self.delegate attributedTitleForButtonCell:self forState:UIControlStateHighlighted] forState:UIControlStateHighlighted];
+    [self.button setAttributedTitle:[self.dataSource attributedTitleForButtonCell:self forState:UIControlStateNormal] forState:UIControlStateNormal];
+    [self.button setAttributedTitle:[self.dataSource attributedTitleForButtonCell:self forState:UIControlStateHighlighted] forState:UIControlStateHighlighted];
     
-    [self.button setImage:[self.delegate imageForButtonCell:self forState:UIControlStateNormal] forState:UIControlStateNormal];
-    [self.button setImage:[self.delegate imageForButtonCell:self forState:UIControlStateSelected] forState:UIControlStateSelected];
-    [self.button setImage:[self.delegate imageForButtonCell:self forState:UIControlStateHighlighted] forState:UIControlStateHighlighted];
+    [self.button setImage:[self.dataSource imageForButtonCell:self forState:UIControlStateNormal] forState:UIControlStateNormal];
+    [self.button setImage:[self.dataSource imageForButtonCell:self forState:UIControlStateSelected] forState:UIControlStateSelected];
+    [self.button setImage:[self.dataSource imageForButtonCell:self forState:UIControlStateHighlighted] forState:UIControlStateHighlighted];
 
     [self updateButtonInsets];
 }

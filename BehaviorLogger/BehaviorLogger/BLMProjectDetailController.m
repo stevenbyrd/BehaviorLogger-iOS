@@ -381,7 +381,7 @@ typedef NS_ENUM(NSUInteger, ActionButton) {
 
 #pragma mark
 
-@interface BLMProjectDetailController () <UICollectionViewDataSource, BLMCollectionViewLayoutDelegate, BehaviorCellDelegate, BLMButtonCellDelegate>
+@interface BLMProjectDetailController () <UICollectionViewDataSource, BLMCollectionViewLayoutDelegate, BLMTextInputCellDataSource, BehaviorCellDelegate, BLMButtonCellDataSource, BLMButtonCellDelegate>
 
 @property (nonatomic, strong, readonly) BLMCollectionView *collectionView;
 @property (nonatomic, strong, readonly) UILabel *instructionsLabel;
@@ -758,6 +758,7 @@ typedef NS_ENUM(NSUInteger, ActionButton) {
         case SectionBasicProperties:
         case SectionSessionProperties: {
             BLMTextInputCell *textInputCell = (BLMTextInputCell *)[collectionView dequeueReusableCellWithReuseIdentifier:NSStringFromClass([BLMTextInputCell class]) forIndexPath:indexPath];
+            textInputCell.dataSource = self;
             textInputCell.delegate = self;
 
             cell = textInputCell;
@@ -769,6 +770,7 @@ typedef NS_ENUM(NSUInteger, ActionButton) {
 
             if ((indexPath.item < behaviorUUIDs.count) || ((indexPath.item == behaviorUUIDs.count) && (self.addedBehaviorUUID != nil))) {
                 BehaviorCell *behaviorCell = (BehaviorCell *)[collectionView dequeueReusableCellWithReuseIdentifier:NSStringFromClass([BehaviorCell class]) forIndexPath:indexPath];
+                behaviorCell.dataSource = self;
                 behaviorCell.delegate = self;
 
                 NSUUID *behaviorUUID = ((indexPath.item < behaviorUUIDs.count) ? behaviorUUIDs[indexPath.item] : self.addedBehaviorUUID);
@@ -781,6 +783,7 @@ typedef NS_ENUM(NSUInteger, ActionButton) {
                            && (self.addedBehaviorUUID == nil)));
 
                 BLMButtonCell *buttonCell = [collectionView dequeueReusableCellWithReuseIdentifier:NSStringFromClass([BLMButtonCell class]) forIndexPath:indexPath];
+                buttonCell.dataSource = self;
                 buttonCell.delegate = self;
 
                 cell = buttonCell;
@@ -791,6 +794,7 @@ typedef NS_ENUM(NSUInteger, ActionButton) {
 
         case SectionActionButtons: {
             BLMButtonCell *buttonCell = [collectionView dequeueReusableCellWithReuseIdentifier:NSStringFromClass([BLMButtonCell class]) forIndexPath:indexPath];
+            buttonCell.dataSource = self;
             buttonCell.delegate = self;
 
             cell = buttonCell;
@@ -972,7 +976,7 @@ typedef NS_ENUM(NSUInteger, ActionButton) {
     }
 }
 
-#pragma mark BLMTextInputCellDelegate
+#pragma mark BLMTextInputCellDataSource
 
 - (NSString *)labelForTextInputCell:(BLMTextInputCell *)cell {
     switch ((Section)cell.section) {
@@ -1140,6 +1144,7 @@ typedef NS_ENUM(NSUInteger, ActionButton) {
     }
 }
 
+#pragma mark BehaviorCellDelegate / BLMTextInputCellDelegate
 
 - (void)didChangeInputForTextInputCell:(BLMTextInputCell *)cell {
     switch ((Section)cell.section) {
@@ -1275,7 +1280,7 @@ typedef NS_ENUM(NSUInteger, ActionButton) {
             }
             break;
         }
-
+            
         case SectionActionButtons:
         case SectionCount: {
             assert(NO);
@@ -1284,7 +1289,6 @@ typedef NS_ENUM(NSUInteger, ActionButton) {
     }
 }
 
-#pragma mark BehaviorCellDelegate
 
 - (void)didFireDeleteButtonActionForBehaviorCell:(BehaviorCell *)cell {
     if (cell.textField.isEditing) {
@@ -1306,7 +1310,7 @@ typedef NS_ENUM(NSUInteger, ActionButton) {
     [[BLMDataManager sharedManager] updateBehaviorForUUID:cell.behavior.UUID property:BLMBehaviorPropertyContinuous value:@(cell.toggleSwitch.isOn) completion:nil];
 }
 
-#pragma mark BLMButtonCellDelegate
+#pragma mark BLMButtonCellDataSource
 
 - (BOOL)isButtonEnabledForButtonCell:(BLMButtonCell *)cell {
     switch ((Section)cell.section) {
@@ -1411,6 +1415,7 @@ typedef NS_ENUM(NSUInteger, ActionButton) {
     return nil;
 }
 
+#pragma mark BLMButtonCellDelegate
 
 - (void)didFireActionForButtonCell:(BLMButtonCell *)cell {
     switch ((Section)cell.section) {

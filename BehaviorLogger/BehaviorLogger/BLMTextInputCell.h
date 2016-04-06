@@ -12,12 +12,18 @@
 @class BLMTextInputCell;
 
 
-@protocol BLMTextInputCellDelegate <NSObject>
+@protocol BLMTextInputCellDataSource <NSObject>
 
 - (NSString *)labelForTextInputCell:(BLMTextInputCell *)cell;
 - (NSString *)defaultInputForTextInputCell:(BLMTextInputCell *)cell;
 - (NSAttributedString *)attributedPlaceholderForTextInputCell:(BLMTextInputCell *)cell;
 - (NSUInteger)minimumInputLengthForTextInputCell:(BLMTextInputCell *)cell;
+
+@end
+
+
+@protocol BLMTextInputCellDelegate <NSObject>
+
 - (void)didChangeInputForTextInputCell:(BLMTextInputCell *)cell;
 - (BOOL)shouldAcceptInputForTextInputCell:(BLMTextInputCell *)cell;
 - (void)didAcceptInputForTextInputCell:(BLMTextInputCell *)cell;
@@ -33,6 +39,7 @@
 @interface BLMTextInputCell : BLMCollectionViewCell
 
 @property (nonatomic, strong, readonly) BLMTextField *textField;
+@property (nonatomic, weak) id<BLMTextInputCellDataSource> dataSource;
 @property (nonatomic, weak) id<BLMTextInputCellDelegate> delegate;
 
 - (void)updateTextFieldColor;

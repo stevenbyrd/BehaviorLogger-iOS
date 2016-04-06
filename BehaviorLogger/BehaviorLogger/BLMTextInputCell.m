@@ -81,9 +81,9 @@
 - (void)updateContent {
     [super updateContent];
 
-    self.label.text = [self.delegate labelForTextInputCell:self];
-    self.textField.text = [self.delegate defaultInputForTextInputCell:self];
-    self.textField.attributedPlaceholder = [self.delegate attributedPlaceholderForTextInputCell:self];
+    self.label.text = [self.dataSource labelForTextInputCell:self];
+    self.textField.text = [self.dataSource defaultInputForTextInputCell:self];
+    self.textField.attributedPlaceholder = [self.dataSource attributedPlaceholderForTextInputCell:self];
 
     [self updateTextFieldColor];
 }
