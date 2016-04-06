@@ -118,9 +118,7 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
 
 
 - (NSEnumerator<BLMBehavior *> *)behaviorEnumerator {
-    return [[BLMModelObjectEnumerator alloc] initWithUUIDEnumerator:self.behaviorUUIDs.objectEnumerator objectRetrievalBlock:^BLMBehavior *(NSUUID *UUID) {
-        return [[BLMDataManager sharedManager] behaviorForUUID:UUID];
-    }];
+    return [[BLMDataManager sharedManager] behaviorEnumeratorByWrappingUUIDEnumerator:self.behaviorUUIDs.objectEnumerator];
 }
 
 @end

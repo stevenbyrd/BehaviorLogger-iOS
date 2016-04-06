@@ -45,21 +45,26 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
 
 #pragma mark
 
-@interface BLMModelObjectEnumerator<ObjectType> ()
+@protocol ModelObjectEnumeratorDataSource <NSObject>
 
-@property (nonatomic, strong, readonly) NSEnumerator<NSUUID *> *UUIDEnumerator;
-@property (nonatomic, copy, readonly) ObjectType (^objectRetrievalBlock)(NSUUID *UUID);
-
-- (instancetype)initWithUUIDEnumerator:(NSEnumerator<NSUUID *> *)UUIDEnumerator objectRetrievalBlock:(ObjectType(^)(NSUUID *UUID))objectRetrievalBlock;
+- (nullable id)objectForUUID:(nonnull NSUUID *)UUID;
 
 @end
 
 
-@implementation BLMModelObjectEnumerator
+@interface ModelObjectEnumerator<ObjectType> : NSEnumerator<ObjectType>
 
-- (instancetype)initWithUUIDEnumerator:(NSEnumerator<NSUUID *> *)UUIDEnumerator objectRetrievalBlock:(id(^)(NSUUID *UUID))objectRetrievalBlock {
+@property (nonatomic, strong, readonly) NSEnumerator<NSUUID *> *UUIDEnumerator;
+@property (nonatomic, weak, readonly) id<ModelObjectEnumeratorDataSource> dataSource;
+
+@end
+
+
+@implementation ModelObjectEnumerator
+
+- (instancetype)initWithUUIDEnumerator:(NSEnumerator<NSUUID *> *)UUIDEnumerator dataSource:(id<ModelObjectEnumeratorDataSource>)dataSource {
     assert(UUIDEnumerator != nil);
-    assert(objectRetrievalBlock != nil);
+    assert(dataSource != nil);
 
     self = [super init];
 
@@ -68,9 +73,16 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
     }
 
     _UUIDEnumerator = UUIDEnumerator;
-    _objectRetrievalBlock = [objectRetrievalBlock copy];
+    _dataSource = dataSource;
 
     return self;
+}
+
+
+- (instancetype)initWithUUIDEnumerator:(NSEnumerator<NSUUID *> *)UUIDEnumerator {
+    assert([[self class] conformsToProtocol:@protocol(ModelObjectEnumeratorDataSource)]);
+    
+    return [self initWithUUIDEnumerator:UUIDEnumerator dataSource:(id<ModelObjectEnumeratorDataSource>)self];
 }
 
 
@@ -84,7 +96,7 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
             return nil;
         }
 
-        object = self.objectRetrievalBlock(UUID);
+        object = [self.dataSource objectForUUID:UUID];
     }
 
     return object;
@@ -95,7 +107,7 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
     NSMutableArray *allObjects = [NSMutableArray array];
 
     for (NSUUID *UUID in self.UUIDEnumerator.allObjects) {
-        id object = self.objectRetrievalBlock(UUID);
+        id object = [self.dataSource objectForUUID:UUID];
 
         if (object != nil) {
             [allObjects addObject:object];
@@ -128,14 +140,62 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
                     return 0;
                 }
 
-                objects[0] = self.objectRetrievalBlock(UUID);
+                objects[0] = [self.dataSource objectForUUID:UUID];
             }
 
             state->itemsPtr = objects;
-            
+
             return 1;
         }
     }
+}
+
+@end
+
+
+#pragma mark
+
+@interface ProjectEnumerator : ModelObjectEnumerator <ModelObjectEnumeratorDataSource>
+
+@end
+
+
+@implementation ProjectEnumerator
+
+- (id)objectForUUID:(NSUUID *)UUID {
+    return [[BLMDataManager sharedManager] projectForUUID:UUID];
+}
+
+@end
+
+
+#pragma mark
+
+@interface BehaviorEnumerator : ModelObjectEnumerator <ModelObjectEnumeratorDataSource>
+
+@end
+
+
+@implementation BehaviorEnumerator
+
+- (id)objectForUUID:(NSUUID *)UUID {
+    return [[BLMDataManager sharedManager] behaviorForUUID:UUID];
+}
+
+@end
+
+
+#pragma mark
+
+@interface SessionConfigurationEnumerator : ModelObjectEnumerator <ModelObjectEnumeratorDataSource>
+
+@end
+
+
+@implementation SessionConfigurationEnumerator
+
+- (id)objectForUUID:(NSUUID *)UUID {
+    return [[BLMDataManager sharedManager] sessionConfigurationForUUID:UUID];
 }
 
 @end
@@ -230,9 +290,12 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
 
 
 - (NSEnumerator<BLMProject *> *)projectEnumerator {
-    return [[BLMModelObjectEnumerator alloc] initWithUUIDEnumerator:self.projectByUUID.keyEnumerator objectRetrievalBlock:^BLMProject *(NSUUID *UUID) {
-        return [self projectForUUID:UUID];
-    }];
+    return [self projectEnumeratorByWrappingUUIDEnumerator:self.projectByUUID.keyEnumerator];
+}
+
+
+- (NSEnumerator<BLMProject *> *)projectEnumeratorByWrappingUUIDEnumerator:(NSEnumerator<NSUUID *> *)UUIDEnumerator {
+    return [[ProjectEnumerator alloc] initWithUUIDEnumerator:UUIDEnumerator];
 }
 
 
@@ -317,9 +380,12 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
 
 
 - (NSEnumerator<BLMBehavior *> *)behaviorEnumerator {
-    return [[BLMModelObjectEnumerator alloc] initWithUUIDEnumerator:self.behaviorByUUID.keyEnumerator objectRetrievalBlock:^BLMBehavior *(NSUUID *UUID) {
-        return [self behaviorForUUID:UUID];
-    }];
+    return [self behaviorEnumeratorByWrappingUUIDEnumerator:self.behaviorByUUID.keyEnumerator];
+}
+
+
+- (NSEnumerator<BLMBehavior *> *)behaviorEnumeratorByWrappingUUIDEnumerator:(NSEnumerator<NSUUID *> *)UUIDEnumerator {
+    return [[BehaviorEnumerator alloc] initWithUUIDEnumerator:UUIDEnumerator];
 }
 
 
@@ -390,9 +456,12 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
 
 
 - (NSEnumerator<BLMSessionConfiguration *> *)sessionConfigurationEnumerator {
-    return [[BLMModelObjectEnumerator alloc] initWithUUIDEnumerator:self.sessionConfigurationByUUID.keyEnumerator objectRetrievalBlock:^BLMSessionConfiguration *(NSUUID *UUID) {
-        return [self sessionConfigurationForUUID:UUID];
-    }];
+    return [self sessionConfigurationEnumeratorByWrappingUUIDEnumerator:self.sessionConfigurationByUUID.keyEnumerator];
+}
+
+
+- (NSEnumerator<BLMSessionConfiguration *> *)sessionConfigurationEnumeratorByWrappingUUIDEnumerator:(NSEnumerator<NSUUID *> *)UUIDEnumerator {
+    return [[SessionConfigurationEnumerator alloc] initWithUUIDEnumerator:UUIDEnumerator];
 }
 
 
