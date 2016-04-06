@@ -209,6 +209,8 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
 
 
 + (instancetype)sharedManager {
+    assert([NSThread isMainThread]);
+    
     static BLMDataManager *sharedManager = nil;
     static dispatch_once_t onceToken = 0;
 

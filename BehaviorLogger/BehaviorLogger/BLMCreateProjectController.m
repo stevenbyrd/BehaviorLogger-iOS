@@ -140,7 +140,7 @@ typedef NS_ENUM(NSUInteger, ActionButton) {
     }
 }
 
-#pragma mark Input Validation
+#pragma mark Internal State
 
 - (NSUInteger)minimumInputLengthForSection:(Section)section property:(NSUInteger)property {
     switch (section) {
@@ -204,6 +204,8 @@ typedef NS_ENUM(NSUInteger, ActionButton) {
 
 
 - (BOOL)isAllTextInputValid {
+    assert([NSThread isMainThread]);
+
     for (NSUInteger section = 0; section < self.properties.count; section += 1) {
         for (NSUInteger property = 0; property < self.properties[section].count; property += 1) {
             if (![self isTextInput:self.properties[section][property] validForSection:section property:property]) {
@@ -213,6 +215,35 @@ typedef NS_ENUM(NSUInteger, ActionButton) {
     }
 
     return YES;
+}
+
+
+- (void)createProjectFromTextInput {
+    assert(self.isAllTextInputValid);
+
+    [[BLMDataManager sharedManager] createSessionConfigurationWithCondition:self.properties[SectionSessionConfigurationProperties][SessionConfigurationPropertyCondition]
+                                                                   location:self.properties[SectionSessionConfigurationProperties][SessionConfigurationPropertyLocation]
+                                                                  therapist:self.properties[SectionSessionConfigurationProperties][SessionConfigurationPropertyTherapist]
+                                                                   observer:self.properties[SectionSessionConfigurationProperties][SessionConfigurationPropertyObserver]
+                                                                  timeLimit:0
+                                                           timeLimitOptions:0
+                                                              behaviorUUIDs:@[]
+                                                                 completion:^(BLMSessionConfiguration *sessionConfiguration, NSError *sessionConfigurationError) {
+                                                                     if (sessionConfigurationError != nil) {
+                                                                         [self.delegate createProjectController:self didFailWithError:sessionConfigurationError];
+                                                                     } else {
+                                                                         [[BLMDataManager sharedManager] createProjectWithName:self.properties[SectionProjectProperties][ProjectPropertyName]
+                                                                                                                        client:self.properties[SectionProjectProperties][ProjectPropertyClient]
+                                                                                                      sessionConfigurationUUID:sessionConfiguration.UUID
+                                                                                                                    completion:^(BLMProject *project, NSError *projectError) {
+                                                                                                                        if (projectError != nil) {
+                                                                                                                            [self.delegate createProjectController:self didFailWithError:projectError];
+                                                                                                                        } else {
+                                                                                                                            [self.delegate createProjectController:self didCreateProject:project];
+                                                                                                                        }
+                                                                                                                    }];
+                                                                     }
+                                                                 }];
 }
 
 #pragma mark UICollectionViewDataSource
@@ -495,48 +526,38 @@ typedef NS_ENUM(NSUInteger, ActionButton) {
 #pragma mark BLMTextInputCellDelegate
 
 - (void)didChangeInputForTextInputCell:(BLMTextInputCell *)cell {
-    switch ((Section)cell.section) {
-        case SectionProjectProperties:
-        case SectionSessionConfigurationProperties: {
-            BOOL wasAllTextInputValid = self.isAllTextInputValid;
+    assert([NSThread isMainThread]);
+    assert(cell.section < self.properties.count);
+    assert(cell.item < self.properties[cell.section].count);
 
-            self.properties[cell.section][cell.item] = (cell.textField.text ?: @"");
+    BOOL wasAllTextInputValid = self.isAllTextInputValid;
 
-            if (wasAllTextInputValid != self.isAllTextInputValid) {
-                [self.collectionView performBatchUpdates:^{
-                    [self.collectionView reloadItemsAtIndexPaths:@[[NSIndexPath indexPathForItem:ActionButtonCreateProject inSection:SectionActionButtons]]];
-                } completion:nil];
-            }
-            break;
-        }
+    self.properties[cell.section][cell.item] = (cell.textField.text ?: @"");
 
-        case SectionActionButtons:
-        case SectionCount: {
-            assert(NO);
-            break;
-        }
+    if (wasAllTextInputValid != self.isAllTextInputValid) {
+        [self.collectionView performBatchUpdates:^{
+            [self.collectionView reloadItemsAtIndexPaths:@[[NSIndexPath indexPathForItem:ActionButtonCreateProject inSection:SectionActionButtons]]];
+        } completion:nil];
     }
 }
 
 
 - (BOOL)shouldAcceptInputForTextInputCell:(BLMTextInputCell *)cell {
-    switch ((Section)cell.section) {
-        case SectionProjectProperties:
-        case SectionSessionConfigurationProperties:
-            assert([BLMUtils isString:self.properties[cell.section][cell.item] equalToString:(cell.textField.text ?: @"")]);
-            return [self isTextInput:self.properties[cell.section][cell.item] validForSection:cell.section property:cell.item];
+    assert([NSThread isMainThread]);
+    assert(cell.section < self.properties.count);
+    assert(cell.item < self.properties[cell.section].count);
+    assert([BLMUtils isString:self.properties[cell.section][cell.item] equalToString:(cell.textField.text ?: @"")]);
 
-        case SectionActionButtons:
-        case SectionCount: {
-            assert(NO);
-            break;
-        }
-    }
+    return [self isTextInput:cell.textField.text validForSection:cell.section property:cell.item];
 }
 
 
 - (void)didAcceptInputForTextInputCell:(BLMTextInputCell *)cell {
-    assert([self isTextInput:self.properties[cell.section][cell.item] validForSection:cell.section property:cell.item]);
+    assert([NSThread isMainThread]);
+    assert(cell.section < self.properties.count);
+    assert(cell.item < self.properties[cell.section].count);
+    assert([self isTextInput:cell.textField.text validForSection:cell.section property:cell.item]);
+    assert([BLMUtils isString:self.properties[cell.section][cell.item] equalToString:(cell.textField.text ?: @"")]);
 }
 
 #pragma mark BLMButtonCellDataSource
@@ -584,34 +605,9 @@ typedef NS_ENUM(NSUInteger, ActionButton) {
 
 - (void)didFireActionForButtonCell:(BLMButtonCell *)cell {
     switch ((ActionButton)cell.item) {
-        case ActionButtonCreateProject: { // TODO: Handle model object creation failures
-            [[BLMDataManager sharedManager] createSessionConfigurationWithCondition:self.properties[SectionSessionConfigurationProperties][SessionConfigurationPropertyCondition]
-                                                                           location:self.properties[SectionSessionConfigurationProperties][SessionConfigurationPropertyLocation]
-                                                                          therapist:self.properties[SectionSessionConfigurationProperties][SessionConfigurationPropertyTherapist]
-                                                                           observer:self.properties[SectionSessionConfigurationProperties][SessionConfigurationPropertyObserver]
-                                                                          timeLimit:0
-                                                                   timeLimitOptions:0
-                                                                      behaviorUUIDs:@[]
-                                                                         completion:^(BLMSessionConfiguration *sessionConfiguration, NSError *error) {
-                                                                             if (error != nil) {
-                                                                                 assert(NO);
-                                                                                 return;
-                                                                             }
-
-                                                                             [[BLMDataManager sharedManager] createProjectWithName:self.properties[SectionProjectProperties][ProjectPropertyName]
-                                                                                                                            client:self.properties[SectionProjectProperties][ProjectPropertyClient]
-                                                                                                          sessionConfigurationUUID:sessionConfiguration.UUID
-                                                                                                                        completion:^(BLMProject *project, NSError *error) {
-                                                                                                                            if (error != nil) {
-                                                                                                                                assert(NO);
-                                                                                                                                return;
-                                                                                                                            }
-
-                                                                                                                            [self.delegate createProjectController:self didCreateProject:project];
-                                                                                                                        }];
-                                                                         }];
+        case ActionButtonCreateProject:
+            [self createProjectFromTextInput];
             break;
-        }
 
         case ActionButtonCancel:
             [self.delegate createProjectControllerDidCancel:self];
@@ -623,6 +619,5 @@ typedef NS_ENUM(NSUInteger, ActionButton) {
         }
     }
 }
-
 
 @end

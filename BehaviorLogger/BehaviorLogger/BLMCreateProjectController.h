@@ -16,6 +16,7 @@
 @protocol BLMCreateProjectControllerDelegate <NSObject>
 
 - (void)createProjectController:(BLMCreateProjectController *)controller didCreateProject:(BLMProject *)project;
+- (void)createProjectController:(BLMCreateProjectController *)controller didFailWithError:(NSError *)error;
 - (void)createProjectControllerDidCancel:(BLMCreateProjectController *)controller;
 
 @end
