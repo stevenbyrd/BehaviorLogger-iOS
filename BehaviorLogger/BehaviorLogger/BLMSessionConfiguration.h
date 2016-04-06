@@ -40,7 +40,7 @@ typedef NS_ENUM(NSInteger, BLMSessionConfigurationProperty) {
 
 #pragma mark
 
-@class BLMBehaviorEnumerator;
+@class BLMBehavior;
 
 
 @interface BLMSessionConfiguration : NSObject <NSCoding>
@@ -57,6 +57,6 @@ typedef NS_ENUM(NSInteger, BLMSessionConfigurationProperty) {
 - (instancetype)initWithUUID:(NSUUID *)UUID condition:(NSString *)condition location:(NSString *)location therapist:(NSString *)therapist observer:(NSString *)observer timeLimit:(BLMTimeInterval)timeLimit timeLimitOptions:(BLMTimeLimitOptions)timeLimitOptions behaviorUUIDs:(NSArray<NSUUID *> *)behaviorUUIDs;
 - (instancetype)copyWithUpdatedValuesByProperty:(NSDictionary<NSNumber *, id> *)valuesByProperty; // @(BLMSessionConfigurationProperty) -> id
 
-- (BLMBehaviorEnumerator *)behaviorEnumerator;
+- (NSEnumerator<BLMBehavior *> *)behaviorEnumerator;
 
 @end
