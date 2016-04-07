@@ -116,9 +116,4 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
                                            behaviorUUIDs:[BLMUtils objectFromDictionary:valuesByProperty forKey:@(BLMSessionConfigurationPropertyBehaviorUUIDs) nullValue:nil defaultValue:self.behaviorUUIDs]];
 }
 
-
-- (NSEnumerator<BLMBehavior *> *)behaviorEnumerator {
-    return [[BLMDataManager sharedManager] behaviorEnumeratorByWrappingUUIDEnumerator:self.behaviorUUIDs.objectEnumerator];
-}
-
 @end

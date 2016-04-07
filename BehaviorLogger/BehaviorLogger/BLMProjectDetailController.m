@@ -531,7 +531,7 @@ typedef NS_ENUM(NSUInteger, ActionButton) {
         return NO;
     }
 
-    for (BLMBehavior *behavior in self.projectSessionConfiguration.behaviorEnumerator) {
+    for (BLMBehavior *behavior in [[BLMDataManager sharedManager] behaviorEnumeratorForUUIDs:self.projectSessionConfiguration.behaviorUUIDs]) {
         if (![BLMUtils isObject:behavior.UUID equalToObject:UUID] && [BLMUtils isString:lowercaseName equalToString:behavior.name.lowercaseString]) {
             return NO;
         }
