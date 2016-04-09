@@ -29,8 +29,9 @@
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
     _window = [[UIWindow alloc] initWithFrame:[UIScreen mainScreen].bounds];
     _splitViewController = [[UISplitViewController alloc] init];
-    
-    UINavigationController *primaryController = [[UINavigationController alloc] initWithRootViewController:[[BLMProjectMenuController alloc] init]];
+
+    BLMProjectMenuController *projectMenuController = [[BLMProjectMenuController alloc] init];
+    UINavigationController *primaryController = [[UINavigationController alloc] initWithRootViewController:projectMenuController];
     UINavigationController *detailController = [[UINavigationController alloc] init];
     
     self.splitViewController.viewControllers = @[primaryController, detailController];
@@ -43,7 +44,9 @@
     
     [self.window makeKeyAndVisible];
 
-    [BLMDataManager initializeWithCompletion:nil];
+    [BLMDataManager initializeWithCompletion:^{
+        [projectMenuController loadProjectData];
+    }];
     
     return YES;
 }

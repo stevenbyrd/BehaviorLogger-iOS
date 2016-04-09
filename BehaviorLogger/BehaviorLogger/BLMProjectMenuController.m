@@ -18,6 +18,7 @@
 NSString *const BLMCreateProjectCellText = @"Create Project";
 BLMColorHexCode const BLMCreateProjectCellTextColor = BLMColorHexCodeBlue;
 
+
 static CGFloat const ProjectCellFontSize = 14.0;
 
 
@@ -149,13 +150,28 @@ typedef NS_ENUM(NSInteger, TableSection) {
     [self.view addSubview:self.tableView];
     [self.view addConstraints:[BLMViewUtils constraintsForItem:self.tableView equalToItem:self.view]];
 
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleDataModelArchiveRestored:) name:BLMDataManagerArchiveRestoredNotification object:nil];
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleDataModelProjectCreated:) name:BLMProjectCreatedNotification object:nil];
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleDataModelProjectDeleted:) name:BLMProjectDeletedNotification object:nil];
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleDataModelProjectUpdated:) name:BLMProjectUpdatedNotification object:nil];
 }
 
 #pragma mark Internal State
+
+- (void)loadProjectData {
+    assert([NSThread isMainThread]);
+    assert(self.projectUUIDs.count == 0);
+    assert(self.lastShownProjectUUID == nil);
+    assert(![BLMDataManager sharedManager].isRestoringArchive);
+
+    for (BLMProject *project in [BLMDataManager sharedManager].projectEnumerator) {
+        [self.projectUUIDs insertObject:project.UUID atIndex:[self insertionIndexForProjectUUID:project.UUID]];
+    }
+
+    [self.tableView reloadData];
+
+    [self showDetailsForProjectUUID:self.projectUUIDs.firstObject];
+}
+
 
 - (NSUInteger)insertionIndexForProjectUUID:(NSUUID *)UUID {
     static NSComparator comparator;
@@ -221,21 +237,6 @@ typedef NS_ENUM(NSInteger, TableSection) {
 
 #pragma mark Event Handling
 
-- (void)handleDataModelArchiveRestored:(NSNotification *)notification {
-    assert(self.projectUUIDs.count == 0);
-    assert(self.lastShownProjectUUID == nil);
-    assert(![BLMDataManager sharedManager].isRestoringArchive);
-
-    for (BLMProject *project in [BLMDataManager sharedManager].projectEnumerator) {
-        [self.projectUUIDs insertObject:project.UUID atIndex:[self insertionIndexForProjectUUID:project.UUID]];
-    }
-
-    [self.tableView reloadData];
-
-    [self showDetailsForProjectUUID:self.projectUUIDs.firstObject];
-}
-
-
 - (void)handleDataModelProjectCreated:(NSNotification *)notification {
     [self.tableView beginUpdates];
 
@@ -255,6 +256,7 @@ typedef NS_ENUM(NSInteger, TableSection) {
     BLMProject *project = (BLMProject *)notification.object;
     NSUInteger UUIDIndex = [self.projectUUIDs indexOfObject:project.UUID];
 
+    assert(UUIDIndex != NSNotFound);
     [self.projectUUIDs removeObjectAtIndex:UUIDIndex];
 
     [self.tableView deleteRowsAtIndexPaths:@[[NSIndexPath indexPathForItem:UUIDIndex inSection:TableSectionProjectList]] withRowAnimation:UITableViewRowAnimationNone];
@@ -270,9 +272,10 @@ typedef NS_ENUM(NSInteger, TableSection) {
     assert([NSThread isMainThread]);
 
     BLMProject *project = (BLMProject *)notification.object;
-    NSInteger index = [self.projectUUIDs indexOfObject:project.UUID];
+    NSInteger UUIDIndex = [self.projectUUIDs indexOfObject:project.UUID];
 
-    [self.tableView reloadRowsAtIndexPaths:@[[NSIndexPath indexPathForItem:index inSection:TableSectionProjectList]] withRowAnimation:UITableViewRowAnimationNone];
+    assert(UUIDIndex != NSNotFound);
+    [self.tableView reloadRowsAtIndexPaths:@[[NSIndexPath indexPathForItem:UUIDIndex inSection:TableSectionProjectList]] withRowAnimation:UITableViewRowAnimationNone];
 }
 
 #pragma mark UITableViewDataSource
@@ -283,30 +286,22 @@ typedef NS_ENUM(NSInteger, TableSection) {
 
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
-    NSInteger rowCount = 0;
-
     switch ((TableSection)section) {
         case TableSectionProjectList:
-            rowCount = self.projectUUIDs.count;
-            break;
+            return self.projectUUIDs.count;
 
         case TableSectionCreateProject:
-            rowCount = 1;
-            break;
+            return 1;
 
         case TableSectionCount: {
             assert(NO);
-            break;
+            return 0;
         }
     }
-
-    return rowCount;
 }
 
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
-    UITableViewCell *cell = nil;
-
     switch ((TableSection)indexPath.section) {
         case TableSectionProjectList: {
             ProjectCell *projectCell = [tableView dequeueReusableCellWithIdentifier:NSStringFromClass([ProjectCell class])];
@@ -314,23 +309,17 @@ typedef NS_ENUM(NSInteger, TableSection) {
 
             projectCell.textLabel.text = project.name;
 
-            cell = projectCell;
-            break;
+            return projectCell;
         }
 
-        case TableSectionCreateProject: {
-            BLMCreateProjectCell *createProjectCell = [tableView dequeueReusableCellWithIdentifier:NSStringFromClass([BLMCreateProjectCell class])];
-            cell = createProjectCell;
-            break;
-        }
+        case TableSectionCreateProject:
+            return [tableView dequeueReusableCellWithIdentifier:NSStringFromClass([BLMCreateProjectCell class])];
 
         case TableSectionCount: {
             assert(NO);
-            break;
+            return nil;
         }
     }
-
-    return cell;
 }
 
 #pragma mark UITableViewDelegate

@@ -27,4 +27,6 @@ extern BLMColorHexCode const BLMCreateProjectCellTextColor;
 
 @interface BLMProjectMenuController : UIViewController
 
+- (void)loadProjectData;
+
 @end

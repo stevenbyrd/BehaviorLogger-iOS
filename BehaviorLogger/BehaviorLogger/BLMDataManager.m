@@ -14,8 +14,6 @@
 #import "NSSet+BLMAdditions.h"
 
 
-NSString *const BLMDataManagerArchiveRestoredNotification = @"BLMDataManagerArchiveRestoredNotification";
-
 NSString *const BLMDataManagerProjectErrorDomain = @"com.3bird.BehaviorLogger.Project";
 NSString *const BLMDataManagerBehaviorErrorDomain = @"com.3bird.BehaviorLogger.Behavior";
 
@@ -642,8 +640,6 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
 
             assert(self.isRestoringArchive);
             _restoringArchive = NO;
-            
-            [[NSNotificationCenter defaultCenter] postNotificationName:BLMDataManagerArchiveRestoredNotification object:self];
             
             if (completion != nil) {
                 completion();
