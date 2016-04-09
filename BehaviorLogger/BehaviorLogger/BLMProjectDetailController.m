@@ -303,7 +303,6 @@ typedef NS_ENUM(NSUInteger, ActionButton) {
 
 - (void)updateContent {
     [super updateContent];
-
     [self updateBorderColor];
 
     self.toggleSwitch.on = self.behavior.isContinuous;
@@ -318,14 +317,12 @@ typedef NS_ENUM(NSUInteger, ActionButton) {
 
 - (void)handleActionForDeleteButton:(UIButton *)deleteButton forEvent:(UIEvent *)event {
     assert([BLMUtils isObject:deleteButton equalToObject:self.deleteButton]);
-
     [self.delegate didFireDeleteButtonActionForBehaviorCell:self];
 }
 
 
 - (void)handleActionToggleSwitch:(UISwitch *)toggleSwitch forEvent:(UIEvent *)event {
     assert([BLMUtils isObject:toggleSwitch equalToObject:self.toggleSwitch]);
-
     if (self.toggleSwitch.isOn != self.behavior.isContinuous) {
         [self.delegate didChangeToggleSwitchStateForBehaviorCell:self];
     }
@@ -712,42 +709,31 @@ typedef NS_ENUM(NSUInteger, ActionButton) {
 
 
 - (NSInteger)collectionView:(UICollectionView *)collectionView numberOfItemsInSection:(NSInteger)section {
-    NSInteger itemCount = 0;
-
     switch ((Section)section) {
-        case SectionBasicProperties: {
-            itemCount = BasicInfoCount;
-            break;
-        }
+        case SectionBasicProperties:
+            return BasicInfoCount;
 
-        case SectionSessionProperties: {
-            itemCount = SessionConfigurationInfoCount;
-            break;
-        }
+        case SectionSessionProperties:
+            return SessionConfigurationInfoCount;
 
         case SectionBehaviors: {
-            itemCount = self.projectSessionConfiguration.behaviorUUIDs.count;
+            NSInteger itemCount = self.projectSessionConfiguration.behaviorUUIDs.count;
 
             if (self.addedBehaviorUUID != nil) {
                 itemCount += 1; // +1 for the BLMBehavior that's been added to the data model but not to a session configuration
             }
 
-            itemCount += 1; // +1 for the add behavior button cell
-            break;
+            return (itemCount + 1); // +1 for the add behavior button cell
         }
 
-        case SectionActionButtons: {
-            itemCount = ActionButtonCount;
-            break;
-        }
+        case SectionActionButtons:
+            return ActionButtonCount;
 
         case SectionCount: {
             assert(NO);
-            break;
+            return 0;
         }
     }
-
-    return itemCount;
 }
 
 
@@ -825,11 +811,6 @@ typedef NS_ENUM(NSUInteger, ActionButton) {
         view = headerView;
 
         switch ((Section)indexPath.section) {
-            case SectionBasicProperties: {
-                assert(NO);
-                break;
-            }
-
             case SectionSessionProperties: {
                 headerView.label.text = @"Default Session Properties";
                 break;
@@ -840,11 +821,8 @@ typedef NS_ENUM(NSUInteger, ActionButton) {
                 break;
             }
 
-            case SectionActionButtons: {
-                assert(NO);
-                break;
-            }
-                
+            case SectionBasicProperties:
+            case SectionActionButtons:
             case SectionCount: {
                 assert(NO);
                 break;
@@ -1162,9 +1140,9 @@ typedef NS_ENUM(NSUInteger, ActionButton) {
 
         case SectionBasicProperties:
         case SectionSessionProperties:
-        case SectionActionButtons:
             break;
 
+        case SectionActionButtons:
         case SectionCount: {
             assert(NO);
             break;
