@@ -11,6 +11,8 @@
 #import "BLMUtils.h"
 
 
+#pragma mark Constants
+
 NSString *const BLMSessionConfigurationCreatedNotification = @"BLMSessionConfigurationCreatedNotification";
 NSString *const BLMSessionConfigurationDeletedNotification = @"BLMSessionConfigurationDeletedNotification";
 NSString *const BLMSessionConfigurationUpdatedNotification = @"BLMSessionConfigurationUpdatedNotification";

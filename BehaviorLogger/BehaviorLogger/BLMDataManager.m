@@ -10,9 +10,10 @@
 #import "BLMProject.h"
 #import "BLMSession.h"
 #import "BLMUtils.h"
-
 #import "NSSet+BLMAdditions.h"
 
+
+#pragma mark Constants
 
 NSString *const BLMDataManagerProjectErrorDomain = @"com.3bird.BehaviorLogger.Project";
 NSString *const BLMDataManagerBehaviorErrorDomain = @"com.3bird.BehaviorLogger.Behavior";
@@ -202,8 +203,6 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
 
 @implementation BLMDataManager
 
-#pragma Lifecycle
-
 + (void)initializeWithCompletion:(dispatch_block_t)completion {
     static dispatch_once_t onceToken;
 
@@ -246,7 +245,7 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
     return self;
 }
 
-#pragma mark Project State
+#pragma mark BLMProject
 
 - (NSSet<NSString *> *)projectNameSet {
     assert([NSThread isMainThread]);
@@ -269,13 +268,12 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
 
 - (BLMProject *)projectForUUID:(NSUUID *)UUID {
     assert([NSThread isMainThread]);
-    assert(UUID != nil);
-
     return self.projectByUUID[UUID];
 }
 
 
 - (NSEnumerator<BLMProject *> *)projectEnumerator {
+    assert([NSThread isMainThread]);
     return self.projectByUUID.objectEnumerator;
 }
 
@@ -355,17 +353,16 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
     }
 }
 
-#pragma mark Behavior State
+#pragma mark BLMBehavior
 
 - (BLMBehavior *)behaviorForUUID:(NSUUID *)UUID {
     assert([NSThread isMainThread]);
-    assert(UUID != nil);
-
     return self.behaviorByUUID[UUID];
 }
 
 
 - (NSEnumerator<BLMBehavior *> *)behaviorEnumerator {
+    assert([NSThread isMainThread]);
     return self.behaviorByUUID.objectEnumerator;
 }
 
@@ -432,16 +429,16 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
     }
 }
 
-#pragma mark Session Configuration State
+#pragma mark BLMSessionConfiguration
 
 - (BLMSessionConfiguration *)sessionConfigurationForUUID:(NSUUID *)UUID {
     assert([NSThread isMainThread]);
-
     return self.sessionConfigurationByUUID[UUID];
 }
 
 
 - (NSEnumerator<BLMSessionConfiguration *> *)sessionConfigurationEnumerator {
+    assert([NSThread isMainThread]);
     return self.sessionConfigurationByUUID.objectEnumerator;
 }
 

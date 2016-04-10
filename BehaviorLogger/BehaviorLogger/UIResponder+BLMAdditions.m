@@ -9,8 +9,12 @@
 #import "UIResponder+BLMAdditions.h"
 
 
+#pragma mark Constants
+
 static __weak id __firstResponder;
 
+
+#pragma mark
 
 @implementation UIResponder (BLMAdditions)
 

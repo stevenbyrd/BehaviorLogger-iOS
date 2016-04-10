@@ -12,6 +12,8 @@
 #import "BLMUtils.h"
 
 
+#pragma mark Constants
+
 NSUInteger const BLMProjectNameMinimumLength = 3;
 NSUInteger const BLMProjectClientMinimumLength = 3;
 

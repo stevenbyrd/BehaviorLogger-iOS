@@ -12,6 +12,8 @@
 #import "BLMProjectDetailController.h"
 
 
+#pragma mark
+
 @interface BLMAppDelegate () <UISplitViewControllerDelegate>
 
 @property (nonatomic, strong, readonly) UISplitViewController *splitViewController;

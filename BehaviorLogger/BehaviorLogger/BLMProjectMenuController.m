@@ -15,6 +15,8 @@
 #import "BLMViewUtils.h"
 
 
+#pragma mark Constants
+
 NSString *const BLMCreateProjectCellText = @"Create Project";
 BLMColorHexCode const BLMCreateProjectCellTextColor = BLMColorHexCodeBlue;
 

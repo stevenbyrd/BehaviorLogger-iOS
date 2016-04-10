@@ -10,7 +10,10 @@
 #import "BLMViewUtils.h"
 
 
+#pragma mark Constants
+
 static CGFloat ButtonTitleTopPadding = 5.0;
+
 
 #pragma mark
 

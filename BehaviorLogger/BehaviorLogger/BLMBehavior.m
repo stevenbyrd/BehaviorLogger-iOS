@@ -10,6 +10,8 @@
 #import "BLMUtils.h"
 
 
+#pragma mark Constants
+
 NSUInteger const BLMBehaviorNameMinimumLength = 3;
 
 NSString *const BLMBehaviorCreatedNotification = @"BLMBehaviorCreatedNotification";;
