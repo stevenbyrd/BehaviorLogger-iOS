@@ -12,6 +12,8 @@
 #import "BLMUtils.h"
 #import "NSSet+BLMAdditions.h"
 
+#import <objc/runtime.h>
+
 
 #pragma mark Constants
 
@@ -40,152 +42,6 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
     ArchiveVersionUnknown,
     ArchiveVersionLatest
 };
-
-
-#pragma mark
-
-@interface ModelObjectEnumerator<ObjectType> : NSEnumerator<ObjectType>
-
-@property (nonatomic, strong, readonly) NSEnumerator<NSUUID *> *UUIDEnumerator;
-@property (nonnull, strong, readonly) BLMDataManager *dataManager;
-
-@end
-
-
-@implementation ModelObjectEnumerator
-
-- (nonnull instancetype)initWithArray:(nonnull NSArray<NSUUID *> *)array dataManager:(nonnull BLMDataManager *)dataManager {
-    self = [super init];
-
-    if (self == nil) {
-        return nil;
-    }
-
-    _UUIDEnumerator = array.objectEnumerator;
-    _dataManager = dataManager;
-
-    return self;
-}
-
-
-- (id)nextObject {
-    id object = nil;
-
-    while (object == nil) {
-        NSUUID *UUID = self.UUIDEnumerator.nextObject;
-
-        if (UUID == nil) {
-            return nil;
-        }
-
-        object = [self objectForUUID:UUID];
-    }
-
-    return object;
-}
-
-
-- (NSArray *)allObjects {
-    NSMutableArray *allObjects = [NSMutableArray array];
-
-    for (NSUUID *UUID in self.UUIDEnumerator) {
-        id object = [self objectForUUID:UUID];
-
-        if (object != nil) {
-            [allObjects addObject:object];
-        }
-    }
-
-    return allObjects;
-}
-
-
-- (NSUInteger)countByEnumeratingWithState:(NSFastEnumerationState *)state objects:(id __unsafe_unretained [])objects count:(NSUInteger)count {
-    typedef NS_ENUM(NSUInteger, EnumerationState) {
-        EnumerationStateUninitialized,
-        EnumerationStateStarted,
-    };
-
-    switch ((EnumerationState)state->state) {
-        case EnumerationStateUninitialized:
-            state->state = EnumerationStateStarted;
-            state->mutationsPtr = &state->state; // We're ignoring mutations, so mutationsPtr points to value that will not change (note: must not be NULL)
-
-        case EnumerationStateStarted: {
-            assert(count >= 1);
-            objects[0] = nil;
-
-            while (objects[0] == nil) {
-                NSUUID *UUID = self.UUIDEnumerator.nextObject;
-
-                if (UUID == nil) {
-                    return 0;
-                }
-
-                objects[0] = [self objectForUUID:UUID];
-            }
-
-            state->itemsPtr = objects;
-
-            return 1;
-        }
-    }
-}
-
-
-- (nullable id)objectForUUID:(nonnull NSUUID *)UUID {
-    @throw [NSException exceptionWithName:@"Unimplemented" reason:[NSString stringWithFormat:@"Abstract method \"%@\" is not implemented in \"%@\"", NSStringFromSelector(_cmd), NSStringFromClass([self class])] userInfo:nil];
-}
-
-@end
-
-
-#pragma mark
-
-@interface ProjectEnumerator : ModelObjectEnumerator
-
-@end
-
-
-@implementation ProjectEnumerator
-
-- (id)objectForUUID:(NSUUID *)UUID {
-    return [self.dataManager projectForUUID:UUID];
-}
-
-@end
-
-
-#pragma mark
-
-@interface BehaviorEnumerator : ModelObjectEnumerator
-
-@end
-
-
-@implementation BehaviorEnumerator
-
-- (id)objectForUUID:(NSUUID *)UUID {
-    return [self.dataManager behaviorForUUID:UUID];
-}
-
-@end
-
-
-#pragma mark
-
-@interface SessionConfigurationEnumerator : ModelObjectEnumerator
-
-@end
-
-
-@implementation SessionConfigurationEnumerator
-
-- (id)objectForUUID:(NSUUID *)UUID {
-    return [self.dataManager sessionConfigurationForUUID:UUID];
-}
-
-@end
 
 
 #pragma mark
@@ -278,11 +134,6 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
 }
 
 
-- (NSEnumerator<BLMProject *> *)projectEnumeratorForUUIDs:(NSArray<NSUUID *> *)UUIDs {
-    return [[ProjectEnumerator alloc] initWithArray:UUIDs dataManager:self];
-}
-
-
 - (void)createProjectWithName:(NSString *)name client:(NSString *)client sessionConfigurationUUID:(NSUUID *)sessionConfigurationUUID completion:(void(^)(BLMProject *project, NSError *error))completion {
     assert([NSThread isMainThread]);
 
@@ -367,11 +218,6 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
 }
 
 
-- (NSEnumerator<BLMBehavior *> *)behaviorEnumeratorForUUIDs:(NSArray<NSUUID *> *)UUIDs {
-    return [[BehaviorEnumerator alloc] initWithArray:UUIDs dataManager:self];
-}
-
-
 - (void)createBehaviorWithName:(NSString *)name continuous:(BOOL)continuous completion:(void(^)(BLMBehavior *behavior, NSError *error))completion {
     assert([NSThread isMainThread]);
 
@@ -440,11 +286,6 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
 - (NSEnumerator<BLMSessionConfiguration *> *)sessionConfigurationEnumerator {
     assert([NSThread isMainThread]);
     return self.sessionConfigurationByUUID.objectEnumerator;
-}
-
-
-- (NSEnumerator<BLMSessionConfiguration *> *)sessionConfigurationEnumeratorForUUIDs:(NSArray<NSUUID *> *)UUIDs {
-    return [[SessionConfigurationEnumerator alloc] initWithArray:UUIDs dataManager:self];
 }
 
 
@@ -643,6 +484,136 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
             }
         }];
     }];
+}
+
+@end
+
+
+#pragma mark
+
+@interface AbstractModelObjectEnumerator : NSEnumerator
+
+@property (nonatomic, strong, readonly) NSEnumerator<NSUUID *> *UUIDEnumerator;
+@property (nonnull, strong, readonly) BLMDataManager *dataManager;
+
+@end
+
+
+@implementation AbstractModelObjectEnumerator
+
+- (instancetype)initWithArray:(NSArray<NSUUID *> *)array dataManager:(BLMDataManager *)dataManager {
+    assert(![self isMemberOfClass:[AbstractModelObjectEnumerator class]]);
+
+    self = [super init];
+
+    if (self == nil) {
+        return nil;
+    }
+
+    _UUIDEnumerator = array.objectEnumerator;
+    _dataManager = dataManager;
+
+    return self;
+}
+
+
+- (id)nextObject {
+    id object = nil;
+
+    while (object == nil) {
+        NSUUID *UUID = self.UUIDEnumerator.nextObject;
+
+        if (UUID == nil) {
+            return nil;
+        }
+
+        object = [self objectForUUID:UUID];
+    }
+
+    return object;
+}
+
+
+- (NSArray *)allObjects {
+    NSMutableArray *allObjects = [NSMutableArray array];
+
+    for (NSUUID *UUID in self.UUIDEnumerator) {
+        id object = [self objectForUUID:UUID];
+
+        if (object != nil) {
+            [allObjects addObject:object];
+        }
+    }
+
+    return allObjects;
+}
+
+
+- (id)objectForUUID:(NSUUID *)UUID {
+    @throw [NSException exceptionWithName:@"Class Invalid" reason:[NSString stringWithFormat:@"Implementation required for abstract method: [%@ %@]", NSStringFromClass([self class]), NSStringFromSelector(_cmd)] userInfo:nil];
+}
+
+@end
+
+
+#pragma mark
+
+@implementation NSEnumerator (BLMModelObjectEnumeration)
+
++ (Class)registerModelObjectEnumeratorSubclassWithName:(const char *)name objectForUUIDBlock:(id(^)(id _self, NSUUID *UUID))objectForUUIDBlock {
+    Class concreteSubclass = objc_allocateClassPair([AbstractModelObjectEnumerator class], name, 0);
+
+    if (concreteSubclass == Nil) {
+        assert(NO);
+        return Nil;
+    }
+
+    class_addMethod(concreteSubclass, @selector(objectForUUID:), imp_implementationWithBlock(objectForUUIDBlock), "@@:@");
+    objc_registerClassPair(concreteSubclass);
+
+    return concreteSubclass;
+}
+
+
++ (NSEnumerator<BLMProject *> *)projectEnumeratorForUUIDs:(NSArray<NSUUID *> *)UUIDs dataManager:(BLMDataManager *)dataManager {
+    static Class concreteSubclass;
+    static dispatch_once_t onceToken;
+
+    dispatch_once(&onceToken, ^{
+        concreteSubclass = [self registerModelObjectEnumeratorSubclassWithName:"_BLMProjectEnumerator" objectForUUIDBlock:^id(AbstractModelObjectEnumerator *_self, NSUUID *UUID) {
+            return [_self.dataManager projectForUUID:UUID];
+        }];
+    });
+
+    return [(AbstractModelObjectEnumerator *)[concreteSubclass alloc] initWithArray:UUIDs dataManager:dataManager];
+}
+
+
++ (NSEnumerator<BLMBehavior *> *)behaviorEnumeratorForUUIDs:(NSArray<NSUUID *> *)UUIDs dataManager:(BLMDataManager *)dataManager {
+    static Class concreteSubclass;
+    static dispatch_once_t onceToken;
+
+    dispatch_once(&onceToken, ^{
+        concreteSubclass = [self registerModelObjectEnumeratorSubclassWithName:"_BLMBehaviorEnumerator" objectForUUIDBlock:^id(AbstractModelObjectEnumerator *_self, NSUUID *UUID) {
+            return [_self.dataManager behaviorForUUID:UUID];
+        }];
+    });
+
+    return [(AbstractModelObjectEnumerator *)[concreteSubclass alloc] initWithArray:UUIDs dataManager:dataManager];
+}
+
+
++ (NSEnumerator<BLMSessionConfiguration *> *)sessionConfigurationEnumeratorForUUIDs:(NSArray<NSUUID *> *)UUIDs dataManager:(BLMDataManager *)dataManager {
+    static Class concreteSubclass;
+    static dispatch_once_t onceToken;
+
+    dispatch_once(&onceToken, ^{
+        concreteSubclass = [self registerModelObjectEnumeratorSubclassWithName:"_BLMSessionConfigurationEnumerator" objectForUUIDBlock:^id(AbstractModelObjectEnumerator *_self, NSUUID *UUID) {
+            return [_self.dataManager sessionConfigurationForUUID:UUID];
+        }];
+    });
+
+    return [(AbstractModelObjectEnumerator *)[concreteSubclass alloc] initWithArray:UUIDs dataManager:dataManager];
 }
 
 @end
