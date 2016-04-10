@@ -11,7 +11,7 @@
 
 @implementation NSArray (BLMAdditions)
 
-- (nonnull NSArray *)arrayByRemovingObject:(nonnull id)object {
+- (NSArray *)arrayByRemovingObject:(id)object {
     NSUInteger index = [self indexOfObject:object];
     assert(index != NSNotFound);
 

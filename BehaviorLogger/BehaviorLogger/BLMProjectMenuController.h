@@ -12,6 +12,9 @@
 #import "BLMViewUtils.h"
 
 
+NS_ASSUME_NONNULL_BEGIN
+
+
 extern NSString *const BLMCreateProjectCellText;
 extern BLMColorHexCode const BLMCreateProjectCellTextColor;
 
@@ -30,3 +33,6 @@ extern BLMColorHexCode const BLMCreateProjectCellTextColor;
 - (void)loadProjectData;
 
 @end
+
+
+NS_ASSUME_NONNULL_END

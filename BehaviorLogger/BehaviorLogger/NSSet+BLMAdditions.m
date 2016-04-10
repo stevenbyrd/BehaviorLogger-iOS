@@ -12,15 +12,13 @@
 
 @implementation NSSet (BLMAdditions)
 
-- (nonnull NSSet *)setByRemovingObject:(nonnull id)object {
-    assert(object != nil);
-
+- (NSSet *)setByRemovingObject:(id)object {
     if (![self containsObject:object]) {
         assert(NO);
         return self;
     }
 
-    return [self filteredSetUsingPredicate:[NSPredicate predicateWithBlock:^BOOL(id  _Nonnull evaluatedObject, NSDictionary<NSString *, id> * _Nullable bindings) {
+    return [self filteredSetUsingPredicate:[NSPredicate predicateWithBlock:^BOOL(id __nonnull evaluatedObject, NSDictionary<NSString *, id> *__nullable bindings) {
         return ![evaluatedObject isEqual:object];
     }]];
 }

@@ -9,6 +9,9 @@
 #import <UIKit/UIKit.h>
 
 
+NS_ASSUME_NONNULL_BEGIN
+
+
 @class BLMTextField;
 
 
@@ -23,10 +26,13 @@
 
 @interface BLMTextField : UITextField
 
-@property (nonatomic, weak) id<BLMTextFieldDelegate> delegate;
+@property (nullable, nonatomic, weak) id<BLMTextFieldDelegate> delegate;
 @property (nonatomic, assign, readonly) CGFloat horizontalPadding;
 @property (nonatomic, assign, readonly) CGFloat verticalPadding;
 
 - (instancetype)initWithHorizontalPadding:(CGFloat)horizontalPadding verticalPadding:(CGFloat)verticalPadding;
 
 @end
+
+
+NS_ASSUME_NONNULL_END

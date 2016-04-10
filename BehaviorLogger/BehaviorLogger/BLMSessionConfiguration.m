@@ -35,9 +35,6 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
 @implementation BLMSessionConfiguration
 
 - (instancetype)initWithUUID:(NSUUID *)UUID condition:(NSString *)condition location:(NSString *)location therapist:(NSString *)therapist observer:(NSString *)observer timeLimit:(BLMTimeInterval)timeLimit timeLimitOptions:(BLMTimeLimitOptions)timeLimitOptions behaviorUUIDs:(NSArray<NSUUID *> *)behaviorUUIDs {
-    assert(UUID != nil);
-    assert(behaviorUUIDs != nil);
-
     self = [super init];
 
     if (self == nil) {

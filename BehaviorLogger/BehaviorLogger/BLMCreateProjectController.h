@@ -9,6 +9,9 @@
 #import <UIKit/UIKit.h>
 
 
+NS_ASSUME_NONNULL_BEGIN
+
+
 @class BLMCreateProjectController;
 @class BLMProject;
 
@@ -26,8 +29,11 @@
 
 @interface BLMCreateProjectController : UIViewController
 
-@property (nonatomic, weak) id<BLMCreateProjectControllerDelegate> delegate;
+@property (nonatomic, weak, readonly) id<BLMCreateProjectControllerDelegate> delegate;
 
 - (instancetype)initWithDelegate:(id<BLMCreateProjectControllerDelegate>)delegate;
 
 @end
+
+
+NS_ASSUME_NONNULL_END

@@ -9,6 +9,9 @@
 #import <Foundation/Foundation.h>
 
 
+NS_ASSUME_NONNULL_BEGIN
+
+
 @interface BLMUtils : NSObject
 
 + (BOOL)isObject:(nullable id)object1 equalToObject:(nullable id)object2;
@@ -18,9 +21,12 @@
 + (BOOL)isArray:(nullable NSArray *)array1 equalToArray:(nullable NSArray *)array2;
 + (BOOL)isDictionary:(nullable NSDictionary *)dictionary1 equalToDictionary:(nullable NSDictionary *)dictionary2;
 
-+ (nullable id)objectFromDictionary:(nonnull NSDictionary *)dictionary forKey:(nonnull id<NSCopying>)key nullValue:(nullable id)nullValue defaultValue:(nullable id)defaultValue;
-+ (NSInteger)integerFromDictionary:(nonnull NSDictionary *)dictionary forKey:(nonnull id<NSCopying>)key defaultValue:(NSInteger)defaultValue;
-+ (double)doubleFromDictionary:(nonnull NSDictionary *)dictionary forKey:(nonnull id<NSCopying>)key defaultValue:(double)defaultValue;
-+ (BOOL)boolFromDictionary:(nonnull NSDictionary *)dictionary forKey:(nonnull id<NSCopying>)key defaultValue:(BOOL)defaultValue;
++ (nullable id)objectFromDictionary:(NSDictionary *)dictionary forKey:(id<NSCopying>)key nullValue:(nullable id)nullValue defaultValue:(nullable id)defaultValue;
++ (NSInteger)integerFromDictionary:(NSDictionary *)dictionary forKey:(id<NSCopying>)key defaultValue:(NSInteger)defaultValue;
++ (double)doubleFromDictionary:(NSDictionary *)dictionary forKey:(id<NSCopying>)key defaultValue:(double)defaultValue;
++ (BOOL)boolFromDictionary:(NSDictionary *)dictionary forKey:(id<NSCopying>)key defaultValue:(BOOL)defaultValue;
 
 @end
+
+
+NS_ASSUME_NONNULL_END

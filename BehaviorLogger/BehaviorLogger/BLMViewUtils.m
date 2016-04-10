@@ -9,6 +9,8 @@
 #import "BLMViewUtils.h"
 
 
+#pragma mark
+
 CGRect CGRectPixelAlign(CGRect rect) {
     return (CGRect) {
         .origin = {

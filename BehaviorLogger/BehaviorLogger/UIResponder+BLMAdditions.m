@@ -11,7 +11,7 @@
 
 #pragma mark Constants
 
-static __weak id __firstResponder;
+static __weak UIResponder *__firstResponder;
 
 
 #pragma mark

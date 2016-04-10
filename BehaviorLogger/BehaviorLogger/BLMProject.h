@@ -9,6 +9,9 @@
 #import <Foundation/Foundation.h>
 
 
+NS_ASSUME_NONNULL_BEGIN
+
+
 extern NSUInteger const BLMProjectNameMinimumLength;
 extern NSUInteger const BLMProjectClientMinimumLength;
 
@@ -28,6 +31,8 @@ typedef NS_ENUM(NSUInteger, BLMProjectProperty) {
 };
 
 
+#pragma mark
+
 @class BLMSession;
 @class BLMSessionConfiguration;
 
@@ -38,9 +43,11 @@ typedef NS_ENUM(NSUInteger, BLMProjectProperty) {
 @property (nonatomic, copy, readonly) NSString *name;
 @property (nonatomic, copy, readonly) NSString *client;
 @property (nonatomic, strong, readonly) NSUUID *sessionConfigurationUUID;
-@property (nonatomic, copy, readonly) NSDictionary<NSUUID *, BLMSession *> *sessionByUUID;
+@property (nullable, nonatomic, copy, readonly) NSDictionary<NSUUID *, BLMSession *> *sessionByUUID;
 
-- (instancetype)initWithUUID:(NSUUID *)UUID name:(NSString *)name client:(NSString *)client sessionConfigurationUUID:(NSUUID *)sessionConfigurationUUID sessionByUUID:(NSDictionary<NSUUID *, BLMSession *> *)sessionByUUID;
+- (instancetype)initWithUUID:(NSUUID *)UUID name:(NSString *)name client:(NSString *)client sessionConfigurationUUID:(NSUUID *)sessionConfigurationUUID sessionByUUID:(nullable NSDictionary<NSUUID *, BLMSession *> *)sessionByUUID;
 - (instancetype)copyWithUpdatedValuesByProperty:(NSDictionary<NSNumber *, id> *)valuesByProperty;
 
 @end
+
+NS_ASSUME_NONNULL_END

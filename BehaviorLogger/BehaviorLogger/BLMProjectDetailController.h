@@ -9,6 +9,9 @@
 #import <UIKit/UIKit.h>
 
 
+NS_ASSUME_NONNULL_BEGIN
+
+
 @class BLMProjectDetailController;
 
 
@@ -29,3 +32,6 @@
 - (instancetype)initWithProjectUUID:(NSUUID *)projectUUID delegate:(id<BLMProjectDetailControllerDelegate>)delegate;
 
 @end
+
+
+NS_ASSUME_NONNULL_END

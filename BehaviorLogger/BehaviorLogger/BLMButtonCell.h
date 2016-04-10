@@ -9,13 +9,16 @@
 #import "BLMCollectionView.h"
 
 
+NS_ASSUME_NONNULL_BEGIN
+
+
 @class BLMButtonCell;
 
 
 @protocol BLMButtonCellDataSource <NSObject>
 
 - (BOOL)isButtonEnabledForButtonCell:(BLMButtonCell *)cell;
-- (UIImage *)imageForButtonCell:(BLMButtonCell *)cell forState:(UIControlState)state;
+- (nullable UIImage *)imageForButtonCell:(BLMButtonCell *)cell forState:(UIControlState)state;
 - (NSAttributedString *)attributedTitleForButtonCell:(BLMButtonCell *)cell forState:(UIControlState)state;
 
 @end
@@ -34,8 +37,11 @@
 
 @interface BLMButtonCell : BLMCollectionViewCell
 
-@property (nonatomic, weak) id<BLMButtonCellDataSource> dataSource;
-@property (nonatomic, weak) id<BLMButtonCellDelegate> delegate;
+@property (nullable, nonatomic, weak) id<BLMButtonCellDataSource> dataSource;
+@property (nullable, nonatomic, weak) id<BLMButtonCellDelegate> delegate;
 @property (nonatomic, strong, readonly) UIButton *button;
 
 @end
+
+
+NS_ASSUME_NONNULL_END

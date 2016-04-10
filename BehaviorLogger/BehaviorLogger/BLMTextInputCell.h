@@ -9,6 +9,9 @@
 #import "BLMCollectionView.h"
 
 
+NS_ASSUME_NONNULL_BEGIN
+
+
 @class BLMTextInputCell;
 
 
@@ -39,11 +42,14 @@
 @interface BLMTextInputCell : BLMCollectionViewCell
 
 @property (nonatomic, strong, readonly) BLMTextField *textField;
-@property (nonatomic, weak) id<BLMTextInputCellDataSource> dataSource;
-@property (nonatomic, weak) id<BLMTextInputCellDelegate> delegate;
+@property (nullable, nonatomic, weak) id<BLMTextInputCellDataSource> dataSource;
+@property (nullable, nonatomic, weak) id<BLMTextInputCellDelegate> delegate;
 
 - (void)updateTextFieldColor;
 
 + (NSDictionary *)errorAttributes;
 
 @end
+
+
+NS_ASSUME_NONNULL_END

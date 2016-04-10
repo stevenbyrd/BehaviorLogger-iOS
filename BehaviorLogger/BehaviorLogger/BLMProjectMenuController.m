@@ -355,12 +355,9 @@ typedef NS_ENUM(NSInteger, TableSection) {
 
 - (void)createProjectController:(BLMCreateProjectController *)controller didFailWithError:(NSError *)error {
     assert([NSThread isMainThread]);
-    assert(error != nil);
 
     UIAlertController *alertController = [UIAlertController alertControllerWithTitle:@"Error" message:@"Failed to create project!" preferredStyle:UIAlertControllerStyleAlert];
-    UIAlertAction *defaultAction = [UIAlertAction actionWithTitle:@"Ok" style:UIAlertActionStyleDefault handler:nil];
-
-    [alertController addAction:defaultAction];
+    [alertController addAction:[UIAlertAction actionWithTitle:@"Ok" style:UIAlertActionStyleDefault handler:nil]];
 
     [self presentViewController:alertController animated:YES completion:nil];
 

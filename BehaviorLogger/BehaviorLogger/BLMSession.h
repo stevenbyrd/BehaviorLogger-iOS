@@ -9,6 +9,8 @@
 #import <Foundation/Foundation.h>
 
 
+NS_ASSUME_NONNULL_BEGIN
+
 @interface BLMSession : NSObject <NSCoding>
 
 @property (nonatomic, strong, readonly) NSUUID *UUID;
@@ -18,3 +20,6 @@
 - (instancetype)initWithUUID:(NSUUID *)UUID name:(NSString *)name configuration:(BLMSessionConfiguration *)configuration;
 
 @end
+
+
+NS_ASSUME_NONNULL_END

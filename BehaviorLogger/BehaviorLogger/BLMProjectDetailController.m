@@ -1308,7 +1308,7 @@ typedef NS_ENUM(NSUInteger, ActionButton) {
 }
 
 
-- (UIImage *)imageForButtonCell:(BLMButtonCell *)cell forState:(UIControlState)state {
+- (nullable UIImage *)imageForButtonCell:(BLMButtonCell *)cell forState:(UIControlState)state {
     switch ((Section)cell.section) {
         case SectionBehaviors: {
             assert(cell.item == self.indexPathForAddBehaviorButtonCell.item);
@@ -1385,11 +1385,9 @@ typedef NS_ENUM(NSUInteger, ActionButton) {
         case SectionSessionProperties:
         case SectionCount: {
             assert(NO);
-            break;
+            return nil;
         }
     }
-
-    return nil;
 }
 
 #pragma mark BLMButtonCellDelegate
@@ -1447,7 +1445,7 @@ typedef NS_ENUM(NSUInteger, ActionButton) {
                 case ActionButtonDeleteProject: {
                     UIAlertController *alertController = [UIAlertController alertControllerWithTitle:[NSString stringWithFormat:@"Delete %@?", self.project.name] message:nil preferredStyle:UIAlertControllerStyleAlert];
 
-                    [alertController addAction:[UIAlertAction actionWithTitle:@"Delete" style:UIAlertActionStyleDestructive handler:^(UIAlertAction * _Nonnull action) {
+                    [alertController addAction:[UIAlertAction actionWithTitle:@"Delete" style:UIAlertActionStyleDestructive handler:^(UIAlertAction *__nonnull action) {
                         [[BLMDataManager sharedManager] deleteProjectForUUID:self.projectUUID completion:nil];
                     }]];
 

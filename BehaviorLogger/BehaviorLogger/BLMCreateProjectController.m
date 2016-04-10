@@ -578,7 +578,7 @@ typedef NS_ENUM(NSUInteger, ActionButton) {
 }
 
 
-- (UIImage *)imageForButtonCell:(BLMButtonCell *)cell forState:(UIControlState)state {
+- (nullable UIImage *)imageForButtonCell:(BLMButtonCell *)cell forState:(UIControlState)state {
     return nil;
 }
 

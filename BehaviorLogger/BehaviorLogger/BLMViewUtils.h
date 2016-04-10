@@ -10,6 +10,9 @@
 #import <UIKit/UIKit.h>
 
 
+NS_ASSUME_NONNULL_BEGIN
+
+
 typedef NS_ENUM(uint32_t, BLMColorHexCode) {
     BLMColorHexCodeDefaultBackground = 0xe4e4e6,
     BLMColorHexCodeDarkBackground = 0xb4b4b4,
@@ -65,3 +68,6 @@ extern CGRect CGRectPixelAlign(CGRect rect);
 + (NSArray<NSLayoutConstraint *> *)constraintsForItem:(id)view1 equalToItem:(id)view2;
 
 @end
+
+
+NS_ASSUME_NONNULL_END

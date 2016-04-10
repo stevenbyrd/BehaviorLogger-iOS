@@ -15,14 +15,15 @@
 
 #pragma mark Constants
 
-BLMCollectionViewSectionLayout const BLMCollectionViewSectionLayoutNull;
-
 NSString *const BLMCollectionViewKindHeader = @"BLMCollectionViewKindHeader";
 NSString *const BLMCollectionViewKindItemAreaBackground = @"BLMCollectionViewKindItemAreaBackground";
 NSString *const BLMCollectionViewKindItemCell = @"BLMCollectionViewKindItemCell";
 NSString *const BLMCollectionViewKindFooter = @"BLMCollectionViewKindFooter";
 
 CGFloat const BLMCollectionViewRoundedCornerRadius = 8.0;
+
+BLMCollectionViewSectionLayout const BLMCollectionViewSectionLayoutNull;
+
 
 static CGFloat const HeaderFontSize = 18.0;
 
@@ -183,14 +184,12 @@ static CGFloat const HeaderFontSize = 18.0;
 
 - (NSArray<NSLayoutConstraint *> *)uniqueVerticalPositionConstraintsForSubview:(UIView *)subview {
     assert([BLMUtils isObject:subview equalToObject:self.label]);
-
     return @[[BLMViewUtils constraintWithItem:subview attribute:NSLayoutAttributeCenterY equalToItem:self.contentView constant:0.0]];
 }
 
 
 - (NSArray<NSLayoutConstraint *> *)uniqueHorizontalPositionConstraintsForSubview:(UIView *)subview {
     assert([BLMUtils isObject:subview equalToObject:self.label]);
-
     return @[[BLMViewUtils constraintWithItem:subview attribute:NSLayoutAttributeLeft equalToItem:self.contentView constant:0.0]];
 }
 

@@ -39,11 +39,6 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
 @implementation BLMProject
 
 - (instancetype)initWithUUID:(NSUUID *)UUID name:(NSString *)name client:(NSString *)client sessionConfigurationUUID:(NSUUID *)sessionConfigurationUUID sessionByUUID:(NSDictionary<NSUUID *, BLMSession *> *)sessionByUUID {
-    assert(UUID != nil);
-    assert(name.length > BLMProjectNameMinimumLength);
-    assert(client.length > BLMProjectClientMinimumLength);
-    assert(sessionConfigurationUUID != nil);
-
     self = [super init];
 
     if (self == nil) {

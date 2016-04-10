@@ -9,8 +9,14 @@
 #import <Foundation/Foundation.h>
 
 
+NS_ASSUME_NONNULL_BEGIN
+
+
 @interface NSSet<E> (BLMAdditions)
 
-- (nonnull NSSet<E> *)setByRemovingObject:(nonnull E)object;
+- (NSSet<E> *)setByRemovingObject:(E)object;
 
 @end
+
+
+NS_ASSUME_NONNULL_END

@@ -9,6 +9,9 @@
 #import <Foundation/Foundation.h>
 
 
+NS_ASSUME_NONNULL_BEGIN
+
+
 extern NSUInteger const BLMBehaviorNameMinimumLength;
 
 extern NSString *const BLMBehaviorCreatedNotification;
@@ -25,6 +28,8 @@ typedef NS_ENUM(NSInteger, BLMBehaviorProperty) {
 };
 
 
+#pragma mark 
+
 @interface BLMBehavior : NSObject <NSCoding>
 
 @property (nonatomic, strong, readonly) NSUUID *UUID;
@@ -35,3 +40,6 @@ typedef NS_ENUM(NSInteger, BLMBehaviorProperty) {
 - (instancetype)copyWithUpdatedValuesByProperty:(NSDictionary<NSNumber *, id> *)valuesByProperty;
 
 @end
+
+
+NS_ASSUME_NONNULL_END

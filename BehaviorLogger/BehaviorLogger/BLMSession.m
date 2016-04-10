@@ -29,10 +29,6 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
 @implementation BLMSession
 
 - (instancetype)initWithUUID:(NSUUID *)UUID name:(NSString *)name configuration:(BLMSessionConfiguration *)configuration {
-    assert(UUID != nil);
-    assert(name.length > 0);
-    assert(configuration != nil);
-
     self = [super init];
 
     if (self == nil) {

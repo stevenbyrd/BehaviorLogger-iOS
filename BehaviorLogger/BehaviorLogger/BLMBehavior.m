@@ -36,8 +36,6 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
 @implementation BLMBehavior
 
 - (instancetype)initWithUUID:(NSUUID *)UUID name:(NSString *)name continuous:(BOOL)continuous {
-    assert(UUID != nil);
-
     self = [super init];
 
     if (self == nil) {

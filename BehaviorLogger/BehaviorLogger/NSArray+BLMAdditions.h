@@ -9,8 +9,14 @@
 #import <Foundation/Foundation.h>
 
 
+NS_ASSUME_NONNULL_BEGIN
+
+
 @interface NSArray<E> (BLMAdditions)
 
-- (nonnull NSArray<E> *)arrayByRemovingObject:(nonnull E)object;
+- (NSArray<E> *)arrayByRemovingObject:(E)object;
 
 @end
+
+
+NS_ASSUME_NONNULL_END
