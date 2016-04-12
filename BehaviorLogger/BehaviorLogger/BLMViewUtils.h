@@ -14,6 +14,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 
 typedef NS_ENUM(uint32_t, BLMColorHexCode) {
+    BLMColorHexCodeBlack = 0x000000,
     BLMColorHexCodeDefaultBackground = 0xe4e4e6,
     BLMColorHexCodeDarkBackground = 0xb4b4b4,
     BLMColorHexCodeDarkBorder = 0x0d0d0d,
@@ -22,7 +23,6 @@ typedef NS_ENUM(uint32_t, BLMColorHexCode) {
     BLMColorHexCodeGreen = 0x007400,
     BLMColorHexCodeRed = 0xc41a16,
     BLMColorHexCodePurple = 0x9529f7,
-    BLMColorHexCodeBlack = 0x000000,
     BLMColorHexCodeWhite = 0xffffff
 };
 

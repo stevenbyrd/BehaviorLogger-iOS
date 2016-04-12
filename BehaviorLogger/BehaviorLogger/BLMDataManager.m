@@ -162,25 +162,30 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
     BLMProject *original = self.projectByUUID[UUID];
     BLMProject *updated = [original copyWithUpdatedValuesByProperty:@{ @(property):(value ?: [NSNull null]) }];
 
-    if (![BLMUtils isObject:original equalToObject:updated]) {
-        if (property == BLMProjectPropertyName) {
-            assert([self.projectNameSet containsObject:original.name]);
-            assert(![self.projectNameSet containsObject:updated.name]);
-
-            NSMutableSet *projectNameSet = [self.projectNameSet mutableCopy];
-            [projectNameSet removeObject:original.name];
-            [projectNameSet addObject:updated.name];
-
-            self.projectNameSet = projectNameSet;
+    if ([BLMUtils isObject:original equalToObject:updated]) {
+        if (completion != nil) {
+            completion(original, nil);
         }
-
-        self.projectByUUID[UUID] = updated;
-
-        [self archiveCurrentState];
-
-        NSDictionary *userInfo = @{ BLMProjectOriginalProjectUserInfoKey:original, BLMProjectUpdatedProjectUserInfoKey:updated };
-        [[NSNotificationCenter defaultCenter] postNotificationName:BLMProjectUpdatedNotification object:original userInfo:userInfo];
+        return;
     }
+
+    if (property == BLMProjectPropertyName) {
+        assert([self.projectNameSet containsObject:original.name]);
+        assert(![self.projectNameSet containsObject:updated.name]);
+
+        NSMutableSet *projectNameSet = [self.projectNameSet mutableCopy];
+        [projectNameSet removeObject:original.name];
+        [projectNameSet addObject:updated.name];
+
+        self.projectNameSet = projectNameSet;
+    }
+
+    self.projectByUUID[UUID] = updated;
+
+    [self archiveCurrentState];
+
+    NSDictionary *userInfo = @{ BLMProjectOriginalProjectUserInfoKey:original, BLMProjectUpdatedProjectUserInfoKey:updated };
+    [[NSNotificationCenter defaultCenter] postNotificationName:BLMProjectUpdatedNotification object:original userInfo:userInfo];
 
     if (completion != nil) {
         completion(updated, nil);
@@ -245,14 +250,19 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
     BLMBehavior *original = self.behaviorByUUID[UUID];
     BLMBehavior *updated = [original copyWithUpdatedValuesByProperty:@{ @(property):(value ?: [NSNull null]) }];
 
-    if (![BLMUtils isObject:original equalToObject:updated]) {
-        self.behaviorByUUID[UUID] = updated;
-
-        [self archiveCurrentState];
-
-        NSDictionary *userInfo = @{ BLMBehaviorOriginalBehaviorUserInfoKey:original, BLMBehaviorUpdatedBehaviorUserInfoKey:updated };
-        [[NSNotificationCenter defaultCenter] postNotificationName:BLMBehaviorUpdatedNotification object:original userInfo:userInfo];
+    if ([BLMUtils isObject:original equalToObject:updated]) {
+        if (completion != nil) {
+            completion(original, nil);
+        }
+        return;
     }
+
+    self.behaviorByUUID[UUID] = updated;
+
+    [self archiveCurrentState];
+
+    NSDictionary *userInfo = @{ BLMBehaviorOriginalBehaviorUserInfoKey:original, BLMBehaviorUpdatedBehaviorUserInfoKey:updated };
+    [[NSNotificationCenter defaultCenter] postNotificationName:BLMBehaviorUpdatedNotification object:original userInfo:userInfo];
 
     if (completion != nil) {
         completion(updated, nil);
@@ -316,14 +326,19 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
     BLMSession *original = self.sessionByUUID[UUID];
     BLMSession *updated = [original copyWithUpdatedValuesByProperty:@{ @(property):(value ?: [NSNull null]) }];
 
-    if (![BLMUtils isObject:original equalToObject:updated]) {
-        self.sessionByUUID[UUID] = updated;
-
-        [self archiveCurrentState];
-
-        NSDictionary *userInfo = @{ BLMSessionOriginalSessionUserInfoKey:original, BLMSessionUpdatedSessionUserInfoKey:updated };
-        [[NSNotificationCenter defaultCenter] postNotificationName:BLMSessionUpdatedNotification object:original userInfo:userInfo];
+    if ([BLMUtils isObject:original equalToObject:updated]) {
+        if (completion != nil) {
+            completion(original, nil);
+        }
+        return;
     }
+
+    self.sessionByUUID[UUID] = updated;
+
+    [self archiveCurrentState];
+
+    NSDictionary *userInfo = @{ BLMSessionOriginalSessionUserInfoKey:original, BLMSessionUpdatedSessionUserInfoKey:updated };
+    [[NSNotificationCenter defaultCenter] postNotificationName:BLMSessionUpdatedNotification object:original userInfo:userInfo];
 
     if (completion != nil) {
         completion(updated, nil);
@@ -387,17 +402,22 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
     BLMSessionConfiguration *original = self.sessionConfigurationByUUID[UUID];
     BLMSessionConfiguration *updated = [original copyWithUpdatedValuesByProperty:@{ @(property):(value ?: [NSNull null]) }];
 
-    if (![BLMUtils isObject:original equalToObject:updated]) {
-        self.sessionConfigurationByUUID[UUID] = updated;
-
-        [self archiveCurrentState];
-
-        NSDictionary *userInfo = @{ BLMSessionConfigurationOriginalSessionConfigurationUserInfoKey:original, BLMSessionConfigurationUpdatedSessionConfigurationUserInfoKey:updated };
-        [[NSNotificationCenter defaultCenter] postNotificationName:BLMSessionConfigurationUpdatedNotification object:original userInfo:userInfo];
+    if ([BLMUtils isObject:original equalToObject:updated]) {
+        if (completion != nil) {
+            completion(original, nil);
+        }
+        return;
     }
 
+    self.sessionConfigurationByUUID[UUID] = updated;
+
+    [self archiveCurrentState];
+
+    NSDictionary *userInfo = @{ BLMSessionConfigurationOriginalSessionConfigurationUserInfoKey:original, BLMSessionConfigurationUpdatedSessionConfigurationUserInfoKey:updated };
+    [[NSNotificationCenter defaultCenter] postNotificationName:BLMSessionConfigurationUpdatedNotification object:original userInfo:userInfo];
+
     if (completion != nil) {
-        completion(self.sessionConfigurationByUUID[UUID], nil);
+        completion(updated, nil);
     }
 }
 
