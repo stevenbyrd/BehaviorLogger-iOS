@@ -49,6 +49,13 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
     return self;
 }
 
+
+- (instancetype)copyWithUpdatedValuesByProperty:(NSDictionary<NSNumber *, id> *)valuesByProperty {
+    return [[BLMBehavior alloc] initWithUUID:self.UUID
+                                        name:[BLMUtils objectFromDictionary:valuesByProperty forKey:@(BLMBehaviorPropertyName) nullValue:nil defaultValue:self.name]
+                                  continuous:[BLMUtils boolFromDictionary:valuesByProperty forKey:@(BLMBehaviorPropertyContinuous) defaultValue:self.isContinuous]];
+}
+
 #pragma mark NSCoding
 
 - (nullable instancetype)initWithCoder:(NSCoder *)decoder {
@@ -82,13 +89,6 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
     return ([BLMUtils isObject:self.UUID equalToObject:other.UUID]
             && [BLMUtils isString:self.name equalToString:other.name]
             && (self.isContinuous == other.isContinuous));
-}
-
-
-- (instancetype)copyWithUpdatedValuesByProperty:(NSDictionary<NSNumber *, id> *)valuesByProperty {
-    return [[BLMBehavior alloc] initWithUUID:self.UUID
-                                        name:[BLMUtils objectFromDictionary:valuesByProperty forKey:@(BLMBehaviorPropertyName) nullValue:nil defaultValue:self.name]
-                                  continuous:[BLMUtils boolFromDictionary:valuesByProperty forKey:@(BLMBehaviorPropertyContinuous) defaultValue:self.isContinuous]];
 }
 
 @end

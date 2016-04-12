@@ -53,6 +53,18 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
     return self;
 }
 
+
+- (instancetype)copyWithUpdatedValuesByProperty:(NSDictionary<NSNumber *, id> *)valuesByProperty {
+    return [[BLMSessionConfiguration alloc] initWithUUID:self.UUID
+                                               condition:[BLMUtils objectFromDictionary:valuesByProperty forKey:@(BLMSessionConfigurationPropertyCondition) nullValue:nil defaultValue:self.condition]
+                                                location:[BLMUtils objectFromDictionary:valuesByProperty forKey:@(BLMSessionConfigurationPropertyLocation) nullValue:nil defaultValue:self.location]
+                                               therapist:[BLMUtils objectFromDictionary:valuesByProperty forKey:@(BLMSessionConfigurationPropertyTherapist) nullValue:nil defaultValue:self.therapist]
+                                                observer:[BLMUtils objectFromDictionary:valuesByProperty forKey:@(BLMSessionConfigurationPropertyObserver) nullValue:nil defaultValue:self.observer]
+                                               timeLimit:[BLMUtils integerFromDictionary:valuesByProperty forKey:@(BLMSessionConfigurationPropertyTimeLimit) defaultValue:self.timeLimit]
+                                        timeLimitOptions:[BLMUtils integerFromDictionary:valuesByProperty forKey:@(BLMSessionConfigurationPropertyTimeLimitOptions) defaultValue:self.timeLimitOptions]
+                                           behaviorUUIDs:[BLMUtils objectFromDictionary:valuesByProperty forKey:@(BLMSessionConfigurationPropertyBehaviorUUIDs) nullValue:nil defaultValue:self.behaviorUUIDs]];
+}
+
 #pragma mark NSCoding
 
 - (nullable instancetype)initWithCoder:(NSCoder *)decoder {
@@ -101,18 +113,6 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
             && [BLMUtils isArray:self.behaviorUUIDs equalToArray:other.behaviorUUIDs]
             && (self.timeLimit == other.timeLimit)
             && (self.timeLimitOptions == other.timeLimitOptions));
-}
-
-
-- (instancetype)copyWithUpdatedValuesByProperty:(NSDictionary<NSNumber *, id> *)valuesByProperty {
-    return [[BLMSessionConfiguration alloc] initWithUUID:self.UUID
-                                               condition:[BLMUtils objectFromDictionary:valuesByProperty forKey:@(BLMSessionConfigurationPropertyCondition) nullValue:nil defaultValue:self.condition]
-                                                location:[BLMUtils objectFromDictionary:valuesByProperty forKey:@(BLMSessionConfigurationPropertyLocation) nullValue:nil defaultValue:self.location]
-                                               therapist:[BLMUtils objectFromDictionary:valuesByProperty forKey:@(BLMSessionConfigurationPropertyTherapist) nullValue:nil defaultValue:self.therapist]
-                                                observer:[BLMUtils objectFromDictionary:valuesByProperty forKey:@(BLMSessionConfigurationPropertyObserver) nullValue:nil defaultValue:self.observer]
-                                               timeLimit:[BLMUtils integerFromDictionary:valuesByProperty forKey:@(BLMSessionConfigurationPropertyTimeLimit) defaultValue:self.timeLimit]
-                                        timeLimitOptions:[BLMUtils integerFromDictionary:valuesByProperty forKey:@(BLMSessionConfigurationPropertyTimeLimitOptions) defaultValue:self.timeLimitOptions]
-                                           behaviorUUIDs:[BLMUtils objectFromDictionary:valuesByProperty forKey:@(BLMSessionConfigurationPropertyBehaviorUUIDs) nullValue:nil defaultValue:self.behaviorUUIDs]];
 }
 
 @end

@@ -54,6 +54,15 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
     return self;
 }
 
+
+- (instancetype)copyWithUpdatedValuesByProperty:(NSDictionary<NSNumber *, id> *)valuesByProperty {
+    return [[BLMProject alloc] initWithUUID:self.UUID
+                                       name:[BLMUtils objectFromDictionary:valuesByProperty forKey:@(BLMProjectPropertyName) nullValue:nil defaultValue:self.name]
+                                     client:[BLMUtils objectFromDictionary:valuesByProperty forKey:@(BLMProjectPropertyClient) nullValue:nil defaultValue:self.client]
+                   sessionConfigurationUUID:[BLMUtils objectFromDictionary:valuesByProperty forKey:@(BLMProjectPropertySessionConfigurationUUID) nullValue:nil defaultValue:self.sessionConfigurationUUID]
+                              sessionByUUID:[BLMUtils objectFromDictionary:valuesByProperty forKey:@(BLMProjectPropertySessionByUUID) nullValue:nil defaultValue:self.sessionByUUID]];
+}
+
 #pragma mark NSCoding
 
 - (nullable instancetype)initWithCoder:(NSCoder *)decoder {
@@ -93,15 +102,6 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
             && [BLMUtils isString:self.client equalToString:other.client]
             && [BLMUtils isObject:self.sessionConfigurationUUID equalToObject:other.sessionConfigurationUUID]
             && [BLMUtils isDictionary:self.sessionByUUID equalToDictionary:other.sessionByUUID]);
-}
-
-
-- (instancetype)copyWithUpdatedValuesByProperty:(NSDictionary<NSNumber *, id> *)valuesByProperty {
-    return [[BLMProject alloc] initWithUUID:self.UUID
-                                       name:[BLMUtils objectFromDictionary:valuesByProperty forKey:@(BLMProjectPropertyName) nullValue:nil defaultValue:self.name]
-                                     client:[BLMUtils objectFromDictionary:valuesByProperty forKey:@(BLMProjectPropertyClient) nullValue:nil defaultValue:self.client]
-                   sessionConfigurationUUID:[BLMUtils objectFromDictionary:valuesByProperty forKey:@(BLMProjectPropertySessionConfigurationUUID) nullValue:nil defaultValue:self.sessionConfigurationUUID]
-                              sessionByUUID:[BLMUtils objectFromDictionary:valuesByProperty forKey:@(BLMProjectPropertySessionByUUID) nullValue:nil defaultValue:self.sessionByUUID]];
 }
 
 @end
