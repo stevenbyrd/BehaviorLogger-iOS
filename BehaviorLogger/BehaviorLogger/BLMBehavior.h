@@ -18,8 +18,8 @@ extern NSString *const BLMBehaviorCreatedNotification;
 extern NSString *const BLMBehaviorDeletedNotification;
 extern NSString *const BLMBehaviorUpdatedNotification;
 
-extern NSString *const BLMBehaviorOldBehaviorUserInfoKey;
-extern NSString *const BLMBehaviorNewBehaviorUserInfoKey;
+extern NSString *const BLMBehaviorOriginalBehaviorUserInfoKey;
+extern NSString *const BLMBehaviorUpdatedBehaviorUserInfoKey;
 
 
 typedef NS_ENUM(NSInteger, BLMBehaviorProperty) {

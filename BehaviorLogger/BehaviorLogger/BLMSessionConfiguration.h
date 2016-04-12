@@ -16,8 +16,8 @@ extern NSString *const BLMSessionConfigurationCreatedNotification;
 extern NSString *const BLMSessionConfigurationDeletedNotification;
 extern NSString *const BLMSessionConfigurationUpdatedNotification;
 
-extern NSString *const BLMSessionConfigurationOldSessionConfigurationUserInfoKey;
-extern NSString *const BLMSessionConfigurationNewSessionConfigurationUserInfoKey;
+extern NSString *const BLMSessionConfigurationOriginalSessionConfigurationUserInfoKey;
+extern NSString *const BLMSessionConfigurationUpdatedSessionConfigurationUserInfoKey;
 
 
 typedef NSInteger BLMTimeInterval; // Represents an interval of time in seconds

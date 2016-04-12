@@ -18,8 +18,8 @@ NSString *const BLMBehaviorCreatedNotification = @"BLMBehaviorCreatedNotificatio
 NSString *const BLMBehaviorDeletedNotification = @"BLMBehaviorDeletedNotification";
 NSString *const BLMBehaviorUpdatedNotification = @"BLMBehaviorUpdatedNotification";
 
-NSString *const BLMBehaviorOldBehaviorUserInfoKey = @"BLMBehaviorOldBehaviorUserInfoKey";
-NSString *const BLMBehaviorNewBehaviorUserInfoKey = @"BLMBehaviorNewBehaviorUserInfoKey";
+NSString *const BLMBehaviorOriginalBehaviorUserInfoKey = @"BLMBehaviorOriginalBehaviorUserInfoKey";
+NSString *const BLMBehaviorUpdatedBehaviorUserInfoKey = @"BLMBehaviorUpdatedBehaviorUserInfoKey";
 
 
 static NSString *const ArchiveVersionKey = @"ArchiveVersionKey";

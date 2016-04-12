@@ -329,7 +329,7 @@ typedef NS_ENUM(NSUInteger, ActionButton) {
 
 
 - (void)handleBehaviorUpdated:(NSNotification *)notification {
-    BLMBehavior *updatedBehavior = notification.userInfo[BLMBehaviorNewBehaviorUserInfoKey];
+    BLMBehavior *updatedBehavior = notification.userInfo[BLMBehaviorUpdatedBehaviorUserInfoKey];
     assert([BLMUtils isObject:updatedBehavior equalToObject:[[BLMDataManager sharedManager] behaviorForUUID:self.behavior.UUID]]);
 
     self.behavior = updatedBehavior;
@@ -559,12 +559,12 @@ typedef NS_ENUM(NSUInteger, ActionButton) {
 #pragma mark Event Handling
 
 - (void)handleProjectUpdated:(NSNotification *)notification {
-    BLMProject *original = (BLMProject *)notification.userInfo[BLMProjectOldProjectUserInfoKey];
+    BLMProject *original = (BLMProject *)notification.userInfo[BLMProjectOriginalProjectUserInfoKey];
     assert(original == notification.object);
 
     [[NSNotificationCenter defaultCenter] removeObserver:self name:BLMProjectUpdatedNotification object:original];
 
-    BLMProject *updated = (BLMProject *)notification.userInfo[BLMProjectNewProjectUserInfoKey];
+    BLMProject *updated = (BLMProject *)notification.userInfo[BLMProjectUpdatedProjectUserInfoKey];
     assert(updated == self.project);
 
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleProjectUpdated:) name:BLMProjectUpdatedNotification object:updated];
@@ -576,12 +576,12 @@ typedef NS_ENUM(NSUInteger, ActionButton) {
 
 
 - (void)handleSessionConfigurationUpdated:(NSNotification *)notification {
-    BLMSessionConfiguration *original = (BLMSessionConfiguration *)notification.userInfo[BLMSessionConfigurationOldSessionConfigurationUserInfoKey];
+    BLMSessionConfiguration *original = (BLMSessionConfiguration *)notification.userInfo[BLMSessionConfigurationOriginalSessionConfigurationUserInfoKey];
     assert(original == notification.object);
 
     [[NSNotificationCenter defaultCenter] removeObserver:self name:BLMSessionConfigurationUpdatedNotification object:original];
 
-    BLMSessionConfiguration *updated = (BLMSessionConfiguration *)notification.userInfo[BLMSessionConfigurationNewSessionConfigurationUserInfoKey];
+    BLMSessionConfiguration *updated = (BLMSessionConfiguration *)notification.userInfo[BLMSessionConfigurationUpdatedSessionConfigurationUserInfoKey];
     assert(updated == self.projectSessionConfiguration);
 
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleSessionConfigurationUpdated:) name:BLMSessionConfigurationUpdatedNotification object:updated];

@@ -17,8 +17,8 @@ NSString *const BLMSessionConfigurationCreatedNotification = @"BLMSessionConfigu
 NSString *const BLMSessionConfigurationDeletedNotification = @"BLMSessionConfigurationDeletedNotification";
 NSString *const BLMSessionConfigurationUpdatedNotification = @"BLMSessionConfigurationUpdatedNotification";
 
-NSString *const BLMSessionConfigurationOldSessionConfigurationUserInfoKey = @"BLMSessionConfigurationOldSessionConfigurationUserInfoKey";
-NSString *const BLMSessionConfigurationNewSessionConfigurationUserInfoKey = @"BLMSessionConfigurationNewSessionConfigurationUserInfoKey";
+NSString *const BLMSessionConfigurationOriginalSessionConfigurationUserInfoKey = @"BLMSessionConfigurationOriginalSessionConfigurationUserInfoKey";
+NSString *const BLMSessionConfigurationUpdatedSessionConfigurationUserInfoKey = @"BLMSessionConfigurationUpdatedSessionConfigurationUserInfoKey";
 
 
 static NSString *const ArchiveVersionKey = @"ArchiveVersionKey";

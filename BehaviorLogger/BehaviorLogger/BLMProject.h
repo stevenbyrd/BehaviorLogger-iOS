@@ -19,8 +19,8 @@ extern NSString *const BLMProjectCreatedNotification;
 extern NSString *const BLMProjectDeletedNotification;
 extern NSString *const BLMProjectUpdatedNotification;
 
-extern NSString *const BLMProjectOldProjectUserInfoKey;
-extern NSString *const BLMProjectNewProjectUserInfoKey;
+extern NSString *const BLMProjectOriginalProjectUserInfoKey;
+extern NSString *const BLMProjectUpdatedProjectUserInfoKey;
 
 
 typedef NS_ENUM(NSUInteger, BLMProjectProperty) {

@@ -21,8 +21,8 @@ NSString *const BLMProjectCreatedNotification = @"BLMProjectCreatedNotification"
 NSString *const BLMProjectDeletedNotification = @"BLMProjectDeletedNotification";
 NSString *const BLMProjectUpdatedNotification = @"BLMProjectUpdatedNotification";
 
-NSString *const BLMProjectOldProjectUserInfoKey = @"BLMProjectOldProjectUserInfoKey";
-NSString *const BLMProjectNewProjectUserInfoKey = @"BLMProjectNewProjectUserInfoKey";
+NSString *const BLMProjectOriginalProjectUserInfoKey = @"BLMProjectOriginalProjectUserInfoKey";
+NSString *const BLMProjectUpdatedProjectUserInfoKey = @"BLMProjectUpdatedProjectUserInfoKey";
 
 
 static NSString *const ArchiveVersionKey = @"ArchiveVersionKey";
