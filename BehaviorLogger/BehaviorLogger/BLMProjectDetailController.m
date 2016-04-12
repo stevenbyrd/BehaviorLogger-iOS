@@ -38,6 +38,7 @@ typedef NS_ENUM(NSUInteger, Section) {
     SectionBasicProperties,
     SectionSessionProperties,
     SectionBehaviors,
+    SectionSessions,
     SectionActionButtons,
     SectionCount
 };
@@ -61,8 +62,6 @@ typedef NS_ENUM(NSUInteger, SessionConfigurationInfo) {
 
 typedef NS_ENUM(NSUInteger, ActionButton) {
     ActionButtonDeleteProject,
-    ActionButtonViewSessionHistory,
-    ActionButtonCreateSession,
     ActionButtonCount
 };
 
@@ -557,6 +556,12 @@ typedef NS_ENUM(NSUInteger, ActionButton) {
     return [NSIndexPath indexPathForItem:cellItem inSection:SectionBehaviors];
 }
 
+
+- (NSIndexPath *)indexPathForCreateSessionButtonCell {
+    NSUInteger cellItem = ([self.collectionView numberOfItemsInSection:SectionSessions] - 1);
+    return [NSIndexPath indexPathForItem:cellItem inSection:SectionSessions];
+}
+
 #pragma mark Event Handling
 
 - (void)handleProjectUpdated:(NSNotification *)notification {
@@ -726,8 +731,11 @@ typedef NS_ENUM(NSUInteger, ActionButton) {
                 itemCount += 1; // +1 for the BLMBehavior that's been added to the data model but not to a session configuration
             }
 
-            return (itemCount + 1); // +1 for the add behavior button cell
+            return (itemCount + 1); // +1 for the "add behavior" button cell
         }
+
+        case SectionSessions:
+            return (self.project.sessionUUIDs.count + 1); // +1 for the "begin session" button cell
 
         case SectionActionButtons:
             return ActionButtonCount;
@@ -781,6 +789,7 @@ typedef NS_ENUM(NSUInteger, ActionButton) {
             break;
         }
 
+        case SectionSessions:
         case SectionActionButtons: {
             BLMButtonCell *buttonCell = [collectionView dequeueReusableCellWithReuseIdentifier:NSStringFromClass([BLMButtonCell class]) forIndexPath:indexPath];
             buttonCell.dataSource = self;
@@ -821,6 +830,11 @@ typedef NS_ENUM(NSUInteger, ActionButton) {
 
             case SectionBehaviors: {
                 headerView.label.text = @"Behaviors";
+                break;
+            }
+
+            case SectionSessions: {
+                headerView.label.text = @"Sessions";
                 break;
             }
 
@@ -920,6 +934,35 @@ typedef NS_ENUM(NSUInteger, ActionButton) {
                     }
                 },
                 .Footer = {
+                    .Height = 0.0,
+                    .Insets = UIEdgeInsetsZero
+                }
+            };
+        }
+
+        case SectionSessions: {
+            return (BLMCollectionViewSectionLayout) {
+                .Header = {
+                    .Height = SectionHeaderHeight,
+                    .Insets = SectionHeaderInsets
+                },
+                .ItemArea = {
+                    .HasBackground = YES,
+                    .Insets = ItemAreaStandardInsets,
+                    .Grid = {
+                        .ColumnCount = 1,
+                        .ColumnSpacing = 0.0,
+                        .RowSpacing = 10.0,
+                        .RowHeight = 40.0,
+                        .Insets = {
+                            .top = 10.0,
+                            .left = 10.0,
+                            .bottom = 10.0,
+                            .right = 10.0
+                        }
+                    }
+                },
+                .Footer = {
                     .Height = SectionSeparatorHeight,
                     .Insets = SectionSeparatorInsets
                 }
@@ -936,7 +979,7 @@ typedef NS_ENUM(NSUInteger, ActionButton) {
                     .HasBackground = NO,
                     .Insets = ItemAreaStandardInsets,
                     .Grid = {
-                        .ColumnCount = 3,
+                        .ColumnCount = ActionButtonCount,
                         .ColumnSpacing = 0.0,
                         .RowSpacing = 10.0,
                         .RowHeight = 40.0,
@@ -1000,6 +1043,7 @@ typedef NS_ENUM(NSUInteger, ActionButton) {
         case SectionBehaviors:
             return @"Name:";
 
+        case SectionSessions:
         case SectionActionButtons:
         case SectionCount: {
             assert(NO);
@@ -1054,6 +1098,7 @@ typedef NS_ENUM(NSUInteger, ActionButton) {
             return [[BLMDataManager sharedManager] behaviorForUUID:UUID].name;
         }
 
+        case SectionSessions:
         case SectionActionButtons:
         case SectionCount: {
             assert(NO);
@@ -1082,6 +1127,7 @@ typedef NS_ENUM(NSUInteger, ActionButton) {
             attributes = [BLMTextInputCell errorAttributes];
             break;
 
+        case SectionSessions:
         case SectionActionButtons:
         case SectionCount: {
             assert(NO);
@@ -1117,6 +1163,7 @@ typedef NS_ENUM(NSUInteger, ActionButton) {
         case SectionBehaviors:
             return BLMBehaviorNameMinimumLength;
 
+        case SectionSessions:
         case SectionActionButtons:
         case SectionCount: {
             assert(NO);
@@ -1145,6 +1192,7 @@ typedef NS_ENUM(NSUInteger, ActionButton) {
         case SectionSessionProperties:
             break;
 
+        case SectionSessions:
         case SectionActionButtons:
         case SectionCount: {
             assert(NO);
@@ -1182,6 +1230,7 @@ typedef NS_ENUM(NSUInteger, ActionButton) {
             return [self isBehaviorName:cell.textField.text validForUUID:behaviorCell.behavior.UUID];
         }
 
+        case SectionSessions:
         case SectionActionButtons:
         case SectionCount: {
             assert(NO);
@@ -1261,7 +1310,8 @@ typedef NS_ENUM(NSUInteger, ActionButton) {
             }
             break;
         }
-            
+
+        case SectionSessions:
         case SectionActionButtons:
         case SectionCount: {
             assert(NO);
@@ -1299,6 +1349,7 @@ typedef NS_ENUM(NSUInteger, ActionButton) {
             return ((self.addedBehaviorUUID == nil)
                     || [self isBehaviorName:[[BLMDataManager sharedManager] behaviorForUUID:self.addedBehaviorUUID].name validForUUID:self.addedBehaviorUUID]);
 
+        case SectionSessions:
         case SectionActionButtons:
             return YES;
 
@@ -1329,6 +1380,7 @@ typedef NS_ENUM(NSUInteger, ActionButton) {
             return ((state == UIControlStateNormal) ? normalPlusSignImage : highlightedPlusSignImage);
         }
 
+        case SectionSessions:
         case SectionActionButtons:
             return nil;
 
@@ -1347,10 +1399,38 @@ typedef NS_ENUM(NSUInteger, ActionButton) {
         case SectionBehaviors: {
             assert(cell.item == self.indexPathForAddBehaviorButtonCell.item);
 
-            BLMColorHexCode colorHex = ((state == UIControlStateNormal) ? BLMColorHexCodeGreen : BLMColorHexCodePurple);
-            NSDictionary *attributes = @{ NSForegroundColorAttributeName:[BLMViewUtils colorForHexCode:colorHex], NSFontAttributeName:[UIFont boldSystemFontOfSize:20.0] };
+            UIColor *titleColor = [BLMViewUtils colorForHexCode:((state == UIControlStateNormal) ? BLMColorHexCodeGreen : BLMColorHexCodePurple)];
+            NSDictionary *attributes = @{ NSForegroundColorAttributeName:titleColor, NSFontAttributeName:[UIFont boldSystemFontOfSize:20.0] };
 
             return [[NSAttributedString alloc] initWithString:@"Add Behavior" attributes:attributes];
+        }
+
+        case SectionSessions: {
+            NSString *title;
+            UIFont *titleFont;
+            BLMColorHexCode titleColorHexCode;
+            NSOrderedSet *sessionUUIDs = self.project.sessionUUIDs;
+
+            if (cell.item < sessionUUIDs.count) {
+                NSUUID *UUID = sessionUUIDs[cell.item];
+                BLMSession *session = [[BLMDataManager sharedManager] sessionForUUID:UUID];
+
+                assert(session != nil);
+
+                title = session.name;
+                titleFont = [UIFont systemFontOfSize:16.0];
+                titleColorHexCode = BLMColorHexCodeBlack;
+            } else {
+                assert(cell.item == self.indexPathForCreateSessionButtonCell.item);
+                title = @"Create Session From Current Configuration";
+                titleFont = [UIFont boldSystemFontOfSize:18.0];
+                titleColorHexCode = BLMColorHexCodeBlue;
+            }
+
+            UIColor *titleColor = [BLMViewUtils colorForHexCode:((state == UIControlStateNormal) ? titleColorHexCode : BLMColorHexCodePurple)];
+            NSDictionary *attributes = @{ NSForegroundColorAttributeName:titleColor, NSFontAttributeName:titleFont };
+
+            return [[NSAttributedString alloc] initWithString:title attributes:attributes];
         }
 
         case SectionActionButtons: {
@@ -1361,16 +1441,6 @@ typedef NS_ENUM(NSUInteger, ActionButton) {
                 case ActionButtonDeleteProject:
                     title = @"Delete Project";
                     colorHex = BLMColorHexCodeRed;
-                    break;
-
-                case ActionButtonViewSessionHistory:
-                    title = @"View Past Sessions";
-                    colorHex = BLMColorHexCodeBlue;
-                    break;
-
-                case ActionButtonCreateSession:
-                    title = @"Begin New Session";
-                    colorHex = BLMColorHexCodeBlue;
                     break;
 
                 case ActionButtonCount: {
@@ -1444,6 +1514,24 @@ typedef NS_ENUM(NSUInteger, ActionButton) {
             break;
         }
 
+        case SectionSessions: {
+            NSOrderedSet *sessionUUIDs = self.project.sessionUUIDs;
+
+            if (cell.item < sessionUUIDs.count) {
+                NSUUID *UUID = sessionUUIDs[cell.item];
+                BLMSession *session = [[BLMDataManager sharedManager] sessionForUUID:UUID];
+
+                assert(session != nil);
+
+                // TODO: Show session details
+            } else {
+                assert(cell.item == self.indexPathForCreateSessionButtonCell.item);
+                // TODO: Create session workflow
+//                NSString *name = [NSString stringWithFormat:@"%@-%@-%@", self.project.client, self.project.name, (self.projectSessionConfiguration.observer ?: @"<no_observer>")];
+            }
+            break;
+        }
+
         case SectionActionButtons: {
             switch ((ActionButton)cell.item) {
                 case ActionButtonDeleteProject: {
@@ -1461,10 +1549,6 @@ typedef NS_ENUM(NSUInteger, ActionButton) {
 
                     break;
                 }
-
-                case ActionButtonViewSessionHistory:
-                case ActionButtonCreateSession:
-                    break;
 
                 case ActionButtonCount: {
                     assert(NO);

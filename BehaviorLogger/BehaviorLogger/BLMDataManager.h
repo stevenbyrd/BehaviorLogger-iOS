@@ -68,7 +68,7 @@ extern NSString *const BLMDataManagerBehaviorErrorDomain;
 
 - (BLMSession *)sessionForUUID:(NSUUID *)UUID;
 - (NSEnumerator<BLMSession *> *)sessionEnumerator;
-- (void)createSessionWithName:(NSString *)name sessionConfigurationUUID:(NSUUID *)sessionConfigurationUUID completion:(nullable void(^)(BLMSession *__nullable session, NSError *__nullable error))completion;
+- (void)createSessionWithName:(NSString *)name configurationUUID:(NSUUID *)configurationUUID completion:(nullable void(^)(BLMSession *__nullable session, NSError *__nullable error))completion;
 - (void)updateSessionForUUID:(NSUUID *)UUID property:(BLMSessionProperty)property value:(nullable id)value completion:(nullable void(^)(BLMSession *__nullable updatedSession, NSError *__nullable error))completion;
 - (void)deleteSessionForUUID:(NSUUID *)UUID completion:(nullable void(^)(NSError *__nullable error))completion;
 

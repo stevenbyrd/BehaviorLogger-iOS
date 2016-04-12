@@ -301,11 +301,11 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
 }
 
 
-- (void)createSessionWithName:(NSString *)name sessionConfigurationUUID:(NSUUID *)sessionConfigurationUUID completion:(nullable void(^)(BLMSession *__nullable session, NSError *__nullable error))completion {
+- (void)createSessionWithName:(NSString *)name configurationUUID:(NSUUID *)configurationUUID completion:(nullable void(^)(BLMSession *__nullable session, NSError *__nullable error))completion {
     assert([NSThread isMainThread]);
 
     NSUUID *UUID = [NSUUID UUID];
-    BLMSession *session = [[BLMSession alloc] initWithUUID:UUID name:name sessionConfigurationUUID:sessionConfigurationUUID];
+    BLMSession *session = [[BLMSession alloc] initWithUUID:UUID name:name configurationUUID:configurationUUID creationDate:[NSDate date] startDate:nil endDate:nil];
 
     self.sessionByUUID[UUID] = session;
 
@@ -538,12 +538,12 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
         [projectByUUID enumerateKeysAndObjectsUsingBlock:^(NSUUID *__nonnull projectUUID, BLMProject *__nonnull project, BOOL *__nonnull stopProjectUUIDEnumeration) {
             [project.sessionUUIDs enumerateObjectsUsingBlock:^(NSUUID *__nonnull sessionUUID, NSUInteger index, BOOL *__nonnull stopSessionUUIDEnumeration) {
                 BLMSession *session = sessionByUUID[sessionUUID];
-                BLMSessionConfiguration *sessionConfiguration = sessionConfigurationByUUID[session.sessionConfigurationUUID];
+                BLMSessionConfiguration *sessionConfiguration = sessionConfigurationByUUID[session.configurationUUID];
 
                 assert([sessionConfiguration.behaviorUUIDs isSubsetOfSet:[NSSet setWithArray:behaviorByUUID.allKeys]]);
 
                 [referenedBehaviorUUIDs unionSet:sessionConfiguration.behaviorUUIDs.set];
-                [referenedSessionConfigurationUUIDs addObject:session.sessionConfigurationUUID];
+                [referenedSessionConfigurationUUIDs addObject:session.configurationUUID];
             }];
 
             BLMSessionConfiguration *projectSessionConfiguration = sessionConfigurationByUUID[project.sessionConfigurationUUID];

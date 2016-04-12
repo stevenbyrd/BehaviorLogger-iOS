@@ -21,8 +21,8 @@ extern NSString *const BLMSessionUpdatedSessionUserInfoKey;
 
 
 typedef NS_ENUM(NSInteger, BLMSessionProperty) {
-    BLMSessionPropertyName,
-    BLMSessionPropertySessionConfigurationUUID
+    BLMSessionPropertyStartDate,
+    BLMSessionPropertyEndDate
 };
 
 
@@ -32,9 +32,12 @@ typedef NS_ENUM(NSInteger, BLMSessionProperty) {
 
 @property (nonatomic, strong, readonly) NSUUID *UUID;
 @property (nonatomic, copy, readonly) NSString *name;
-@property (nonatomic, strong, readonly) NSUUID *sessionConfigurationUUID;
+@property (nonatomic, strong, readonly) NSUUID *configurationUUID;
+@property (nonatomic, strong, readonly) NSDate *creationDate;
+@property (nonatomic, strong, readonly) NSDate *startDate;
+@property (nonatomic, strong, readonly) NSDate *endDate;
 
-- (instancetype)initWithUUID:(NSUUID *)UUID name:(NSString *)name sessionConfigurationUUID:(NSUUID *)sessionConfigurationUUID;
+- (instancetype)initWithUUID:(NSUUID *)UUID name:(NSString *)name configurationUUID:(NSUUID *)configurationUUID creationDate:(NSDate *)creationDate startDate:(nullable NSDate *)startDate endDate:(nullable NSDate *)endDate;
 - (instancetype)copyWithUpdatedValuesByProperty:(NSDictionary<NSNumber *, id> *)valuesByProperty;
 
 @end

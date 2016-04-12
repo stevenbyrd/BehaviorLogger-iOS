@@ -13,6 +13,9 @@
 #import "BLMUtils.h"
 
 
+NS_ASSUME_NONNULL_BEGIN
+
+
 #pragma mark Constants
 
 NSString *const BLMSessionCreatedNotification = @"BLMSessionCreatedNotification";
@@ -36,7 +39,7 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
 
 @implementation BLMSession
 
-- (instancetype)initWithUUID:(NSUUID *)UUID name:(NSString *)name sessionConfigurationUUID:(NSUUID *)sessionConfigurationUUID {
+- (instancetype)initWithUUID:(NSUUID *)UUID name:(NSString *)name configurationUUID:(NSUUID *)configurationUUID creationDate:(NSDate *)creationDate startDate:(nullable NSDate *)startDate endDate:(nullable NSDate *)endDate {
     self = [super init];
 
     if (self == nil) {
@@ -45,7 +48,10 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
 
     _UUID = UUID;
     _name = [name copy];
-    _sessionConfigurationUUID = sessionConfigurationUUID;
+    _configurationUUID = configurationUUID;
+    _creationDate = creationDate;
+    _startDate = startDate;
+    _endDate = endDate;
 
     return self;
 }
@@ -53,8 +59,11 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
 
 - (instancetype)copyWithUpdatedValuesByProperty:(NSDictionary<NSNumber *, id> *)valuesByProperty {
     return [[BLMSession alloc] initWithUUID:self.UUID
-                                       name:[BLMUtils objectFromDictionary:valuesByProperty forKey:@(BLMSessionPropertyName) nullValue:nil defaultValue:self.name]
-                   sessionConfigurationUUID:[BLMUtils objectFromDictionary:valuesByProperty forKey:@(BLMSessionPropertySessionConfigurationUUID) nullValue:nil defaultValue:self.sessionConfigurationUUID]];
+                                       name:self.name
+                          configurationUUID:self.configurationUUID
+                               creationDate:self.creationDate
+                                  startDate:[BLMUtils objectFromDictionary:valuesByProperty forKey:@(BLMSessionPropertyStartDate) nullValue:nil defaultValue:self.startDate]
+                                    endDate:[BLMUtils objectFromDictionary:valuesByProperty forKey:@(BLMSessionPropertyEndDate) nullValue:nil defaultValue:self.endDate]];
 }
 
 #pragma mark NSCoding
@@ -62,14 +71,20 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
 - (nullable instancetype)initWithCoder:(NSCoder *)decoder {
     return [self initWithUUID:[decoder decodeObjectForKey:@"UUID"]
                          name:[decoder decodeObjectForKey:@"name"]
-                sessionConfigurationUUID:[decoder decodeObjectForKey:@"sessionConfigurationUUID"]];
+            configurationUUID:[decoder decodeObjectForKey:@"configurationUUID"]
+                 creationDate:[decoder decodeObjectForKey:@"creationDate"]
+                    startDate:[decoder decodeObjectForKey:@"startDate"]
+                      endDate:[decoder decodeObjectForKey:@"endDate"]];
 }
 
 
 - (void)encodeWithCoder:(NSCoder *)coder {
     [coder encodeObject:self.UUID forKey:@"UUID"];
     [coder encodeObject:self.name forKey:@"name"];
-    [coder encodeObject:self.sessionConfigurationUUID forKey:@"sessionConfigurationUUID"];
+    [coder encodeObject:self.configurationUUID forKey:@"configurationUUID"];
+    [coder encodeObject:self.creationDate forKey:@"creationDate"];
+    [coder encodeObject:self.startDate forKey:@"startDate"];
+    [coder encodeObject:self.endDate forKey:@"endDate"];
     [coder encodeInteger:ArchiveVersionLatest forKey:ArchiveVersionKey];
 }
 
@@ -89,7 +104,10 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
 
     return ([BLMUtils isObject:self.UUID equalToObject:other.UUID]
             && [BLMUtils isString:self.name equalToString:other.name]
-            && [BLMUtils isObject:self.sessionConfigurationUUID equalToObject:other.sessionConfigurationUUID]);
+            && [BLMUtils isObject:self.configurationUUID equalToObject:other.configurationUUID]);
 }
 
 @end
+
+
+NS_ASSUME_NONNULL_END
