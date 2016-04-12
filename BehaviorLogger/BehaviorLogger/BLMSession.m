@@ -15,6 +15,14 @@
 
 #pragma mark Constants
 
+NSString *const BLMSessionCreatedNotification = @"BLMSessionCreatedNotification";
+NSString *const BLMSessionDeletedNotification = @"BLMSessionDeletedNotification";
+NSString *const BLMSessionUpdatedNotification = @"BLMSessionUpdatedNotification";
+
+NSString *const BLMSessionOriginalSessionUserInfoKey = @"BLMSessionOriginalSessionUserInfoKey";
+NSString *const BLMSessionUpdatedSessionUserInfoKey = @"BLMSessionUpdatedSessionUserInfoKey";
+
+
 static NSString *const ArchiveVersionKey = @"ArchiveVersionKey";
 
 
@@ -28,7 +36,7 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
 
 @implementation BLMSession
 
-- (instancetype)initWithUUID:(NSUUID *)UUID name:(NSString *)name configuration:(BLMSessionConfiguration *)configuration {
+- (instancetype)initWithUUID:(NSUUID *)UUID name:(NSString *)name sessionConfigurationUUID:(NSUUID *)sessionConfigurationUUID {
     self = [super init];
 
     if (self == nil) {
@@ -37,9 +45,16 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
 
     _UUID = UUID;
     _name = [name copy];
-    _configuration = configuration;
+    _sessionConfigurationUUID = sessionConfigurationUUID;
 
     return self;
+}
+
+
+- (instancetype)copyWithUpdatedValuesByProperty:(NSDictionary<NSNumber *, id> *)valuesByProperty {
+    return [[BLMSession alloc] initWithUUID:self.UUID
+                                       name:[BLMUtils objectFromDictionary:valuesByProperty forKey:@(BLMSessionPropertyName) nullValue:nil defaultValue:self.name]
+                   sessionConfigurationUUID:[BLMUtils objectFromDictionary:valuesByProperty forKey:@(BLMSessionPropertySessionConfigurationUUID) nullValue:nil defaultValue:self.sessionConfigurationUUID]];
 }
 
 #pragma mark NSCoding
@@ -47,14 +62,14 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
 - (nullable instancetype)initWithCoder:(NSCoder *)decoder {
     return [self initWithUUID:[decoder decodeObjectForKey:@"UUID"]
                          name:[decoder decodeObjectForKey:@"name"]
-                configuration:[decoder decodeObjectForKey:@"configuration"]];
+                sessionConfigurationUUID:[decoder decodeObjectForKey:@"sessionConfigurationUUID"]];
 }
 
 
 - (void)encodeWithCoder:(NSCoder *)coder {
     [coder encodeObject:self.UUID forKey:@"UUID"];
     [coder encodeObject:self.name forKey:@"name"];
-    [coder encodeObject:self.configuration forKey:@"configuration"];
+    [coder encodeObject:self.sessionConfigurationUUID forKey:@"sessionConfigurationUUID"];
     [coder encodeInteger:ArchiveVersionLatest forKey:ArchiveVersionKey];
 }
 
@@ -74,7 +89,7 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
 
     return ([BLMUtils isObject:self.UUID equalToObject:other.UUID]
             && [BLMUtils isString:self.name equalToString:other.name]
-            && [BLMUtils isObject:self.configuration equalToObject:other.configuration]);
+            && [BLMUtils isObject:self.sessionConfigurationUUID equalToObject:other.sessionConfigurationUUID]);
 }
 
 @end

@@ -11,13 +11,31 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+
+extern NSString *const BLMSessionCreatedNotification;
+extern NSString *const BLMSessionDeletedNotification;
+extern NSString *const BLMSessionUpdatedNotification;
+
+extern NSString *const BLMSessionOriginalSessionUserInfoKey;
+extern NSString *const BLMSessionUpdatedSessionUserInfoKey;
+
+
+typedef NS_ENUM(NSInteger, BLMSessionProperty) {
+    BLMSessionPropertyName,
+    BLMSessionPropertySessionConfigurationUUID
+};
+
+
+#pragma mark
+
 @interface BLMSession : NSObject <NSCoding>
 
 @property (nonatomic, strong, readonly) NSUUID *UUID;
 @property (nonatomic, copy, readonly) NSString *name;
-@property (nonatomic, strong, readonly) BLMSessionConfiguration *configuration;
+@property (nonatomic, strong, readonly) NSUUID *sessionConfigurationUUID;
 
-- (instancetype)initWithUUID:(NSUUID *)UUID name:(NSString *)name configuration:(BLMSessionConfiguration *)configuration;
+- (instancetype)initWithUUID:(NSUUID *)UUID name:(NSString *)name sessionConfigurationUUID:(NSUUID *)sessionConfigurationUUID;
+- (instancetype)copyWithUpdatedValuesByProperty:(NSDictionary<NSNumber *, id> *)valuesByProperty;
 
 @end
 

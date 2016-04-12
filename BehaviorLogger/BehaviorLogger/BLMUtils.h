@@ -19,6 +19,8 @@ NS_ASSUME_NONNULL_BEGIN
 + (BOOL)isNumber:(nullable NSNumber *)number1 equalToNumber:(nullable NSNumber *)number2;
 + (BOOL)isDate:(nullable NSDate *)date1 equalToDate:(nullable NSDate *)date2;
 + (BOOL)isArray:(nullable NSArray *)array1 equalToArray:(nullable NSArray *)array2;
++ (BOOL)isSet:(nullable NSSet *)set1 equalToSet:(nullable NSSet *)set2;
++ (BOOL)isOrderedSet:(nullable NSOrderedSet *)orderedSet1 equalToOrderedSet:(nullable NSOrderedSet *)orderedSet2;
 + (BOOL)isDictionary:(nullable NSDictionary *)dictionary1 equalToDictionary:(nullable NSDictionary *)dictionary2;
 
 + (nullable id)objectFromDictionary:(NSDictionary *)dictionary forKey:(id<NSCopying>)key nullValue:(nullable id)nullValue defaultValue:(nullable id)defaultValue;

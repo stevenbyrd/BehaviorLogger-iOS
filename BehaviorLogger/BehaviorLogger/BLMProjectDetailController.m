@@ -17,6 +17,7 @@
 #import "BLMUtils.h"
 #import "BLMViewUtils.h"
 #import "NSArray+BLMAdditions.h"
+#import "NSOrderedSet+BLMAdditions.h"
 
 
 #pragma mark Constants
@@ -538,12 +539,12 @@ typedef NS_ENUM(NSUInteger, ActionButton) {
 
 
 - (void)updateProjectSessionConfigurationWithAddedBehaviorUUID {
-    BLMSessionConfiguration *sessionConfiguration = self.projectSessionConfiguration;
-    NSArray *updatedBehaviorUUIDs = [sessionConfiguration.behaviorUUIDs arrayByAddingObject:self.addedBehaviorUUID];
-
     assert(self.addedBehaviorUUID != nil);
-    assert(![sessionConfiguration.behaviorUUIDs containsObject:self.addedBehaviorUUID]);
+    assert(![self.projectSessionConfiguration.behaviorUUIDs containsObject:self.addedBehaviorUUID]);
     assert([self isBehaviorName:[[BLMDataManager sharedManager] behaviorForUUID:self.addedBehaviorUUID].name validForUUID:self.addedBehaviorUUID]);
+
+    BLMSessionConfiguration *sessionConfiguration = self.projectSessionConfiguration;
+    NSOrderedSet *updatedBehaviorUUIDs = [sessionConfiguration.behaviorUUIDs orderedSetByAddingObject:self.addedBehaviorUUID];
 
     [[BLMDataManager sharedManager] updateSessionConfigurationForUUID:sessionConfiguration.UUID property:BLMSessionConfigurationPropertyBehaviorUUIDs value:updatedBehaviorUUIDs completion:nil];
 
@@ -586,40 +587,42 @@ typedef NS_ENUM(NSUInteger, ActionButton) {
 
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleSessionConfigurationUpdated:) name:BLMSessionConfigurationUpdatedNotification object:updated];
 
-    if ([BLMUtils isArray:original.behaviorUUIDs equalToArray:updated.behaviorUUIDs]) {
+    if ([BLMUtils isOrderedSet:original.behaviorUUIDs equalToOrderedSet:updated.behaviorUUIDs]) {
         return;
     }
 
     [self.collectionView performBatchUpdates:^{
-        NSMutableArray *deletedIndexPaths = [NSMutableArray array];
+        NSMutableArray<NSIndexPath *> *reloadedIndexPaths = [NSMutableArray arrayWithObject:[self indexPathForAddBehaviorButtonCell]];
+        NSMutableArray<NSIndexPath *> *deletedIndexPaths = [NSMutableArray array];
 
-        NSMutableSet *deletedUUIDs = [NSMutableSet setWithArray:original.behaviorUUIDs];
-        [deletedUUIDs minusSet:[NSSet setWithArray:updated.behaviorUUIDs]];
+        [original.behaviorUUIDs enumerateObjectsUsingBlock:^(NSUUID *__nonnull UUID, NSUInteger index, BOOL *__nonnull stop) {
+            NSIndexPath *indexPath = [NSIndexPath indexPathForItem:index inSection:SectionBehaviors];
 
-        for (NSUUID *UUID in deletedUUIDs) {
-            [deletedIndexPaths addObject:[NSIndexPath indexPathForItem:[original.behaviorUUIDs indexOfObject:UUID] inSection:SectionBehaviors]];
-        }
+            if ([updated.behaviorUUIDs containsObject:UUID]) {
+                [reloadedIndexPaths addObject:indexPath];
+            } else {
+                [deletedIndexPaths addObject:indexPath];
+            }
+        }];
 
-        NSMutableSet<NSUUID *> *insertedUUIDs = [NSMutableSet setWithArray:updated.behaviorUUIDs];
-        [insertedUUIDs minusSet:[NSMutableSet setWithArray:original.behaviorUUIDs]];
+        NSUInteger addedBehaviorUUIDIndex = [updated.behaviorUUIDs indexOfObject:self.addedBehaviorUUID];
 
-        NSMutableArray *insertedIndexPaths = [NSMutableArray array];
-        NSMutableArray *reloadIndexPaths = [NSMutableArray arrayWithObject:[self indexPathForAddBehaviorButtonCell]];
-
-        if ([insertedUUIDs containsObject:self.addedBehaviorUUID]) {
-            [insertedUUIDs removeObject:self.addedBehaviorUUID];
-            [reloadIndexPaths addObject:[NSIndexPath indexPathForItem:[updated.behaviorUUIDs indexOfObject:self.addedBehaviorUUID] inSection:SectionBehaviors]];
-
+        if (addedBehaviorUUIDIndex != NSNotFound) {
+            [reloadedIndexPaths addObject:[NSIndexPath indexPathForItem:addedBehaviorUUIDIndex inSection:SectionBehaviors]];
             self.addedBehaviorUUID = nil;
         }
 
-        for (NSUUID *UUID in insertedUUIDs) {
-            [insertedIndexPaths addObject:[NSIndexPath indexPathForItem:[updated.behaviorUUIDs indexOfObject:UUID] inSection:SectionBehaviors]];
-        }
+        NSMutableArray<NSIndexPath *> *insertedIndexPaths = [NSMutableArray array];
+
+        [updated.behaviorUUIDs enumerateObjectsUsingBlock:^(NSUUID *__nonnull UUID, NSUInteger index, BOOL *__nonnull stop) {
+            if ((index != addedBehaviorUUIDIndex) && ![original.behaviorUUIDs containsObject:UUID]) {
+                [insertedIndexPaths addObject:[NSIndexPath indexPathForItem:index inSection:SectionBehaviors]];
+            }
+        }];
 
         [self.collectionView deleteItemsAtIndexPaths:deletedIndexPaths];
         [self.collectionView insertItemsAtIndexPaths:insertedIndexPaths];
-        [self.collectionView reloadItemsAtIndexPaths:reloadIndexPaths];
+        [self.collectionView reloadItemsAtIndexPaths:reloadedIndexPaths];
     } completion:^(BOOL finished) {
         assert(finished);
     }];
@@ -629,7 +632,7 @@ typedef NS_ENUM(NSUInteger, ActionButton) {
 - (void)handleBehaviorUpdated:(NSNotification *)notification {
     BLMBehavior *behavior = (BLMBehavior *)notification.object;
     BOOL updatedBehaviorIsAddedBehavior = [BLMUtils isObject:behavior.UUID equalToObject:self.addedBehaviorUUID];
-    NSArray<NSUUID *> *behaviorUUIDs = self.projectSessionConfiguration.behaviorUUIDs;
+    NSOrderedSet<NSUUID *> *behaviorUUIDs = self.projectSessionConfiguration.behaviorUUIDs;
 
     if ((self.addedBehaviorUUID == nil)
         || (!updatedBehaviorIsAddedBehavior
@@ -660,20 +663,21 @@ typedef NS_ENUM(NSUInteger, ActionButton) {
 - (void)handleBehaviorDeleted:(NSNotification *)notification {
     BLMBehavior *behavior = (BLMBehavior *)notification.object;
     BLMSessionConfiguration *sessionConfiguration = self.projectSessionConfiguration;
-    NSArray<NSUUID *> *behaviorUUIDs = sessionConfiguration.behaviorUUIDs;
+    NSOrderedSet<NSUUID *> *behaviorUUIDs = sessionConfiguration.behaviorUUIDs;
 
     if ([BLMUtils isObject:behavior.UUID equalToObject:self.addedBehaviorUUID]) {
         assert(![behaviorUUIDs containsObject:self.addedBehaviorUUID]);
 
+        self.addedBehaviorUUID = nil;
+
         [self.collectionView performBatchUpdates:^{
-            self.addedBehaviorUUID = nil;
             [self.collectionView deleteItemsAtIndexPaths:@[[NSIndexPath indexPathForItem:behaviorUUIDs.count inSection:SectionBehaviors]]];
             [self.collectionView reloadItemsAtIndexPaths:@[[self indexPathForAddBehaviorButtonCell]]];
         } completion:^(BOOL finished) {
             assert(finished);
         }];
     } else if ([behaviorUUIDs containsObject:behavior.UUID]) {
-        NSArray *updatedBehaviorUUIDs = [behaviorUUIDs arrayByRemovingObject:behavior.UUID];
+        NSOrderedSet<NSUUID *> *updatedBehaviorUUIDs = [behaviorUUIDs orderedSetByRemovingObject:behavior.UUID];
         [[BLMDataManager sharedManager] updateSessionConfigurationForUUID:sessionConfiguration.UUID property:BLMSessionConfigurationPropertyBehaviorUUIDs value:updatedBehaviorUUIDs completion:nil];
     }
 }
@@ -751,7 +755,7 @@ typedef NS_ENUM(NSUInteger, ActionButton) {
         }
 
         case SectionBehaviors: {
-            NSArray<NSUUID *> *behaviorUUIDs = self.projectSessionConfiguration.behaviorUUIDs;
+            NSOrderedSet<NSUUID *> *behaviorUUIDs = self.projectSessionConfiguration.behaviorUUIDs;
 
             if ((indexPath.item < behaviorUUIDs.count) || ((indexPath.item == behaviorUUIDs.count) && (self.addedBehaviorUUID != nil))) {
                 BehaviorCell *behaviorCell = (BehaviorCell *)[collectionView dequeueReusableCellWithReuseIdentifier:NSStringFromClass([BehaviorCell class]) forIndexPath:indexPath];
@@ -1276,7 +1280,7 @@ typedef NS_ENUM(NSUInteger, ActionButton) {
         [[BLMDataManager sharedManager] deleteBehaviorForUUID:self.addedBehaviorUUID completion:nil];
     } else {
         BLMSessionConfiguration *sessionConfiguration = self.projectSessionConfiguration;
-        NSArray *updatedBehaviorUUIDs = [sessionConfiguration.behaviorUUIDs arrayByRemovingObject:cell.behavior.UUID];
+        NSOrderedSet *updatedBehaviorUUIDs = [sessionConfiguration.behaviorUUIDs orderedSetByRemovingObject:cell.behavior.UUID];
 
         [[BLMDataManager sharedManager] updateSessionConfigurationForUUID:sessionConfiguration.UUID property:BLMSessionConfigurationPropertyBehaviorUUIDs value:updatedBehaviorUUIDs completion:nil];
     }
@@ -1398,7 +1402,7 @@ typedef NS_ENUM(NSUInteger, ActionButton) {
             assert(cell.item == ([self.collectionView numberOfItemsInSection:SectionBehaviors] - 1));
 
             if (self.addedBehaviorUUID != nil) { // There is a valid behavior item that has not been officially added to the data model
-                NSArray<NSUUID *> *behaviorUUIDs = self.projectSessionConfiguration.behaviorUUIDs;
+                NSOrderedSet<NSUUID *> *behaviorUUIDs = self.projectSessionConfiguration.behaviorUUIDs;
                 NSIndexPath *addedBehaviorIndexPath = [NSIndexPath indexPathForItem:behaviorUUIDs.count inSection:SectionBehaviors];
                 BehaviorCell *addedBehaviorCell = (BehaviorCell *)[self.collectionView cellForItemAtIndexPath:addedBehaviorIndexPath];
 
@@ -1419,7 +1423,7 @@ typedef NS_ENUM(NSUInteger, ActionButton) {
 
                 self.addedBehaviorUUID = behavior.UUID;
 
-                NSArray<NSUUID *> *behaviorUUIDs = self.projectSessionConfiguration.behaviorUUIDs;
+                NSOrderedSet<NSUUID *> *behaviorUUIDs = self.projectSessionConfiguration.behaviorUUIDs;
                 NSIndexPath *addedBehaviorIndexPath = [NSIndexPath indexPathForItem:behaviorUUIDs.count inSection:SectionBehaviors];
 
                 [self.collectionView performBatchUpdates:^{

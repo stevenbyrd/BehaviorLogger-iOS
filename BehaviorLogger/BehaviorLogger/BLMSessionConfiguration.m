@@ -34,7 +34,7 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
 
 @implementation BLMSessionConfiguration
 
-- (instancetype)initWithUUID:(NSUUID *)UUID condition:(NSString *)condition location:(NSString *)location therapist:(NSString *)therapist observer:(NSString *)observer timeLimit:(BLMTimeInterval)timeLimit timeLimitOptions:(BLMTimeLimitOptions)timeLimitOptions behaviorUUIDs:(NSArray<NSUUID *> *)behaviorUUIDs {
+- (instancetype)initWithUUID:(NSUUID *)UUID condition:(NSString *)condition location:(NSString *)location therapist:(NSString *)therapist observer:(NSString *)observer timeLimit:(BLMTimeInterval)timeLimit timeLimitOptions:(BLMTimeLimitOptions)timeLimitOptions behaviorUUIDs:(NSOrderedSet<NSUUID *> *)behaviorUUIDs {
     self = [super init];
 
     if (self == nil) {
@@ -48,7 +48,7 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
     _observer = [observer copy];
     _timeLimit = timeLimit;
     _timeLimitOptions = timeLimitOptions;
-    _behaviorUUIDs = [behaviorUUIDs copy];
+    _behaviorUUIDs = ([behaviorUUIDs copy] ?: [NSOrderedSet orderedSet]);
 
     return self;
 }
@@ -110,7 +110,7 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
             && [BLMUtils isString:self.location equalToString:other.location]
             && [BLMUtils isString:self.therapist equalToString:other.therapist]
             && [BLMUtils isString:self.observer equalToString:other.observer]
-            && [BLMUtils isArray:self.behaviorUUIDs equalToArray:other.behaviorUUIDs]
+            && [BLMUtils isOrderedSet:self.behaviorUUIDs equalToOrderedSet:other.behaviorUUIDs]
             && (self.timeLimit == other.timeLimit)
             && (self.timeLimitOptions == other.timeLimitOptions));
 }

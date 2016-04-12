@@ -13,6 +13,7 @@
 		AA6A53A21C8E985200422078 /* BLMCollectionView.m in Sources */ = {isa = PBXBuildFile; fileRef = AA6A53A11C8E985200422078 /* BLMCollectionView.m */; };
 		AA6A53A51C8F008C00422078 /* NSArray+BLMAdditions.m in Sources */ = {isa = PBXBuildFile; fileRef = AA6A53A41C8F008C00422078 /* NSArray+BLMAdditions.m */; };
 		AA848FFE1C8C251E0037EF80 /* UIResponder+BLMAdditions.m in Sources */ = {isa = PBXBuildFile; fileRef = AA848FFD1C8C251E0037EF80 /* UIResponder+BLMAdditions.m */; };
+		AAB1E1041CBC87D900A4B407 /* NSOrderedSet+BLMAdditions.m in Sources */ = {isa = PBXBuildFile; fileRef = AAB1E1031CBC87D900A4B407 /* NSOrderedSet+BLMAdditions.m */; };
 		AAB5616A1C5D775D00D454F8 /* BLMViewUtils.m in Sources */ = {isa = PBXBuildFile; fileRef = AAB561691C5D775D00D454F8 /* BLMViewUtils.m */; };
 		AABA33401C3D2FB10086A9A1 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = AABA333F1C3D2FB10086A9A1 /* main.m */; };
 		AABA33431C3D2FB10086A9A1 /* BLMAppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = AABA33421C3D2FB10086A9A1 /* BLMAppDelegate.m */; };
@@ -43,6 +44,8 @@
 		AA6A53A41C8F008C00422078 /* NSArray+BLMAdditions.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSArray+BLMAdditions.m"; sourceTree = "<group>"; };
 		AA848FFC1C8C251E0037EF80 /* UIResponder+BLMAdditions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "UIResponder+BLMAdditions.h"; sourceTree = "<group>"; };
 		AA848FFD1C8C251E0037EF80 /* UIResponder+BLMAdditions.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "UIResponder+BLMAdditions.m"; sourceTree = "<group>"; };
+		AAB1E1021CBC87D900A4B407 /* NSOrderedSet+BLMAdditions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSOrderedSet+BLMAdditions.h"; sourceTree = "<group>"; };
+		AAB1E1031CBC87D900A4B407 /* NSOrderedSet+BLMAdditions.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSOrderedSet+BLMAdditions.m"; sourceTree = "<group>"; };
 		AAB561681C5D775D00D454F8 /* BLMViewUtils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BLMViewUtils.h; sourceTree = "<group>"; };
 		AAB561691C5D775D00D454F8 /* BLMViewUtils.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BLMViewUtils.m; sourceTree = "<group>"; };
 		AABA333B1C3D2FB10086A9A1 /* BehaviorLogger.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BehaviorLogger.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -94,6 +97,8 @@
 				AAEC9E141CB2260B00FD4011 /* NSSet+BLMAdditions.m */,
 				AA848FFC1C8C251E0037EF80 /* UIResponder+BLMAdditions.h */,
 				AA848FFD1C8C251E0037EF80 /* UIResponder+BLMAdditions.m */,
+				AAB1E1021CBC87D900A4B407 /* NSOrderedSet+BLMAdditions.h */,
+				AAB1E1031CBC87D900A4B407 /* NSOrderedSet+BLMAdditions.m */,
 			);
 			name = Categories;
 			sourceTree = "<group>";
@@ -282,6 +287,7 @@
 				AABA338F1C3DC58A0086A9A1 /* BLMSession.m in Sources */,
 				AABA336B1C3D3CCB0086A9A1 /* BLMDataManager.m in Sources */,
 				AAEC9E151CB2260B00FD4011 /* NSSet+BLMAdditions.m in Sources */,
+				AAB1E1041CBC87D900A4B407 /* NSOrderedSet+BLMAdditions.m in Sources */,
 				AAB5616A1C5D775D00D454F8 /* BLMViewUtils.m in Sources */,
 				AAE8CB651C61C1E5008FF024 /* BLMTextInputCell.m in Sources */,
 				AA848FFE1C8C251E0037EF80 /* UIResponder+BLMAdditions.m in Sources */,

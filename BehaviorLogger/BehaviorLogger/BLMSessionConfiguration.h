@@ -55,9 +55,9 @@ typedef NS_ENUM(NSInteger, BLMSessionConfigurationProperty) {
 @property (nullable, nonatomic, copy, readonly) NSString *observer;
 @property (nonatomic, assign, readonly) BLMTimeInterval timeLimit;
 @property (nonatomic, assign, readonly) BLMTimeLimitOptions timeLimitOptions;
-@property (nonatomic, copy, readonly) NSArray<NSUUID *> *behaviorUUIDs;
+@property (nonatomic, copy, readonly) NSOrderedSet<NSUUID *> *behaviorUUIDs;
 
-- (instancetype)initWithUUID:(NSUUID *)UUID condition:(nullable NSString *)condition location:(nullable NSString *)location therapist:(nullable NSString *)therapist observer:(nullable NSString *)observer timeLimit:(BLMTimeInterval)timeLimit timeLimitOptions:(BLMTimeLimitOptions)timeLimitOptions behaviorUUIDs:(NSArray<NSUUID *> *)behaviorUUIDs;
+- (instancetype)initWithUUID:(NSUUID *)UUID condition:(nullable NSString *)condition location:(nullable NSString *)location therapist:(nullable NSString *)therapist observer:(nullable NSString *)observer timeLimit:(BLMTimeInterval)timeLimit timeLimitOptions:(BLMTimeLimitOptions)timeLimitOptions behaviorUUIDs:(nullable NSOrderedSet<NSUUID *> *)behaviorUUIDs;
 - (instancetype)copyWithUpdatedValuesByProperty:(NSDictionary<NSNumber *, id> *)valuesByProperty; // @(BLMSessionConfigurationProperty) -> id
 
 @end

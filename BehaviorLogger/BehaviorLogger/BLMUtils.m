@@ -59,6 +59,27 @@
 }
 
 
++ (BOOL)isSet:(nullable NSSet *)set1 equalToSet:(nullable NSSet *)set2 {
+    return ((set1 == set2)
+            || ((set1 != nil)
+                && (set2 != nil)
+                && [set1 respondsToSelector:@selector(isEqualToSet:)]
+                && [set2 respondsToSelector:@selector(isEqualToSet:)]
+                && [set1 isEqualToSet:set2]));
+}
+
+
++ (BOOL)isOrderedSet:(nullable NSOrderedSet *)orderedSet1 equalToOrderedSet:(nullable NSOrderedSet *)orderedSet2 {
+    return ((orderedSet1 == orderedSet2)
+            || ((orderedSet1 != nil)
+                && (orderedSet2 != nil)
+                && [orderedSet1 respondsToSelector:@selector(isEqualToOrderedSet:)]
+                && [orderedSet2 respondsToSelector:@selector(isEqualToOrderedSet:)]
+                && [orderedSet1 isEqualToOrderedSet:orderedSet2]));
+
+}
+
+
 + (BOOL)isDictionary:(NSDictionary *)dictionary1 equalToDictionary:(NSDictionary *)dictionary2 {
     return ((dictionary1 == dictionary2)
             || ((dictionary1 != nil)

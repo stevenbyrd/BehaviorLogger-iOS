@@ -38,7 +38,7 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
 
 @implementation BLMProject
 
-- (instancetype)initWithUUID:(NSUUID *)UUID name:(NSString *)name client:(NSString *)client sessionConfigurationUUID:(NSUUID *)sessionConfigurationUUID sessionByUUID:(NSDictionary<NSUUID *, BLMSession *> *)sessionByUUID {
+- (instancetype)initWithUUID:(NSUUID *)UUID name:(NSString *)name client:(NSString *)client sessionConfigurationUUID:(NSUUID *)sessionConfigurationUUID sessionUUIDs:(nullable NSOrderedSet<NSUUID *> *)sessionUUIDs {
     self = [super init];
 
     if (self == nil) {
@@ -49,7 +49,7 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
     _name = [name copy];
     _client = [client copy];
     _sessionConfigurationUUID = sessionConfigurationUUID;
-    _sessionByUUID = [sessionByUUID copy];
+    _sessionUUIDs = [sessionUUIDs copy];
 
     return self;
 }
@@ -60,7 +60,7 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
                                        name:[BLMUtils objectFromDictionary:valuesByProperty forKey:@(BLMProjectPropertyName) nullValue:nil defaultValue:self.name]
                                      client:[BLMUtils objectFromDictionary:valuesByProperty forKey:@(BLMProjectPropertyClient) nullValue:nil defaultValue:self.client]
                    sessionConfigurationUUID:[BLMUtils objectFromDictionary:valuesByProperty forKey:@(BLMProjectPropertySessionConfigurationUUID) nullValue:nil defaultValue:self.sessionConfigurationUUID]
-                              sessionByUUID:[BLMUtils objectFromDictionary:valuesByProperty forKey:@(BLMProjectPropertySessionByUUID) nullValue:nil defaultValue:self.sessionByUUID]];
+                               sessionUUIDs:[BLMUtils objectFromDictionary:valuesByProperty forKey:@(BLMProjectPropertySessionUUIDs) nullValue:nil defaultValue:self.sessionUUIDs]];
 }
 
 #pragma mark NSCoding
@@ -70,7 +70,7 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
                          name:[decoder decodeObjectForKey:@"name"]
                        client:[decoder decodeObjectForKey:@"client"]
      sessionConfigurationUUID:[decoder decodeObjectForKey:@"sessionConfigurationUUID"]
-                sessionByUUID:[decoder decodeObjectForKey:@"sessionByUUID"]];
+                 sessionUUIDs:[decoder decodeObjectForKey:@"sessionUUIDs"]];
 }
 
 
@@ -79,7 +79,7 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
     [coder encodeObject:self.name forKey:@"name"];
     [coder encodeObject:self.client forKey:@"client"];
     [coder encodeObject:self.sessionConfigurationUUID forKey:@"sessionConfigurationUUID"];
-    [coder encodeObject:self.sessionByUUID forKey:@"sessionByUUID"];
+    [coder encodeObject:self.sessionUUIDs forKey:@"sessionUUIDs"];
     [coder encodeInteger:ArchiveVersionLatest forKey:ArchiveVersionKey];
 }
 
@@ -101,7 +101,7 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
             && [BLMUtils isString:self.name equalToString:other.name]
             && [BLMUtils isString:self.client equalToString:other.client]
             && [BLMUtils isObject:self.sessionConfigurationUUID equalToObject:other.sessionConfigurationUUID]
-            && [BLMUtils isDictionary:self.sessionByUUID equalToDictionary:other.sessionByUUID]);
+            && [BLMUtils isOrderedSet:self.sessionUUIDs equalToOrderedSet:other.sessionUUIDs]);
 }
 
 @end

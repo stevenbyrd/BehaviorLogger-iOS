@@ -227,7 +227,7 @@ typedef NS_ENUM(NSUInteger, ActionButton) {
                                                                    observer:self.properties[SectionSessionConfigurationProperties][SessionConfigurationPropertyObserver]
                                                                   timeLimit:0
                                                            timeLimitOptions:0
-                                                              behaviorUUIDs:@[]
+                                                              behaviorUUIDs:nil
                                                                  completion:^(BLMSessionConfiguration *sessionConfiguration, NSError *sessionConfigurationError) {
                                                                      if (sessionConfigurationError != nil) {
                                                                          [self.delegate createProjectController:self didFailWithError:sessionConfigurationError];

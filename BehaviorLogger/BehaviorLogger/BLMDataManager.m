@@ -11,6 +11,7 @@
 #import "BLMSession.h"
 #import "BLMUtils.h"
 #import "NSSet+BLMAdditions.h"
+#import "NSOrderedSet+BLMAdditions.h"
 
 #import <objc/runtime.h>
 
@@ -51,6 +52,7 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
 @property (nonatomic, copy, readwrite) NSSet<NSString *> *projectNameSet;
 @property (nonatomic, copy, readonly) NSMutableDictionary<NSUUID*, BLMProject *> *projectByUUID;
 @property (nonatomic, copy, readonly) NSMutableDictionary<NSUUID*, BLMBehavior *> *behaviorByUUID;
+@property (nonatomic, copy, readonly) NSMutableDictionary<NSUUID*, BLMSession *> *sessionByUUID;
 @property (nonatomic, copy, readonly) NSMutableDictionary<NSUUID*, BLMSessionConfiguration *> *sessionConfigurationByUUID;
 @property (nonatomic, strong, readonly) NSOperationQueue *archiveQueue;
 
@@ -140,7 +142,7 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
     assert(![self.projectNameSet containsObject:name]);
     self.projectNameSet = [self.projectNameSet setByAddingObject:name];
 
-    BLMProject *project = [[BLMProject alloc] initWithUUID:[NSUUID UUID] name:name client:client sessionConfigurationUUID:sessionConfigurationUUID sessionByUUID:nil];
+    BLMProject *project = [[BLMProject alloc] initWithUUID:[NSUUID UUID] name:name client:client sessionConfigurationUUID:sessionConfigurationUUID sessionUUIDs:nil];
     self.projectByUUID[project.UUID] = project;
 
     [self archiveCurrentState];
@@ -275,6 +277,77 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
     }
 }
 
+#pragma mark BLMSession
+
+- (BLMSession *)sessionForUUID:(NSUUID *)UUID {
+    assert([NSThread isMainThread]);
+    return self.sessionByUUID[UUID];
+}
+
+
+- (NSEnumerator<BLMSession *> *)sessionEnumerator {
+    assert([NSThread isMainThread]);
+    return self.sessionByUUID.objectEnumerator;
+}
+
+
+- (void)createSessionWithName:(NSString *)name sessionConfigurationUUID:(NSUUID *)sessionConfigurationUUID completion:(nullable void(^)(BLMSession *__nullable session, NSError *__nullable error))completion {
+    assert([NSThread isMainThread]);
+
+    NSUUID *UUID = [NSUUID UUID];
+    BLMSession *session = [[BLMSession alloc] initWithUUID:UUID name:name sessionConfigurationUUID:sessionConfigurationUUID];
+
+    self.sessionByUUID[UUID] = session;
+
+    [self archiveCurrentState];
+
+    NSDictionary *userInfo = @{ BLMSessionUpdatedSessionUserInfoKey:session };
+    [[NSNotificationCenter defaultCenter] postNotificationName:BLMSessionCreatedNotification object:session userInfo:userInfo];
+
+    if (completion != nil) {
+        completion(session, nil);
+    }
+}
+
+
+- (void)updateSessionForUUID:(NSUUID *)UUID property:(BLMSessionProperty)property value:(nullable id)value completion:(nullable void(^)(BLMSession *__nullable updatedSession, NSError *__nullable error))completion {
+    assert([NSThread isMainThread]);
+
+    BLMSession *original = self.sessionByUUID[UUID];
+    BLMSession *updated = [original copyWithUpdatedValuesByProperty:@{ @(property):(value ?: [NSNull null]) }];
+
+    if (![BLMUtils isObject:original equalToObject:updated]) {
+        self.sessionByUUID[UUID] = updated;
+
+        [self archiveCurrentState];
+
+        NSDictionary *userInfo = @{ BLMSessionOriginalSessionUserInfoKey:original, BLMSessionUpdatedSessionUserInfoKey:updated };
+        [[NSNotificationCenter defaultCenter] postNotificationName:BLMSessionUpdatedNotification object:original userInfo:userInfo];
+    }
+
+    if (completion != nil) {
+        completion(updated, nil);
+    }
+}
+
+
+- (void)deleteSessionForUUID:(NSUUID *)UUID completion:(nullable void(^)(NSError *__nullable error))completion {
+    assert([NSThread isMainThread]);
+
+    BLMSession *session = self.sessionByUUID[UUID];
+    assert(session != nil);
+
+    [self.sessionByUUID removeObjectForKey:UUID];
+
+    [self archiveCurrentState];
+
+    [[NSNotificationCenter defaultCenter] postNotificationName:BLMSessionDeletedNotification object:session userInfo:nil];
+
+    if (completion != nil) {
+        completion(nil);
+    }
+}
+
 #pragma mark BLMSessionConfiguration
 
 - (BLMSessionConfiguration *)sessionConfigurationForUUID:(NSUUID *)UUID {
@@ -289,7 +362,7 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
 }
 
 
-- (void)createSessionConfigurationWithCondition:(NSString *)condition location:(NSString *)location therapist:(NSString *)therapist observer:(NSString *)observer timeLimit:(BLMTimeInterval)timeLimit timeLimitOptions:(BLMTimeLimitOptions)timeLimitOptions behaviorUUIDs:(NSArray<NSUUID *> *)behaviorUUIDs completion:(void(^)(BLMSessionConfiguration *sessionConfiguration, NSError *error))completion {
+- (void)createSessionConfigurationWithCondition:(NSString *)condition location:(NSString *)location therapist:(NSString *)therapist observer:(NSString *)observer timeLimit:(BLMTimeInterval)timeLimit timeLimitOptions:(BLMTimeLimitOptions)timeLimitOptions behaviorUUIDs:(NSOrderedSet<NSUUID *> *)behaviorUUIDs completion:(void(^)(BLMSessionConfiguration *sessionConfiguration, NSError *error))completion {
     assert([NSThread isMainThread]);
 
     NSUUID *UUID = [NSUUID UUID];
@@ -412,6 +485,7 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
     [self.archiveQueue addOperationWithBlock:^{
         NSMutableDictionary<NSUUID *, BLMProject *> *projectByUUID = nil;
         NSMutableDictionary<NSUUID *, BLMBehavior *> *behaviorByUUID = nil;
+        NSMutableDictionary<NSUUID *, BLMSession *> *sessionByUUID = nil;
         NSMutableDictionary<NSUUID *, BLMSessionConfiguration *> *sessionConfigurationByUUID = nil;
         NSString *filePath = [ArchiveDirectory() stringByAppendingPathComponent:ArchiveFileName];
         NSData *archiveData = [NSData dataWithContentsOfFile:filePath];
@@ -429,6 +503,7 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
                 case ArchiveVersionLatest:
                     projectByUUID = [[unarchiver decodeObjectForKey:@"projectByUUID"] mutableCopy];
                     behaviorByUUID = [[unarchiver decodeObjectForKey:@"behaviorByUUID"] mutableCopy];
+                    sessionByUUID = [[unarchiver decodeObjectForKey:@"sessionByUUID"] mutableCopy];
                     sessionConfigurationByUUID = [[unarchiver decodeObjectForKey:@"sessionConfigurationByUUID"] mutableCopy];
                     break;
             }
@@ -437,34 +512,51 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
         }
 
         NSMutableSet<NSUUID *> *referenedBehaviorUUIDs = [NSMutableSet set];
+        NSMutableSet<NSUUID *> *referenedSessionUUIDs = [NSMutableSet set];
+        NSMutableSet<NSUUID *> *referenedSessionConfigurationUUIDs = [NSMutableSet set];
 
-        for (BLMProject *project in projectByUUID.objectEnumerator) {
-            BLMSessionConfiguration *sessionConfiguration = sessionConfigurationByUUID[project.sessionConfigurationUUID];
+        [projectByUUID enumerateKeysAndObjectsUsingBlock:^(NSUUID *__nonnull projectUUID, BLMProject *__nonnull project, BOOL *__nonnull stopProjectUUIDEnumeration) {
+            [project.sessionUUIDs enumerateObjectsUsingBlock:^(NSUUID *__nonnull sessionUUID, NSUInteger index, BOOL *__nonnull stopSessionUUIDEnumeration) {
+                BLMSession *session = sessionByUUID[sessionUUID];
+                BLMSessionConfiguration *sessionConfiguration = sessionConfigurationByUUID[session.sessionConfigurationUUID];
 
-            NSArray *sanitizedBehaviorUUIDs = [sessionConfiguration.behaviorUUIDs filteredArrayUsingPredicate:[NSPredicate predicateWithBlock:^BOOL(NSUUID *UUID, NSDictionary *bindings) {
-                return (behaviorByUUID[UUID] != nil);
+                assert([sessionConfiguration.behaviorUUIDs isSubsetOfSet:[NSSet setWithArray:behaviorByUUID.allKeys]]);
+
+                [referenedBehaviorUUIDs unionSet:sessionConfiguration.behaviorUUIDs.set];
+                [referenedSessionConfigurationUUIDs addObject:session.sessionConfigurationUUID];
+            }];
+
+            BLMSessionConfiguration *projectSessionConfiguration = sessionConfigurationByUUID[project.sessionConfigurationUUID];
+
+            NSOrderedSet *sanitizedBehaviorUUIDs = [projectSessionConfiguration.behaviorUUIDs filteredOrderedSetUsingPredicate:[NSPredicate predicateWithBlock:^BOOL(NSUUID *behaviorUUID, NSDictionary *bindings) {
+                return (behaviorByUUID[behaviorUUID] != nil);
             }]];
 
-            if (sanitizedBehaviorUUIDs.count != sessionConfiguration.behaviorUUIDs.count) { // Remove references to behaviors that no longer exist from projects' default session configurations
-                sessionConfigurationByUUID[project.sessionConfigurationUUID] = [sessionConfiguration copyWithUpdatedValuesByProperty:@{ @(BLMSessionConfigurationPropertyBehaviorUUIDs):sanitizedBehaviorUUIDs }];
+            if (![BLMUtils isOrderedSet:sanitizedBehaviorUUIDs equalToOrderedSet:projectSessionConfiguration.behaviorUUIDs]) { // Remove references to behaviors that no longer exist from projects' default session configurations
+                projectSessionConfiguration = [projectSessionConfiguration copyWithUpdatedValuesByProperty:@{ @(BLMSessionConfigurationPropertyBehaviorUUIDs):sanitizedBehaviorUUIDs }];
+                sessionConfigurationByUUID[project.sessionConfigurationUUID] = projectSessionConfiguration;
             }
 
-            [referenedBehaviorUUIDs addObjectsFromArray:sanitizedBehaviorUUIDs];
+            [referenedBehaviorUUIDs unionSet:sanitizedBehaviorUUIDs.set];
+            [referenedSessionUUIDs unionSet:project.sessionUUIDs.set];
+            [referenedSessionConfigurationUUIDs addObject:project.sessionConfigurationUUID];
+        }];
 
-            for (BLMSession *session in project.sessionByUUID.objectEnumerator) {
-                [referenedBehaviorUUIDs addObjectsFromArray:session.configuration.behaviorUUIDs];
+        void (^removeUnreferencedEntries)(NSMutableDictionary *, NSSet *) = ^(NSMutableDictionary<NSUUID *, id> *entryByUUID, NSSet<NSUUID *> *referencedUUIDs) {
+            NSMutableArray *unreferencedUUIDs = [NSMutableArray array];
+
+            for (NSUUID *UUID in entryByUUID.keyEnumerator) {
+                if (![referencedUUIDs containsObject:UUID]) {
+                    [unreferencedUUIDs addObject:UUID];
+                }
             }
-        }
 
-        NSMutableArray *unreferencedBehaviorUUIDs = [NSMutableArray array];
+            [entryByUUID removeObjectsForKeys:unreferencedUUIDs];
+        };
 
-        for (NSUUID *UUID in behaviorByUUID.keyEnumerator) { // Remove behaviors from the data model when there is no longer anything referencing them
-            if (![referenedBehaviorUUIDs containsObject:UUID]) {
-                [unreferencedBehaviorUUIDs addObject:UUID];
-            }
-        }
-
-        [behaviorByUUID removeObjectsForKeys:unreferencedBehaviorUUIDs];
+        removeUnreferencedEntries(behaviorByUUID, referenedBehaviorUUIDs);
+        removeUnreferencedEntries(sessionByUUID, referenedSessionUUIDs);
+        removeUnreferencedEntries(sessionConfigurationByUUID, referenedSessionConfigurationUUIDs);
 
         [[NSOperationQueue mainQueue] addOperationWithBlock:^{
             assert(self.projectByUUID.count == 0);
@@ -501,7 +593,7 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
 
 @implementation AbstractModelObjectEnumerator
 
-- (instancetype)initWithArray:(NSArray<NSUUID *> *)array dataManager:(BLMDataManager *)dataManager {
+- (instancetype)initWithUUIDs:(NSOrderedSet<NSUUID *> *)UUIDs dataManager:(BLMDataManager *)dataManager {
     assert(![self isMemberOfClass:[AbstractModelObjectEnumerator class]]);
 
     self = [super init];
@@ -510,7 +602,7 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
         return nil;
     }
 
-    _UUIDEnumerator = array.objectEnumerator;
+    _UUIDEnumerator = UUIDs.objectEnumerator;
     _dataManager = dataManager;
 
     return self;
@@ -575,7 +667,7 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
 }
 
 
-+ (NSEnumerator<BLMProject *> *)projectEnumeratorForUUIDs:(NSArray<NSUUID *> *)UUIDs dataManager:(BLMDataManager *)dataManager {
++ (NSEnumerator<BLMProject *> *)projectEnumeratorForUUIDs:(NSOrderedSet<NSUUID *> *)UUIDs dataManager:(BLMDataManager *)dataManager {
     static Class concreteSubclass;
     static dispatch_once_t onceToken;
 
@@ -585,11 +677,11 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
         }];
     });
 
-    return [(AbstractModelObjectEnumerator *)[concreteSubclass alloc] initWithArray:UUIDs dataManager:dataManager];
+    return [(AbstractModelObjectEnumerator *)[concreteSubclass alloc] initWithUUIDs:UUIDs dataManager:dataManager];
 }
 
 
-+ (NSEnumerator<BLMBehavior *> *)behaviorEnumeratorForUUIDs:(NSArray<NSUUID *> *)UUIDs dataManager:(BLMDataManager *)dataManager {
++ (NSEnumerator<BLMBehavior *> *)behaviorEnumeratorForUUIDs:(NSOrderedSet<NSUUID *> *)UUIDs dataManager:(BLMDataManager *)dataManager {
     static Class concreteSubclass;
     static dispatch_once_t onceToken;
 
@@ -599,11 +691,11 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
         }];
     });
 
-    return [(AbstractModelObjectEnumerator *)[concreteSubclass alloc] initWithArray:UUIDs dataManager:dataManager];
+    return [(AbstractModelObjectEnumerator *)[concreteSubclass alloc] initWithUUIDs:UUIDs dataManager:dataManager];
 }
 
 
-+ (NSEnumerator<BLMSessionConfiguration *> *)sessionConfigurationEnumeratorForUUIDs:(NSArray<NSUUID *> *)UUIDs dataManager:(BLMDataManager *)dataManager {
++ (NSEnumerator<BLMSessionConfiguration *> *)sessionConfigurationEnumeratorForUUIDs:(NSOrderedSet<NSUUID *> *)UUIDs dataManager:(BLMDataManager *)dataManager {
     static Class concreteSubclass;
     static dispatch_once_t onceToken;
 
@@ -613,7 +705,7 @@ typedef NS_ENUM(NSInteger, ArchiveVersion) {
         }];
     });
 
-    return [(AbstractModelObjectEnumerator *)[concreteSubclass alloc] initWithArray:UUIDs dataManager:dataManager];
+    return [(AbstractModelObjectEnumerator *)[concreteSubclass alloc] initWithUUIDs:UUIDs dataManager:dataManager];
 }
 
 @end
