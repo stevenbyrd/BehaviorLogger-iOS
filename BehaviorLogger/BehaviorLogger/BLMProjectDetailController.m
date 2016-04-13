@@ -338,10 +338,15 @@ typedef NS_ENUM(NSUInteger, ActionButton) {
 }
 
 
-- (void)configureLabelSubviewsPreferredMaxLayoutWidth {
-    [super configureLabelSubviewsPreferredMaxLayoutWidth];
+- (void)updateLabelSubviewsPreferredMaxLayoutWidthWithLayoutRequired:(BOOL *)layoutRequired {
+    [super updateLabelSubviewsPreferredMaxLayoutWidthWithLayoutRequired:layoutRequired];
 
-    self.toggleSwitchLabel.preferredMaxLayoutWidth = CGRectGetWidth([self.toggleSwitchLabel alignmentRectForFrame:self.toggleSwitchLabel.frame]);
+    CGFloat preferredMaxLayoutWidth = CGRectGetWidth([self.toggleSwitchLabel alignmentRectForFrame:self.toggleSwitchLabel.frame]);
+
+    if (preferredMaxLayoutWidth != self.toggleSwitchLabel.preferredMaxLayoutWidth) {
+        self.toggleSwitchLabel.preferredMaxLayoutWidth = preferredMaxLayoutWidth;
+        *layoutRequired = YES;
+    }
 }
 
 #pragma mark BLMCollectionViewCellLayoutDelegate

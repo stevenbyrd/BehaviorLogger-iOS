@@ -84,9 +84,12 @@ static CGFloat const HeaderFontSize = 18.0;
 - (void)layoutSubviews {
     [super layoutSubviews];
 
-    self.label.preferredMaxLayoutWidth = CGRectGetWidth([self.label alignmentRectForFrame:self.label.frame]);
+    CGFloat preferredMaxLayoutWidth = CGRectGetWidth([self.label alignmentRectForFrame:self.label.frame]);
 
-    [super layoutSubviews];
+    if (preferredMaxLayoutWidth != self.label.preferredMaxLayoutWidth) {
+        self.label.preferredMaxLayoutWidth = preferredMaxLayoutWidth;
+        [super layoutSubviews];
+    }
 }
 
 @end
@@ -146,9 +149,13 @@ static CGFloat const HeaderFontSize = 18.0;
 - (void)layoutSubviews {
     [super layoutSubviews];
 
-    [self configureLabelSubviewsPreferredMaxLayoutWidth];
+    BOOL layoutRequired = NO;
 
-    [super layoutSubviews];
+    [self updateLabelSubviewsPreferredMaxLayoutWidthWithLayoutRequired:&layoutRequired];
+
+    if (layoutRequired) {
+        [self layoutSubviews];
+    }
 }
 
 
@@ -171,8 +178,13 @@ static CGFloat const HeaderFontSize = 18.0;
 }
 
 
-- (void)configureLabelSubviewsPreferredMaxLayoutWidth {
-    self.label.preferredMaxLayoutWidth = CGRectGetWidth([self.label alignmentRectForFrame:self.label.frame]);
+- (void)updateLabelSubviewsPreferredMaxLayoutWidthWithLayoutRequired:(BOOL *)layoutRequired {
+    CGFloat preferredMaxLayoutWidth = CGRectGetWidth([self.label alignmentRectForFrame:self.label.frame]);
+
+    if (preferredMaxLayoutWidth != self.label.preferredMaxLayoutWidth) {
+        self.label.preferredMaxLayoutWidth = preferredMaxLayoutWidth;
+        *layoutRequired = YES;
+    }
 }
 
 

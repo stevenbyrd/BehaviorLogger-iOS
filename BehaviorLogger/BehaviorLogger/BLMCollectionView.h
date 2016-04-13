@@ -125,7 +125,7 @@ extern BLMCollectionViewSectionLayout const BLMCollectionViewSectionLayoutNull;
 @property (nonatomic, assign) NSInteger item;
 
 - (void)updateContent;
-- (void)configureLabelSubviewsPreferredMaxLayoutWidth;
+- (void)updateLabelSubviewsPreferredMaxLayoutWidthWithLayoutRequired:(BOOL *)layoutRequired;
 
 + (UIColor *)errorColor;
 
