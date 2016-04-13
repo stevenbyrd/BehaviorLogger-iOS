@@ -15,9 +15,8 @@ NS_ASSUME_NONNULL_BEGIN
 @class BLMTextInputCell;
 
 
-@protocol BLMTextInputCellDataSource <NSObject>
+@protocol BLMTextInputCellDataSource <BLMCollectionViewCellDataSource>
 
-- (NSString *)labelForTextInputCell:(BLMTextInputCell *)cell;
 - (NSString *)defaultInputForTextInputCell:(BLMTextInputCell *)cell;
 - (NSAttributedString *)attributedPlaceholderForTextInputCell:(BLMTextInputCell *)cell;
 - (NSUInteger)minimumInputLengthForTextInputCell:(BLMTextInputCell *)cell;

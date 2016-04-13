@@ -19,6 +19,8 @@ static CGFloat ButtonTitleTopPadding = 5.0;
 
 @implementation BLMButtonCell
 
+@dynamic dataSource;
+
 - (instancetype)initWithFrame:(CGRect)frame {
     self = [super initWithFrame:frame];
 
@@ -60,6 +62,10 @@ static CGFloat ButtonTitleTopPadding = 5.0;
 
     self.button.enabled = [self.dataSource isButtonEnabledForButtonCell:self];
     self.button.alpha = (self.button.isEnabled ? 1.0 : 0.5);
+
+    for (UIView *view in @[self.button, self.button.titleLabel, self.button.imageView]) {
+        view.backgroundColor = self.contentView.backgroundColor;
+    }
 
     [self.button setAttributedTitle:[self.dataSource attributedTitleForButtonCell:self forState:UIControlStateNormal] forState:UIControlStateNormal];
     [self.button setAttributedTitle:[self.dataSource attributedTitleForButtonCell:self forState:UIControlStateHighlighted] forState:UIControlStateHighlighted];

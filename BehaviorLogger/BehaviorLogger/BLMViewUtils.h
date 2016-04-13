@@ -30,6 +30,7 @@ typedef NS_ENUM(uint32_t, BLMColorHexCode) {
 #pragma mark
 
 extern CGRect CGRectPixelAlign(CGRect rect);
+extern CGPoint CGRectGetCenter(CGRect rect);
 
 
 #pragma mark

@@ -106,6 +106,19 @@ extern BLMCollectionViewSectionLayout const BLMCollectionViewSectionLayoutNull;
 
 #pragma mark
 
+@class BLMCollectionViewCell;
+
+
+@protocol BLMCollectionViewCellDataSource <NSObject>
+
+- (NSString *)labelTextForCollectionViewCell:(BLMCollectionViewCell *)cell;
+
+@optional
+- (UIColor *)backgroundColorForCollectionViewCell:(BLMCollectionViewCell *)cell;
+
+@end
+
+
 @protocol BLMCollectionViewCellLayoutDelegate <NSObject>
 
 - (NSArray<NSLayoutConstraint *> *)uniqueVerticalPositionConstraintsForSubview:(UIView *)subview;
@@ -118,6 +131,7 @@ extern BLMCollectionViewSectionLayout const BLMCollectionViewSectionLayoutNull;
 
 @interface BLMCollectionViewCell : UICollectionViewCell <BLMCollectionViewCellLayoutDelegate>
 
+@property (nonatomic, weak) id<BLMCollectionViewCellDataSource> dataSource;
 @property (nonatomic, strong, readonly) UILabel *label;
 @property (nonatomic, strong, readonly) NSIndexPath *indexPath;
 

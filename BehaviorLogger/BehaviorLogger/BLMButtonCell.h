@@ -15,7 +15,7 @@ NS_ASSUME_NONNULL_BEGIN
 @class BLMButtonCell;
 
 
-@protocol BLMButtonCellDataSource <NSObject>
+@protocol BLMButtonCellDataSource <BLMCollectionViewCellDataSource>
 
 - (BOOL)isButtonEnabledForButtonCell:(BLMButtonCell *)cell;
 - (nullable UIImage *)imageForButtonCell:(BLMButtonCell *)cell forState:(UIControlState)state;

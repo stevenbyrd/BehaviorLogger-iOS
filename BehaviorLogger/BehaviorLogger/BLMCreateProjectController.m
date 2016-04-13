@@ -62,7 +62,7 @@ typedef NS_ENUM(NSUInteger, ActionButton) {
 
 #pragma mark
 
-@interface BLMCreateProjectController () < UICollectionViewDataSource, BLMCollectionViewLayoutDelegate, BLMButtonCellDataSource, BLMButtonCellDelegate, BLMTextInputCellDataSource, BLMTextInputCellDelegate>
+@interface BLMCreateProjectController () < UICollectionViewDataSource, BLMCollectionViewLayoutDelegate, BLMCollectionViewCellDataSource, BLMButtonCellDataSource, BLMButtonCellDelegate, BLMTextInputCellDataSource, BLMTextInputCellDelegate>
 
 @property (nonatomic, copy, readonly) NSArray<NSMutableArray<NSString *> *> *properties;
 @property (nonatomic, assign, getter=shouldAutomaticallyBeginEditingProjectName) BOOL automaticallyBeginEditingProjectName;
@@ -314,8 +314,6 @@ typedef NS_ENUM(NSUInteger, ActionButton) {
     cell.section = indexPath.section;
     cell.item = indexPath.item;
 
-    [cell updateContent];
-
     return cell;
 }
 
@@ -353,6 +351,12 @@ typedef NS_ENUM(NSUInteger, ActionButton) {
 }
 
 #pragma mark UICollectionViewDelegate / BLMCollectionViewLayoutDelegate
+
+- (void)collectionView:(UICollectionView *)collectionView willDisplayCell:(UICollectionViewCell *)cell forItemAtIndexPath:(NSIndexPath *)indexPath {
+    assert([cell isKindOfClass:[BLMCollectionViewCell class]]);
+    [(BLMCollectionViewCell *)cell updateContent];
+}
+
 
 - (BLMCollectionViewSectionLayout)collectionView:(BLMCollectionView *)collectionView layoutForSection:(NSUInteger)section {
     switch ((Section)section) {
@@ -435,9 +439,9 @@ typedef NS_ENUM(NSUInteger, ActionButton) {
     }
 }
 
-#pragma mark BLMTextInputCellDataSource
+#pragma mark BLMCollectionViewCellDataSource
 
-- (NSString *)labelForTextInputCell:(BLMTextInputCell *)cell {
+- (NSString *)labelTextForCollectionViewCell:(BLMTextInputCell *)cell {
     switch ((Section)cell.section) {
         case SectionProjectProperties: {
             switch ((ProjectProperty)cell.item) {
@@ -476,16 +480,19 @@ typedef NS_ENUM(NSUInteger, ActionButton) {
         }
 
         case SectionActionButtons:
+            return nil;
+
         case SectionCount: {
             assert(NO);
-            break;
+            return nil;
         }
     }
-
+    
     assert(NO);
     return nil;
 }
 
+#pragma mark BLMTextInputCellDataSource
 
 - (NSString *)defaultInputForTextInputCell:(BLMTextInputCell *)cell {
     switch ((Section)cell.section) {

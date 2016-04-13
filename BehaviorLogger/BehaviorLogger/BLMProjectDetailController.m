@@ -68,14 +68,14 @@ typedef NS_ENUM(NSUInteger, ActionButton) {
 
 #pragma mark
 
-@interface BehaviorCellBackgroundView : UIView
+@interface BehaviorCellBorderView : UIView
 
 @property (nonatomic, strong) UIColor *borderColor;
 
 @end
 
 
-@implementation BehaviorCellBackgroundView
+@implementation BehaviorCellBorderView
 
 - (instancetype)init {
     self = [super init];
@@ -83,8 +83,6 @@ typedef NS_ENUM(NSUInteger, ActionButton) {
     if (self == nil) {
         return nil;
     }
-
-    self.backgroundColor = [BLMViewUtils colorForHexCode:BLMColorHexCodeDarkBackground];
 
     _borderColor = [BLMViewUtils colorForHexCode:BLMColorHexCodeBlue];
 
@@ -106,10 +104,23 @@ typedef NS_ENUM(NSUInteger, ActionButton) {
 - (void)drawRect:(CGRect)rect {
     [super drawRect:rect];
 
+    static CGFloat edgeLengthCoveredByDeleteButton = 0;
+    static dispatch_once_t onceToken = 0;
+
+    dispatch_once(&onceToken, ^{
+        edgeLengthCoveredByDeleteButton = ceilf((BehaviorCellDeleteButtonImageRadius // The region in the top left corner that is covered by the delete button image circle...
+                                                 - BehaviorCellDeleteButtonOffset) // ...found by computing the horizontal distance between the circle's center and rect's left edge...
+                                                + (BehaviorCellDeleteButtonImageRadius // ...added to horizontal the distance between the circle's center and the point of intersection with rect's top edge...
+                                                   * cos(asin((BehaviorCellDeleteButtonImageRadius // ...as determined from the angle between the circle's center and the intersection point...
+                                                               - BehaviorCellDeleteButtonOffset) // ...given the vertical distance between the two...
+                                                              / BehaviorCellDeleteButtonImageRadius)))); // ...as a ratio of the circle's radius
+    });
+
+
     UIBezierPath *path = [UIBezierPath bezierPath];
 
     [path moveToPoint:(CGPoint) {
-        .x = CGRectGetMinX(rect) + 0.5 + [BehaviorCellBackgroundView edgeLengthCoveredByDeleteButton],
+        .x = CGRectGetMinX(rect) + 0.5 + edgeLengthCoveredByDeleteButton,
         .y = CGRectGetMinY(rect) + 0.5
     }];
 
@@ -151,7 +162,7 @@ typedef NS_ENUM(NSUInteger, ActionButton) {
 
     [path addLineToPoint:(CGPoint) {
         .x = CGRectGetMinX(rect) + 0.5,
-        .y = CGRectGetMinY(rect) + 0.5 + [BehaviorCellBackgroundView edgeLengthCoveredByDeleteButton]
+        .y = CGRectGetMinY(rect) + 0.5 + edgeLengthCoveredByDeleteButton
     }];
 
     path.lineWidth = 1.0;
@@ -161,25 +172,10 @@ typedef NS_ENUM(NSUInteger, ActionButton) {
     [path stroke];
 }
 
-
-+ (CGFloat)edgeLengthCoveredByDeleteButton {
-    static CGFloat coveredEdgeLength = 0;
-    static dispatch_once_t onceToken = 0;
-
-    dispatch_once(&onceToken, ^{
-        coveredEdgeLength = ceilf((BehaviorCellDeleteButtonImageRadius // The region in the top left corner that is covered by the delete button image circle...
-                                   - BehaviorCellDeleteButtonOffset) // ...found by computing the horizontal distance between the circle's center and rect's left edge...
-                                  + (BehaviorCellDeleteButtonImageRadius // ...added to horizontal the distance between the circle's center and the point of intersection with rect's top edge...
-                                     * cos(asin((BehaviorCellDeleteButtonImageRadius // ...as determined from the angle between the circle's center and the intersection point...
-                                                 - BehaviorCellDeleteButtonOffset) // ...given the vertical distance between the two...
-                                                / BehaviorCellDeleteButtonImageRadius)))); // ...as a ratio of the circle's radius
-    });
-
-    return coveredEdgeLength;
-}
-
 @end
 
+
+#pragma mark
 
 @class BehaviorCell;
 
@@ -194,6 +190,7 @@ typedef NS_ENUM(NSUInteger, ActionButton) {
 
 @interface BehaviorCell : BLMTextInputCell
 
+@property (nonatomic, strong, readonly) BehaviorCellBorderView *borderView;
 @property (nonatomic, strong, readonly) UIButton *deleteButton;
 @property (nonatomic, strong, readonly) UISwitch *toggleSwitch;
 @property (nonatomic, strong, readonly) UILabel *toggleSwitchLabel;
@@ -215,10 +212,16 @@ typedef NS_ENUM(NSUInteger, ActionButton) {
     }
 
     self.clipsToBounds = NO;
-    self.backgroundView = [[BehaviorCellBackgroundView alloc] init];
-
     self.contentView.clipsToBounds = NO;
-    self.contentView.backgroundColor = [self.backgroundView.backgroundColor colorWithAlphaComponent:0.0];
+
+    // Border View
+
+    _borderView = [[BehaviorCellBorderView alloc] init];
+
+    self.borderView.translatesAutoresizingMaskIntoConstraints = NO;
+
+    [self.contentView insertSubview:self.borderView atIndex:0];
+    [self.contentView addConstraints:[BLMViewUtils constraintsForItem:self.borderView equalToItem:self.contentView]];
 
     // Delete Button
 
@@ -253,6 +256,7 @@ typedef NS_ENUM(NSUInteger, ActionButton) {
 
     [self.toggleSwitch addTarget:self action:@selector(handleActionToggleSwitch:forEvent:) forControlEvents:UIControlEventTouchUpInside];
 
+    self.toggleSwitch.clipsToBounds = YES;
     self.toggleSwitch.translatesAutoresizingMaskIntoConstraints = NO;
 
     [self.contentView addSubview:self.toggleSwitch];
@@ -302,15 +306,19 @@ typedef NS_ENUM(NSUInteger, ActionButton) {
 
 - (void)updateContent {
     [super updateContent];
+
     [self updateBorderColor];
 
     self.toggleSwitch.on = self.behavior.isContinuous;
+
+    for (UIView *view in @[self.borderView, self.toggleSwitch, self.toggleSwitchLabel]) {
+        view.backgroundColor = self.contentView.backgroundColor;
+    }
 }
 
 
 - (void)updateBorderColor {
-    BehaviorCellBackgroundView *backgroundView = (BehaviorCellBackgroundView *)self.backgroundView;
-    backgroundView.borderColor = ([self.delegate shouldAcceptInputForTextInputCell:self] ? [BLMViewUtils colorForHexCode:BLMColorHexCodeBlue] : [BLMCollectionViewCell errorColor]);
+    self.borderView.borderColor = ([self.delegate shouldAcceptInputForTextInputCell:self] ? [BLMViewUtils colorForHexCode:BLMColorHexCodeBlue] : [BLMCollectionViewCell errorColor]);
 }
 
 
@@ -813,8 +821,6 @@ typedef NS_ENUM(NSUInteger, ActionButton) {
     cell.section = indexPath.section;
     cell.item = indexPath.item;
 
-    [cell updateContent];
-
     return cell;
 }
 
@@ -860,6 +866,12 @@ typedef NS_ENUM(NSUInteger, ActionButton) {
 }
 
 #pragma mark UICollectionViewDelegate / BLMCollectionViewLayoutDelegate
+
+- (void)collectionView:(UICollectionView *)collectionView willDisplayCell:(UICollectionViewCell *)cell forItemAtIndexPath:(NSIndexPath *)indexPath {
+    assert([cell isKindOfClass:[BLMCollectionViewCell class]]);
+    [(BLMCollectionViewCell *)cell updateContent];
+}
+
 
 - (BLMCollectionViewSectionLayout)collectionView:(BLMCollectionView *)collectionView layoutForSection:(NSUInteger)section {
     switch ((Section)section) {
@@ -1005,9 +1017,9 @@ typedef NS_ENUM(NSUInteger, ActionButton) {
     }
 }
 
-#pragma mark BLMTextInputCellDataSource
+#pragma mark BLMCollectionViewCellDataSource
 
-- (NSString *)labelForTextInputCell:(BLMTextInputCell *)cell {
+- (NSString *)labelTextForCollectionViewCell:(BLMTextInputCell *)cell {
     switch ((Section)cell.section) {
         case SectionBasicProperties: {
             switch ((BasicInfo)cell.item) {
@@ -1046,10 +1058,14 @@ typedef NS_ENUM(NSUInteger, ActionButton) {
         }
 
         case SectionBehaviors:
-            return @"Name:";
+            if (cell.item < ([self.collectionView numberOfItemsInSection:SectionBehaviors] - 1)) {
+                return @"Name:";
+            }
 
         case SectionSessions:
         case SectionActionButtons:
+            return nil;
+
         case SectionCount: {
             assert(NO);
             return nil;
@@ -1057,6 +1073,26 @@ typedef NS_ENUM(NSUInteger, ActionButton) {
     }
 }
 
+
+- (UIColor *)backgroundColorForCollectionViewCell:(BLMCollectionViewCell *)cell {
+    switch ((Section)cell.section) {
+        case SectionBasicProperties:
+        case SectionSessionProperties:
+        case SectionSessions:
+        case SectionActionButtons:
+            return [BLMViewUtils colorForHexCode:BLMColorHexCodeDefaultBackground];
+
+        case SectionBehaviors:
+            return [BLMViewUtils colorForHexCode:BLMColorHexCodeDarkBackground];
+            
+        case SectionCount: {
+            assert(NO);
+            return nil;
+        }
+    }
+}
+
+#pragma mark BLMTextInputCellDataSource
 
 - (NSString *)defaultInputForTextInputCell:(BLMTextInputCell *)cell {
     switch ((Section)cell.section) {

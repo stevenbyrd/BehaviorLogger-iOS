@@ -59,6 +59,7 @@ static CGFloat const HeaderFontSize = 18.0;
         return nil;
     }
 
+    self.backgroundColor = [BLMViewUtils colorForHexCode:BLMColorHexCodeDefaultBackground];
     self.clipsToBounds = NO;
 
     _label = [[UILabel alloc] initWithFrame:CGRectZero];
@@ -69,6 +70,7 @@ static CGFloat const HeaderFontSize = 18.0;
     [self.label setContentCompressionResistancePriority:UILayoutPriorityRequired forAxis:UILayoutConstraintAxisVertical];
     [self.label setContentCompressionResistancePriority:UILayoutPriorityRequired forAxis:UILayoutConstraintAxisHorizontal];
 
+    self.label.backgroundColor = self.backgroundColor;
     self.label.textColor = [BLMViewUtils colorForHexCode:BLMColorHexCodeBlack];
     self.label.font = [UIFont boldSystemFontOfSize:HeaderFontSize];
     self.label.translatesAutoresizingMaskIntoConstraints = NO;
@@ -106,7 +108,7 @@ static CGFloat const HeaderFontSize = 18.0;
         return nil;
     }
 
-    self.backgroundColor = [BLMViewUtils colorForHexCode:BLMColorHexCodeDarkBorder alpha:0.5];
+    self.backgroundColor = [BLMViewUtils colorForHexCode:BLMColorHexCodeDarkBorder];
 
     return self;
 }
@@ -117,6 +119,11 @@ static CGFloat const HeaderFontSize = 18.0;
 #pragma mark
 
 @implementation BLMCollectionViewCell
+
+- (instancetype)init {
+    return [self initWithFrame:CGRectZero];
+}
+
 
 - (instancetype)initWithFrame:(CGRect)frame {
     self = [super initWithFrame:frame];
@@ -150,7 +157,6 @@ static CGFloat const HeaderFontSize = 18.0;
     [super layoutSubviews];
 
     BOOL layoutRequired = NO;
-
     [self updateLabelSubviewsPreferredMaxLayoutWidthWithLayoutRequired:&layoutRequired];
 
     if (layoutRequired) {
@@ -175,6 +181,18 @@ static CGFloat const HeaderFontSize = 18.0;
     assert([NSThread isMainThread]);
     assert(self.section != NSNotFound);
     assert(self.item != NSNotFound);
+
+    UIColor *backgroundColor = [BLMViewUtils colorForHexCode:BLMColorHexCodeDefaultBackground];
+
+    if ([self.dataSource respondsToSelector:@selector(backgroundColorForCollectionViewCell:)]) {
+        backgroundColor = [self.dataSource backgroundColorForCollectionViewCell:self];
+    }
+
+    self.contentView.backgroundColor = backgroundColor;
+    
+    self.label.backgroundColor = self.contentView.backgroundColor;
+    self.label.text = [self.dataSource labelTextForCollectionViewCell:self];
+    self.label.hidden = (self.label.text.length == 0);
 }
 
 
@@ -299,12 +317,12 @@ static CGFloat const HeaderFontSize = 18.0;
 @interface BLMCollectionViewLayout ()
 
 @property (nonatomic, assign) CGSize collectionViewContentSize;
-@property (nonatomic, copy) NSMutableArray<NSValue *> *sectionFrameList;
-@property (nonatomic, copy) NSMutableDictionary<NSString *, NSMutableDictionary<NSIndexPath *, UICollectionViewLayoutAttributes *> *> *attributesByIndexPathByKind;
-@property (nonatomic, copy) NSMutableDictionary<NSString *, NSMutableDictionary<NSIndexPath *, UICollectionViewLayoutAttributes *> *> *previousAttributesByIndexPathByKind;
-@property (nonatomic, copy) NSMutableDictionary<NSIndexPath *, NSIndexPath *> *reloadedIndexPathByOriginalIndexPath;
-@property (nonatomic, copy) NSMutableArray<NSIndexPath *> *deletedIndexPaths;
-@property (nonatomic, copy) NSMutableArray<NSIndexPath *> *insertedIndexPaths;
+@property (nonatomic, copy, readonly) NSMutableArray<NSValue *> *sectionFrameList;
+@property (nonatomic, copy, readonly) NSMutableDictionary<NSString *, NSMutableDictionary<NSIndexPath *, UICollectionViewLayoutAttributes *> *> *attributesByIndexPathByKind;
+@property (nonatomic, copy, readonly) NSMutableDictionary<NSString *, NSMutableDictionary<NSIndexPath *, UICollectionViewLayoutAttributes *> *> *previousAttributesByIndexPathByKind;
+@property (nonatomic, copy, readonly) NSMutableDictionary<NSIndexPath *, NSIndexPath *> *reloadedIndexPathByOriginalIndexPath;
+@property (nonatomic, copy, readonly) NSMutableArray<NSIndexPath *> *deletedIndexPaths;
+@property (nonatomic, copy, readonly) NSMutableArray<NSIndexPath *> *insertedIndexPaths;
 
 @end
 
@@ -322,6 +340,7 @@ static CGFloat const HeaderFontSize = 18.0;
     _collectionViewContentSize = CGSizeZero;
     _sectionFrameList = [NSMutableArray array];
     _attributesByIndexPathByKind = [NSMutableDictionary dictionary];
+    _previousAttributesByIndexPathByKind = [NSMutableDictionary dictionary];
     _reloadedIndexPathByOriginalIndexPath = [NSMutableDictionary dictionary];
     _deletedIndexPaths = [NSMutableArray array];
     _insertedIndexPaths = [NSMutableArray array];
@@ -334,10 +353,10 @@ static CGFloat const HeaderFontSize = 18.0;
     [super prepareLayout];
 
     [self.sectionFrameList removeAllObjects];
-
-    self.previousAttributesByIndexPathByKind = self.attributesByIndexPathByKind.copy;
+    [self.previousAttributesByIndexPathByKind removeAllObjects];
 
     for (NSString *kind in @[BLMCollectionViewKindHeader, BLMCollectionViewKindItemAreaBackground, BLMCollectionViewKindItemCell, BLMCollectionViewKindFooter]) {
+        self.previousAttributesByIndexPathByKind[kind] = (self.attributesByIndexPathByKind[kind] ?: [NSMutableDictionary dictionary]);
         self.attributesByIndexPathByKind[kind] = [NSMutableDictionary dictionary];
     }
 

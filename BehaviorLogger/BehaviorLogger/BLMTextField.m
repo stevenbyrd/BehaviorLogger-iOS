@@ -20,6 +20,8 @@
     if (self == nil) {
         return nil;
     }
+    
+    self.backgroundColor = [BLMViewUtils colorForHexCode:BLMColorHexCodeWhite];
 
     _horizontalPadding = horizontalPadding;
     _verticalPadding = verticalPadding;
@@ -28,12 +30,12 @@
 }
 
 
-- (CGRect)textRectForBounds:(CGRect)bounds { // placeholder position
+- (CGRect)textRectForBounds:(CGRect)bounds { // Placeholder position
     return CGRectPixelAlign(CGRectInset(bounds, (self.horizontalPadding - 1.0), self.verticalPadding)); // -1.0 pixel workaround for NSAttributedString size bug
 }
 
 
-- (CGRect)editingRectForBounds:(CGRect)bounds { // text position
+- (CGRect)editingRectForBounds:(CGRect)bounds { // Text position
     return CGRectPixelAlign(CGRectInset(bounds, (self.horizontalPadding - 1.0), self.verticalPadding)); // -1.0 pixel workaround for NSAttributedString size bug
 }
 

@@ -25,6 +25,14 @@ CGRect CGRectPixelAlign(CGRect rect) {
 }
 
 
+CGPoint CGRectGetCenter(CGRect rect) {
+    return (CGPoint) {
+        .x = CGRectGetMidX(rect),
+        .y = CGRectGetMidY(rect)
+    };
+}
+
+
 #pragma mark
 
 @implementation BLMViewUtils

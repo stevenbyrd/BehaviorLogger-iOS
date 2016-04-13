@@ -21,10 +21,7 @@
 
 @implementation BLMTextInputCell
 
-- (instancetype)init {
-    return [self initWithFrame:CGRectZero];
-}
-
+@dynamic dataSource;
 
 - (instancetype)initWithFrame:(CGRect)frame {
     self = [super initWithFrame:frame];
@@ -35,18 +32,17 @@
     
     _textField = [[BLMTextField alloc] initWithHorizontalPadding:8.0 verticalPadding:5.0];
 
+    [self.textField addTarget:self action:@selector(handleEditingChangedForTextField:) forControlEvents:UIControlEventEditingChanged];
+
     self.textField.delegate = self;
     self.textField.minimumFontSize = 10.0;
     self.textField.adjustsFontSizeToFitWidth = YES;
     self.textField.returnKeyType = UIReturnKeyDone;
     self.textField.borderStyle = UITextBorderStyleLine;
-    self.textField.backgroundColor = [BLMViewUtils colorForHexCode:BLMColorHexCodeWhite];
-    self.textField.clearButtonMode = UITextFieldViewModeWhileEditing;
     self.textField.autocapitalizationType = UITextAutocapitalizationTypeWords;
+    self.textField.clearButtonMode = UITextFieldViewModeWhileEditing;
     self.textField.autocorrectionType = UITextAutocorrectionTypeNo;
     self.textField.translatesAutoresizingMaskIntoConstraints = NO;
-
-    [self.textField addTarget:self action:@selector(handleEditingChangedForTextField:) forControlEvents:UIControlEventEditingChanged];
 
     [self.contentView addSubview:self.textField];
     [self.contentView addConstraints:[self uniqueVerticalPositionConstraintsForSubview:self.textField]];
@@ -86,7 +82,6 @@
 - (void)updateContent {
     [super updateContent];
 
-    self.label.text = [self.dataSource labelForTextInputCell:self];
     self.textField.text = [self.dataSource defaultInputForTextInputCell:self];
     self.textField.attributedPlaceholder = [self.dataSource attributedPlaceholderForTextInputCell:self];
 
