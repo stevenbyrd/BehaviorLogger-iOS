@@ -1367,14 +1367,23 @@ typedef NS_ENUM(NSUInteger, ActionButton) {
         [cell.textField endEditing:YES];
     }
 
-    if ([BLMUtils isObject:cell.behavior.UUID equalToObject:self.addedBehaviorUUID]) {
-        [[BLMDataManager sharedManager] deleteBehaviorForUUID:self.addedBehaviorUUID completion:nil];
-    } else {
-        BLMSessionConfiguration *sessionConfiguration = self.projectSessionConfiguration;
-        NSOrderedSet *updatedBehaviorUUIDs = [sessionConfiguration.behaviorUUIDs orderedSetByRemovingObject:cell.behavior.UUID];
+    [UIView beginAnimations:nil context:NULL];
 
-        [[BLMDataManager sharedManager] updateSessionConfigurationForUUID:sessionConfiguration.UUID property:BLMSessionConfigurationPropertyBehaviorUUIDs value:updatedBehaviorUUIDs completion:nil];
-    }
+    NSUUID *cellBehaviorUUID = cell.behavior.UUID;
+    NSUUID *addedBehaviorUUID = self.addedBehaviorUUID;
+
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)([UIView inheritedAnimationDuration] * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{ // Wait until prior animations end (i.e. keyboard hiding) to avoid stuttering
+        if ([BLMUtils isObject:cellBehaviorUUID equalToObject:addedBehaviorUUID]) {
+            [[BLMDataManager sharedManager] deleteBehaviorForUUID:addedBehaviorUUID completion:nil];
+        } else {
+            BLMSessionConfiguration *sessionConfiguration = self.projectSessionConfiguration;
+            NSOrderedSet *updatedBehaviorUUIDs = [sessionConfiguration.behaviorUUIDs orderedSetByRemovingObject:cellBehaviorUUID];
+
+            [[BLMDataManager sharedManager] updateSessionConfigurationForUUID:sessionConfiguration.UUID property:BLMSessionConfigurationPropertyBehaviorUUIDs value:updatedBehaviorUUIDs completion:nil];
+        }
+    });
+
+    [UIView commitAnimations];
 }
 
 
